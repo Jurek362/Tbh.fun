@@ -13,65 +13,29 @@
         }
         .card {
             background: rgba(255, 255, 255, 0.9);
-            border: none;
             border-radius: 15px;
-            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
-        }
-        textarea {
-            resize: none;
+            padding: 2rem;
         }
     </style>
 </head>
-<body class="d-flex align-items-center">
-    <div class="container">
-        <div class="row justify-content-center">
-            <div class="col-md-8 col-lg-6">
-                <div class="card p-4">
-                    <h1 class="text-center mb-4">🔒 Anonimowe Wiadomości</h1>
-                    
-                    <!-- Formularz wysyłki -->
-                    <form action="/send_message/test_user" method="POST">
-                        <div class="mb-3">
-                            <textarea 
-                                class="form-control" 
-                                name="content" 
-                                rows="4" 
-                                placeholder="Napisz coś anonimowo..." 
-                                required
-                            ></textarea>
-                        </div>
-                        <button type="submit" class="btn btn-primary w-100">Wyślij</button>
-                    </form>
-
-                    <!-- Link do udostępniania -->
-                    <div class="mt-4 text-center text-dark">
-                        <p>Twój link:</p>
-                        <div class="input-group">
-                            <input 
-                                type="text" 
-                                id="profileLink" 
-                                value="https://tbh-fun.onrender.com/profile/test_user" 
-                                class="form-control" 
-                                readonly
-                            >
-                            <button 
-                                class="btn btn-outline-secondary" 
-                                type="button" 
-                                onclick="copyLink()"
-                            >Kopiuj</button>
-                        </div>
-                    </div>
-                </div>
+<body>
+    <div class="container d-flex align-items-center justify-content-center" style="min-height: 100vh;">
+        <div class="card">
+            <h1 class="text-center mb-4">✉️ Anonimowe Wiadomości</h1>
+            <form action="/send_message/test_user" method="POST">
+                <textarea class="form-control mb-3" name="content" rows="4" placeholder="Napisz coś..." required></textarea>
+                <button type="submit" class="btn btn-primary w-100">Wyślij</button>
+            </form>
+            <div class="mt-4">
+                <input type="text" id="profileLink" value="https://tbh-fun.onrender.com/profile/test_user" class="form-control" readonly>
+                <button onclick="copyLink()" class="btn btn-secondary w-100 mt-2">Kopiuj link</button>
             </div>
         </div>
     </div>
-
     <script>
         function copyLink() {
-            const link = document.getElementById('profileLink');
-            link.select();
-            navigator.clipboard.writeText(link.value);
-            alert('Skopiowano link do schowka!');
+            navigator.clipboard.writeText(document.getElementById('profileLink').value);
+            alert('Skopiowano!');
         }
     </script>
 </body>
