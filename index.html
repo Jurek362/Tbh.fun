@@ -1,41 +1,68 @@
 <!DOCTYPE html>
-<html lang="pl">
+<html lang="en">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Utwórz Sesję Q&A</title>
+    <title>Anonimowe Wiadomości</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <style>
+        .gradient-bg {
+            background: linear-gradient(120deg, #a1c4fd 0%, #c2e9fb 100%);
+            min-height: 100vh;
+        }
+        .card {
+            border-radius: 15px;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+        }
+    </style>
 </head>
-<body>
-    <h1>Utwórz Nową Sesję Q&A</h1>
-    <form id="createForm">
-        <label for="password">Ustaw Hasło:</label>
-        <input type="password" id="password" name="password" required>
-        <button type="submit">Utwórz Sesję</button>
-    </form>
-    <div id="result"></div>
+<body class="gradient-bg">
+    <div class="container py-5">
+        <div class="row justify-content-center">
+            <div class="col-md-6">
+                <div class="card p-4">
+                    <h1 class="text-center mb-4">📨 Anonimowe Wiadomości</h1>
+                    <form action="/send_message/TWOJE_USER_ID" method="POST">
+                        <div class="mb-3">
+                            <textarea 
+                                class="form-control" 
+                                name="content" 
+                                rows="4" 
+                                placeholder="Napisz anonimową wiadomość..." 
+                                required
+                            ></textarea>
+                        </div>
+                        <button type="submit" class="btn btn-primary w-100">Wyślij</button>
+                    </form>
+                    <div class="mt-4 text-center">
+                        <p>Twój link do udostępniania:</p>
+                        <div class="input-group">
+                            <input 
+                                type="text" 
+                                id="profileLink" 
+                                value="http://twoja-domena.com/profile/TWOJE_USER_ID" 
+                                class="form-control" 
+                                readonly
+                            >
+                            <button 
+                                class="btn btn-outline-secondary" 
+                                type="button" 
+                                onclick="copyLink()"
+                            >Kopiuj</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
 
     <script>
-        document.getElementById('createForm').addEventListener('submit', async (e) => {
-            e.preventDefault();
-            const password = document.getElementById('password').value;
-            const response = await fetch('/create-qa', {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json'
-                },
-                body: JSON.stringify({ password })
-            });
-            if (response.ok) {
-                const data = await response.json();
-                document.getElementById('result').innerHTML = `
-                    <p>Twoja sesja Q&A została utworzona!</p>
-                    <p>Udostępnij ten link, aby inni mogli zadawać pytania: <a href="${window.location.origin}/ask/${data.id}">${window.location.origin}/ask/${data.id}</a></p>
-                    <p>Aby wyświetlić i moderować pytania, odwiedź: <a href="${window.location.origin}/qa/${data.id}/questions?password=${password}">${window.location.origin}/qa/${data.id}/questions</a></p>
-                `;
-            } else {
-                document.getElementById('result').innerHTML = '<p>Błąd podczas tworzenia sesji.</p>';
-            }
-        });
+        function copyLink() {
+            const link = document.getElementById('profileLink');
+            link.select();
+            document.execCommand('copy');
+            alert('Skopiowano link!');
+        }
     </script>
 </body>
 </html>
