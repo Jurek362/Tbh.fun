@@ -4,29 +4,34 @@ import uuid
 import os
 
 app = Flask(__name__)
-app.config['SQLALCHEMY_DATABASE_URI'] = os.environ.get('DATABASE_URL', 'sqlite:///messages.db').replace('postgres://', 'postgresql://', 1)  # Fix dla Render
-app.config['SECRET_KEY'] = os.environ.get('SECRET_KEY', 'dev-key-123')
+
+# Konfiguracja z Render.com
+app.config['SQLALCHEMY_DATABASE_URI'] = os.environ.get('DATABASE_URL', 'sqlite:///messages.db').replace('postgres://', 'postgresql://', 1)
+app.config['SECRET_KEY'] = os.environ.get('SECRET_KEY', 'dev-secret-key')  # Zmień w produkcji!
+app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
+
 db = SQLAlchemy(app)
 
-# Modele (bez zmian)
+# Model użytkownika
 class User(db.Model):
     id = db.Column(db.String(36), primary_key=True, default=lambda: str(uuid.uuid4()))
-    username = db.Column(db.String(50), unique=True)
+    username = db.Column(db.String(50), unique=True, nullable=False)
 
+# Model wiadomości
 class Message(db.Model):
     id = db.Column(db.Integer, primary_key=True)
-    content = db.Column(db.String(500))
-    user_id = db.Column(db.String(36), db.ForeignKey('user.id'))
+    content = db.Column(db.String(500), nullable=False)
+    user_id = db.Column(db.String(36), db.ForeignKey('user.id'), nullable=False)
 
-# Stwórz przykładowego użytkownika (tylko do testów!)
+# Utwórz testowego użytkownika (jeśli nie istnieje)
 with app.app_context():
     db.create_all()
-    if not User.query.first():
+    if not User.query.filter_by(username="test_user").first():
         test_user = User(username="test_user")
         db.session.add(test_user)
         db.session.commit()
 
-# Routy (bez zmian)
+# Routing
 @app.route('/')
 def home():
     return render_template('index.html')
