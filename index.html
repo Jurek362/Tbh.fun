@@ -1,42 +1,17 @@
 <!DOCTYPE html>
-<html lang="pl">
+<html>
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Anonimowe Wiadomości</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
-    <style>
-        body {
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            min-height: 100vh;
-            color: #fff;
-        }
-        .card {
-            background: rgba(255, 255, 255, 0.9);
-            border-radius: 15px;
-            padding: 2rem;
-        }
-    </style>
 </head>
 <body>
-    <div class="container d-flex align-items-center justify-content-center" style="min-height: 100vh;">
-        <div class="card">
-            <h1 class="text-center mb-4">✉️ Anonimowe Wiadomości</h1>
-            <form action="/send_message/test_user" method="POST">
-                <textarea class="form-control mb-3" name="content" rows="4" placeholder="Napisz coś..." required></textarea>
-                <button type="submit" class="btn btn-primary w-100">Wyślij</button>
-            </form>
-            <div class="mt-4">
-                <input type="text" id="profileLink" value="https://tbh-fun.onrender.com/profile/test_user" class="form-control" readonly>
-                <button onclick="copyLink()" class="btn btn-secondary w-100 mt-2">Kopiuj link</button>
-            </div>
+    <div class="container text-center mt-5">
+        <h1 class="mb-4">Witaj w Anonimowych Wiadomościach! ✨</h1>
+        <div class="d-grid gap-2 col-md-6 mx-auto">
+            <a href="{{ url_for('register') }}" class="btn btn-lg btn-primary">Załóż konto</a>
+            <a href="{{ url_for('login') }}" class="btn btn-lg btn-outline-secondary">Zaloguj się</a>
         </div>
     </div>
-    <script>
-        function copyLink() {
-            navigator.clipboard.writeText(document.getElementById('profileLink').value);
-            alert('Skopiowano!');
-        }
-    </script>
 </body>
 </html>
