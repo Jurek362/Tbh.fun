@@ -3,27 +3,26 @@ from flask_sqlalchemy import SQLAlchemy
 import uuid
 import os
 
-app = Flask(__name__)
+app = Flask(__name__, template_folder='.')  # Szablonów szukaj w bieżącym folderze
 
 # Konfiguracja z Render.com
 app.config['SQLALCHEMY_DATABASE_URI'] = os.environ.get('DATABASE_URL', 'sqlite:///messages.db').replace('postgres://', 'postgresql://', 1)
-app.config['SECRET_KEY'] = os.environ.get('SECRET_KEY', 'dev-secret-key')  # Zmień w produkcji!
+app.config['SECRET_KEY'] = os.environ.get('SECRET_KEY', 'dev-key-123')
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 
 db = SQLAlchemy(app)
 
-# Model użytkownika
+# Modele
 class User(db.Model):
     id = db.Column(db.String(36), primary_key=True, default=lambda: str(uuid.uuid4()))
     username = db.Column(db.String(50), unique=True, nullable=False)
 
-# Model wiadomości
 class Message(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     content = db.Column(db.String(500), nullable=False)
     user_id = db.Column(db.String(36), db.ForeignKey('user.id'), nullable=False)
 
-# Utwórz testowego użytkownika (jeśli nie istnieje)
+# Utwórz testowego użytkownika
 with app.app_context():
     db.create_all()
     if not User.query.filter_by(username="test_user").first():
@@ -34,7 +33,7 @@ with app.app_context():
 # Routing
 @app.route('/')
 def home():
-    return render_template('index.html')
+    return render_template('index.html')  # index.html jest w folderze `main`
 
 @app.route('/send_message/<user_id>', methods=['POST'])
 def send_message(user_id):
@@ -49,7 +48,7 @@ def send_message(user_id):
 def profile(user_id):
     user = User.query.get(user_id)
     messages = Message.query.filter_by(user_id=user_id).all()
-    return render_template('profile.html', user=user, messages=messages)
+    return render_template('profile.html', user=user, messages=messages)  # profile.html w `main`
 
 if __name__ == '__main__':
     app.run(host='0.0.0.0', port=int(os.environ.get('PORT', 10000)))
