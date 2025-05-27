@@ -1,46 +1,56 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="pl">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Anonimowe Wiadomości</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
     <style>
-        .gradient-bg {
-            background: linear-gradient(120deg, #a1c4fd 0%, #c2e9fb 100%);
+        body {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
             min-height: 100vh;
+            color: #fff;
         }
         .card {
+            background: rgba(255, 255, 255, 0.9);
+            border: none;
             border-radius: 15px;
-            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
+        }
+        textarea {
+            resize: none;
         }
     </style>
 </head>
-<body class="gradient-bg">
-    <div class="container py-5">
+<body class="d-flex align-items-center">
+    <div class="container">
         <div class="row justify-content-center">
-            <div class="col-md-6">
+            <div class="col-md-8 col-lg-6">
                 <div class="card p-4">
-                    <h1 class="text-center mb-4">📨 Anonimowe Wiadomości</h1>
-                    <form action="/send_message/TWOJE_USER_ID" method="POST">
+                    <h1 class="text-center mb-4">🔒 Anonimowe Wiadomości</h1>
+                    
+                    <!-- Formularz wysyłki -->
+                    <form action="/send_message/test_user" method="POST">
                         <div class="mb-3">
                             <textarea 
                                 class="form-control" 
                                 name="content" 
                                 rows="4" 
-                                placeholder="Napisz anonimową wiadomość..." 
+                                placeholder="Napisz coś anonimowo..." 
                                 required
                             ></textarea>
                         </div>
                         <button type="submit" class="btn btn-primary w-100">Wyślij</button>
                     </form>
-                    <div class="mt-4 text-center">
-                        <p>Twój link do udostępniania:</p>
+
+                    <!-- Link do udostępniania -->
+                    <div class="mt-4 text-center text-dark">
+                        <p>Twój link:</p>
                         <div class="input-group">
                             <input 
                                 type="text" 
                                 id="profileLink" 
-                                value="http://twoja-domena.com/profile/TWOJE_USER_ID" 
+                                value="https://tbh-fun.onrender.com/profile/test_user" 
                                 class="form-control" 
                                 readonly
                             >
@@ -60,8 +70,8 @@
         function copyLink() {
             const link = document.getElementById('profileLink');
             link.select();
-            document.execCommand('copy');
-            alert('Skopiowano link!');
+            navigator.clipboard.writeText(link.value);
+            alert('Skopiowano link do schowka!');
         }
     </script>
 </body>
