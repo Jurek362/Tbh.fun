@@ -56,27 +56,41 @@ def create_user():
         # Loguj otrzymane dane
         print(f"Otrzymane dane: {data}")
         
-        # Walidacja
+        # Walidacja - tylko username jest wymagany
         username = data.get('username', '').strip()
-        email = data.get('email', '').strip()
         
         if not username:
             return jsonify({
                 'success': False,
                 'error': 'Username jest wymagany'
             }), 400
-            
-        if not email:
+        
+        if len(username) < 3:
             return jsonify({
                 'success': False,
-                'error': 'Email jest wymagany'
+                'error': 'Username musi mieć przynajmniej 3 znaki'
             }), 400
         
-        # Utwórz użytkownika
+        if len(username) > 20:
+            return jsonify({
+                'success': False,
+                'error': 'Username nie może być dłuższy niż 20 znaków'
+            }), 400
+        
+        # Sprawdź czy username zawiera tylko dozwolone znaki
+        import re
+        if not re.match("^[a-zA-Z0-9_-]+$", username):
+            return jsonify({
+                'success': False,
+                'error': 'Username może zawierać tylko litery, cyfry, _ i -'
+            }), 400
+        
+        # Utwórz użytkownika - email jest opcjonalny
+        email = data.get('email', '').strip()
         user_data = {
             'id': str(int(datetime.now().timestamp() * 1000)),
             'username': username,
-            'email': email.lower(),
+            'email': email.lower() if email else None,
             'preferences': data.get('preferences', {}),
             'created_at': datetime.now().isoformat()
         }
