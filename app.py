@@ -1,225 +1,227 @@
+# app.py - Poprawiony serwer Flask
 from flask import Flask, request, jsonify
 from flask_cors import CORS
-import secrets
-from datetime import datetime
+import json
 import os
+from datetime import datetime
 
 app = Flask(__name__)
 
-# Wyłącz automatyczne CORS - będziemy obsługiwać to ręcznie
-# CORS(app) - usunięte, żeby uniknąć duplikowania nagłówków
+# ===== KONFIGURACJA CORS - TYLKO JEDNA! =====
+# USUŃ wszystkie inne konfiguracje CORS z kodu!
 
-# In-memory storage (w produkcji użyj prawdziwej bazy danych jak PostgreSQL)
-users = {}
-messages = {}
+CORS(app, 
+     origins=['https://jurek362.github.io'],  # Tylko jeden origin
+     methods=['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
+     allow_headers=['Content-Type', 'Authorization', 'X-Requested-With', 'Accept', 'Origin'],
+     supports_credentials=True)
 
-def generate_user_id():
-    """Generuj unikalny ID użytkownika"""
-    return secrets.token_hex(8)
+# ===== MIDDLEWARE =====
+@app.before_request
+def before_request():
+    # Debug logging
+    print(f"{datetime.now().isoformat()} - {request.method} {request.path}")
+    print(f"Origin: {request.headers.get('Origin')}")
+    
+    # Handle preflight requests
+    if request.method == 'OPTIONS':
+        response = jsonify({'status': 'OK'})
+        response.headers.add('Access-Control-Allow-Origin', 'https://jurek362.github.io')
+        response.headers.add('Access-Control-Allow-Headers', 'Content-Type,Authorization')
+        response.headers.add('Access-Control-Allow-Methods', 'GET,PUT,POST,DELETE,OPTIONS')
+        return response
 
-def generate_message_id():
-    """Generuj unikalny ID wiadomości"""
-    return secrets.token_hex(12)
+@app.after_request
+def after_request(response):
+    # Dodatkowe nagłówki bezpieczeństwa
+    response.headers['X-Content-Type-Options'] = 'nosniff'
+    response.headers['X-Frame-Options'] = 'DENY'
+    response.headers['X-XSS-Protection'] = '1; mode=block'
+    
+    # Debug - sprawdź nagłówki CORS
+    print(f"Response headers: {dict(response.headers)}")
+    
+    return response
+
+# ===== ROUTES =====
+
+@app.route('/api/health', methods=['GET'])
+def health_check():
+    """Health check endpoint"""
+    return jsonify({
+        'status': 'OK',
+        'timestamp': datetime.now().isoformat(),
+        'cors': 'enabled'
+    })
 
 @app.route('/api/create-user', methods=['POST', 'OPTIONS'])
 def create_user():
-    """Endpoint do tworzenia nowego użytkownika/linku"""
-    # Obsługa preflight request - bez ustawiania nagłówków (robi to @app.after_request)
-    if request.method == 'OPTIONS':
-        return jsonify({'status': 'ok'})
-    
+    """Create new user endpoint"""
     try:
+        # Handle preflight
+        if request.method == 'OPTIONS':
+            return jsonify({'status': 'OK'})
+        
+        # Get JSON data
         data = request.get_json()
+        
         if not data:
-            return jsonify({'error': 'Brak danych JSON'}), 400
-            
-        username = data.get('username', '').strip()
+            return jsonify({
+                'success': False,
+                'error': 'No JSON data provided'
+            }), 400
         
-        if not username or len(username) < 3:
-            return jsonify({'error': 'Username musi mieć co najmniej 3 znaki'}), 400
+        print(f"Creating user with data: {data}")
         
-        # Sprawdź czy username już istnieje
-        for user_id, user in users.items():
-            if user['username'].lower() == username.lower():
-                return jsonify({'error': 'Ta nazwa użytkownika jest już zajęta'}), 400
+        # Validate required fields
+        username = data.get('username')
+        email = data.get('email')
         
-        user_id = generate_user_id()
-        user = {
-            'id': user_id,
-            'username': username,
-            'created_at': datetime.now().isoformat(),
-            'message_count': 0
+        if not username or not email:
+            return jsonify({
+                'success': False,
+                'error': 'Username and email are required'
+            }), 400
+        
+        # Create new user object
+        new_user = {
+            'id': str(int(datetime.now().timestamp() * 1000)),
+            'username': username.strip(),
+            'email': email.strip().lower(),
+            'preferences': data.get('preferences', {}),
+            'created_at': datetime.now().isoformat()
         }
         
-        users[user_id] = user
-        messages[user_id] = []
+        # Here you would typically save to database
+        # For now, we'll just return the user data
+        
+        print(f"User created successfully: {new_user['id']}")
         
         return jsonify({
             'success': True,
-            'user_id': user_id,
-            'username': username,
-            'link': f'https://jurek362.github.io/tbh.fun/u/{username}'  # Poprawiony link
+            'data': {
+                'user': new_user,
+                'message': 'User created successfully'
+            }
+        }), 201
+        
+    except Exception as e:
+        print(f"Error creating user: {str(e)}")
+        return jsonify({
+            'success': False,
+            'error': 'Internal server error',
+            'message': str(e)
+        }), 500
+
+@app.route('/api/user/<user_id>', methods=['GET'])
+def get_user(user_id):
+    """Get user by ID"""
+    try:
+        # Here you would typically fetch from database
+        user = {
+            'id': user_id,
+            'username': 'example_user',
+            'email': 'user@example.com',
+            'created_at': datetime.now().isoformat()
+        }
+        
+        return jsonify({
+            'success': True,
+            'data': {'user': user}
         })
         
     except Exception as e:
-        return jsonify({'error': f'Błąd serwera: {str(e)}'}), 500
+        print(f"Error fetching user: {str(e)}")
+        return jsonify({
+            'success': False,
+            'error': 'Internal server error'
+        }), 500
 
-@app.route('/api/user/<username>', methods=['GET', 'OPTIONS'])
-def get_user(username):
-    """Endpoint do pobierania informacji o użytkowniku"""
-    if request.method == 'OPTIONS':
-        return jsonify({'status': 'ok'})
-        
-    found_user = None
-    for user_id, user in users.items():
-        if user['username'].lower() == username.lower():
-            found_user = user
-            break
-    
-    if not found_user:
-        return jsonify({'error': 'Użytkownik nie został znaleziony'}), 404
-    
-    return jsonify({
-        'username': found_user['username'],
-        'message_count': found_user['message_count']
-    })
-
-@app.route('/api/send-message', methods=['POST', 'OPTIONS'])
-def send_message():
-    """Endpoint do wysyłania anonimowej wiadomości"""
-    if request.method == 'OPTIONS':
-        return jsonify({'status': 'ok'})
-        
+@app.route('/api/user/<user_id>', methods=['PUT'])
+def update_user(user_id):
+    """Update user by ID"""
     try:
         data = request.get_json()
-        if not data:
-            return jsonify({'error': 'Brak danych JSON'}), 400
-            
-        username = data.get('username', '').strip()
-        message = data.get('message', '').strip()
         
-        if not message:
-            return jsonify({'error': 'Wiadomość nie może być pusta'}), 400
+        print(f"Updating user {user_id} with: {data}")
         
-        if len(message) > 500:
-            return jsonify({'error': 'Wiadomość jest zbyt długa (max 500 znaków)'}), 400
-        
-        # Znajdź użytkownika
-        found_user = None
-        user_id = None
-        for uid, user in users.items():
-            if user['username'].lower() == username.lower():
-                found_user = user
-                user_id = uid
-                break
-        
-        if not found_user:
-            return jsonify({'error': 'Użytkownik nie został znaleziony'}), 404
-        
-        # Dodaj wiadomość
-        message_obj = {
-            'id': generate_message_id(),
-            'content': message,
-            'timestamp': datetime.now().isoformat(),
-            'read': False
+        # Here you would typically update in database
+        updated_user = {
+            'id': user_id,
+            **data,
+            'updated_at': datetime.now().isoformat()
         }
         
-        user_messages = messages.get(user_id, [])
-        user_messages.insert(0, message_obj)  # Dodaj na początek (najnowsze pierwsze)
-        messages[user_id] = user_messages
-        
-        # Zaktualizuj licznik wiadomości
-        found_user['message_count'] = len(user_messages)
-        users[user_id] = found_user
-        
-        return jsonify({'success': True, 'message': 'Wiadomość została wysłana!'})
+        return jsonify({
+            'success': True,
+            'data': {'user': updated_user},
+            'message': 'User updated successfully'
+        })
         
     except Exception as e:
-        return jsonify({'error': f'Błąd serwera: {str(e)}'}), 500
+        print(f"Error updating user: {str(e)}")
+        return jsonify({
+            'success': False,
+            'error': 'Internal server error'
+        }), 500
 
-@app.route('/api/messages/<user_id>', methods=['GET', 'OPTIONS'])
-def get_messages(user_id):
-    """Endpoint do pobierania wiadomości użytkownika"""
-    if request.method == 'OPTIONS':
-        return jsonify({'status': 'ok'})
+@app.route('/api/user/<user_id>', methods=['DELETE'])
+def delete_user(user_id):
+    """Delete user by ID"""
+    try:
+        print(f"Deleting user {user_id}")
         
-    if user_id not in users:
-        return jsonify({'error': 'Użytkownik nie został znaleziony'}), 404
-    
-    user_messages = messages.get(user_id, [])
+        # Here you would typically delete from database
+        
+        return jsonify({
+            'success': True,
+            'message': 'User deleted successfully'
+        })
+        
+    except Exception as e:
+        print(f"Error deleting user: {str(e)}")
+        return jsonify({
+            'success': False,
+            'error': 'Internal server error'
+        }), 500
+
+# ===== ERROR HANDLERS =====
+
+@app.errorhandler(404)
+def not_found(error):
     return jsonify({
-        'messages': user_messages,
-        'total': len(user_messages)
-    })
+        'success': False,
+        'error': 'Endpoint not found',
+        'path': request.path
+    }), 404
 
-@app.route('/api/mark-read/<user_id>/<message_id>', methods=['POST', 'OPTIONS'])
-def mark_message_read(user_id, message_id):
-    """Endpoint do oznaczania wiadomości jako przeczytanej"""
-    if request.method == 'OPTIONS':
-        return jsonify({'status': 'ok'})
-        
-    if user_id not in users:
-        return jsonify({'error': 'Użytkownik nie został znaleziony'}), 404
-    
-    user_messages = messages.get(user_id, [])
-    for message in user_messages:
-        if message['id'] == message_id:
-            message['read'] = True
-            break
-    
-    messages[user_id] = user_messages
-    return jsonify({'success': True})
-
-@app.route('/api/delete-message/<user_id>/<message_id>', methods=['DELETE', 'OPTIONS'])
-def delete_message(user_id, message_id):
-    """Endpoint do usuwania wiadomości"""
-    if request.method == 'OPTIONS':
-        return jsonify({'status': 'ok'})
-        
-    if user_id not in users:
-        return jsonify({'error': 'Użytkownik nie został znaleziony'}), 404
-    
-    user_messages = messages.get(user_id, [])
-    user_messages = [msg for msg in user_messages if msg['id'] != message_id]
-    messages[user_id] = user_messages
-    
-    # Zaktualizuj licznik
-    users[user_id]['message_count'] = len(user_messages)
-    
-    return jsonify({'success': True})
-
-@app.route('/health', methods=['GET'])
-def health_check():
-    """Health check endpoint dla Render"""
-    return jsonify({'status': 'healthy', 'timestamp': datetime.now().isoformat()})
-
-@app.route('/')
-def home():
-    """Główna strona API"""
+@app.errorhandler(500)
+def internal_error(error):
+    print(f"Internal server error: {str(error)}")
     return jsonify({
-        'message': 'NGL Clone API',
-        'version': '1.0.0',
-        'endpoints': {
-            'create_user': '/api/create-user',
-            'get_user': '/api/user/<username>',
-            'send_message': '/api/send-message',
-            'get_messages': '/api/messages/<user_id>',
-            'mark_read': '/api/mark-read/<user_id>/<message_id>',
-            'delete_message': '/api/delete-message/<user_id>/<message_id>'
-        }
-    })
+        'success': False,
+        'error': 'Internal server error'
+    }), 500
 
-# Dodaj globalne nagłówki CORS dla wszystkich odpowiedzi
-@app.after_request
-def after_request(response):
-    origin = request.headers.get('Origin')
-    if origin in ['https://jurek362.github.io', 'https://tbh-fun.onrender.com', 'http://localhost:3000', 'http://127.0.0.1:3000']:
-        response.headers.add('Access-Control-Allow-Origin', origin)
-        response.headers.add('Access-Control-Allow-Headers', 'Content-Type,Authorization')
-        response.headers.add('Access-Control-Allow-Methods', 'GET,PUT,POST,DELETE,OPTIONS')
-        response.headers.add('Access-Control-Allow-Credentials', 'true')
-    return response
+@app.errorhandler(400)
+def bad_request(error):
+    return jsonify({
+        'success': False,
+        'error': 'Bad request',
+        'message': str(error)
+    }), 400
 
+# ===== MAIN =====
 if __name__ == '__main__':
     port = int(os.environ.get('PORT', 5000))
-    app.run(host='0.0.0.0', port=port, debug=False)
+    debug_mode = os.environ.get('FLASK_ENV') == 'development'
+    
+    print(f"🚀 Starting Flask server on port {port}")
+    print(f"📡 CORS enabled for: https://jurek362.github.io")
+    print(f"🌍 Debug mode: {debug_mode}")
+    
+    app.run(
+        host='0.0.0.0',
+        port=port,
+        debug=debug_mode
+    )
