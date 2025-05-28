@@ -1,11 +1,15 @@
 import os
 import uuid
-import smtplib
+# import smtplib # Niepotrzebne, jeśli weryfikacja e-mail jest wyłączona
+# from email.mime.text import MIMEText # Niepotrzebne, jeśli weryfikacja e-mail jest wyłączona
 import random
-from email.mime.text import MIMEText
 from flask import Flask, render_template, request, redirect, url_for, session, jsonify
 
-app = Flask(__name__)
+# Zmodyfikuj inicjalizację Flask, aby wskazać bieżący katalog jako folder szablonów.
+# Zakładamy, że pliki HTML (index.html, home.html, login.html, register.html)
+# znajdują się w tym samym katalogu co ten skrypt Pythona.
+app = Flask(__name__, template_folder='.') # <-- TUTAJ ZMIANA
+
 app.secret_key = os.urandom(24) # Ustaw losowy klucz sesji
 
 # Zmienne środowiskowe do konfiguracji serwera e-mail
@@ -25,7 +29,8 @@ def index():
         if users[user_id].get('verified', False): # Sprawdzamy, czy użytkownik jest zweryfikowany
             return render_template('home.html', nickname=users[user_id]['nickname'])
         else:
-            return redirect(url_for('login')) # Przekieruj na stronę logowania, jeśli niezweryfikowany
+            # Jeśli użytkownik niezweryfikowany (choć w tej wersji zawsze True), przekieruj na logowanie
+            return redirect(url_for('login'))
     return render_template('index.html')
 
 @app.route('/login', methods=['GET', 'POST'])
@@ -37,8 +42,6 @@ def login():
             user_id = user_ids[nickname]
             if users[user_id]['password'] == password:
                 # Jeśli użytkownik istnieje i hasło się zgadza
-                # W usuniętej wersji była tu weryfikacja maila.
-                # Teraz logujemy od razu.
                 session['user_id'] = user_id
                 return redirect(url_for('index'))
             else:
@@ -120,3 +123,4 @@ if __name__ == '__main__':
     # Upewnij się, że masz ustawione zmienne środowiskowe EMAIL_USER i EMAIL_PASS
     # dla oryginalnej wersji. Dla tej wersji nie są one potrzebne.
     app.run(debug=True) # debug=True w trybie deweloperskim
+
