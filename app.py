@@ -1,260 +1,122 @@
-# app.py - Naprawiony Flask backend bez duplikatów CORS
-from flask import Flask, request, jsonify
-from flask_cors import CORS
-import json
 import os
-from datetime import datetime
+import uuid
+import smtplib
+import random
+from email.mime.text import MIMEText
+from flask import Flask, render_template, request, redirect, url_for, session, jsonify
 
 app = Flask(__name__)
+app.secret_key = os.urandom(24) # Ustaw losowy klucz sesji
 
-# ===== KONFIGURACJA CORS - TYLKO TA JEDNA LINIA! =====
-# USUŃ wszystkie inne konfiguracje CORS!
-CORS(app, origins=['https://jurek362.github.io'])
+# Zmienne środowiskowe do konfiguracji serwera e-mail
+# EMAIL_ADDRESS = os.environ.get('EMAIL_USER')
+# EMAIL_PASSWORD = os.environ.get('EMAIL_PASS')
 
-# ===== USUŃ WSZYSTKIE @app.after_request które dodają nagłówki CORS! =====
-# NIE DODAWAJ żadnych response.headers['Access-Control-Allow-Origin']!
-
-@app.before_request
-def log_request():
-    """Debug logging - usuń w produkcji"""
-    print(f"{datetime.now().isoformat()} - {request.method} {request.path}")
-    if request.headers.get('Origin'):
-        print(f"Origin: {request.headers.get('Origin')}")
-
-# ===== ROUTES =====
+# Prosta "baza danych" w pamięci
+users = {} # {user_id: {"nickname": "...", "password": "...", "verified": True}}
+user_ids = {} # {nickname: user_id}
+# verification_codes = {} # {user_id: code}
+sessions = {} # {session_id: user_id}
 
 @app.route('/')
-def home():
-    """Root endpoint"""
-    return jsonify({
-        'message': 'Tbh.fun API is running',
-        'status': 'OK',
-        'cors_enabled': True
-    })
+def index():
+    if 'user_id' in session and session['user_id'] in users:
+        user_id = session['user_id']
+        if users[user_id].get('verified', False): # Sprawdzamy, czy użytkownik jest zweryfikowany
+            return render_template('home.html', nickname=users[user_id]['nickname'])
+        else:
+            return redirect(url_for('login')) # Przekieruj na stronę logowania, jeśli niezweryfikowany
+    return render_template('index.html')
 
-@app.route('/api/health')
-def health():
-    """Health check"""
-    return jsonify({
-        'status': 'healthy',
-        'timestamp': datetime.now().isoformat()
-    })
+@app.route('/login', methods=['GET', 'POST'])
+def login():
+    if request.method == 'POST':
+        nickname = request.form['nickname']
+        password = request.form['password']
+        if nickname in user_ids:
+            user_id = user_ids[nickname]
+            if users[user_id]['password'] == password:
+                # Jeśli użytkownik istnieje i hasło się zgadza
+                # W usuniętej wersji była tu weryfikacja maila.
+                # Teraz logujemy od razu.
+                session['user_id'] = user_id
+                return redirect(url_for('index'))
+            else:
+                return render_template('login.html', error="Błędne hasło")
+        else:
+            return render_template('login.html', error="Użytkownik nie istnieje")
+    return render_template('login.html')
 
-@app.route('/api/create-user', methods=['POST'])
-def create_user():
-    """Create new user - główny endpoint który sprawia problemy"""
-    try:
-        # Pobierz dane JSON
-        data = request.get_json()
+@app.route('/register', methods=['GET', 'POST'])
+def register():
+    if request.method == 'POST':
+        nickname = request.form['nickname']
+        password = request.form['password']
+        # email = request.form['email'] # Adres e-mail nie jest już używany
         
-        if not data:
-            return jsonify({
-                'success': False,
-                'error': 'Brak danych JSON'
-            }), 400
+        if nickname in user_ids:
+            return render_template('register.html', error="Nazwa użytkownika już zajęta")
         
-        # Loguj otrzymane dane
-        print(f"Otrzymane dane: {data}")
+        # Generuj nowy ID dla użytkownika
+        user_id = str(uuid.uuid4())
         
-        # Walidacja - tylko username jest wymagany
-        username = data.get('username', '').strip()
-        
-        if not username:
-            return jsonify({
-                'success': False,
-                'error': 'Username jest wymagany'
-            }), 400
-        
-        if len(username) < 3:
-            return jsonify({
-                'success': False,
-                'error': 'Username musi mieć przynajmniej 3 znaki'
-            }), 400
-        
-        if len(username) > 20:
-            return jsonify({
-                'success': False,
-                'error': 'Username nie może być dłuższy niż 20 znaków'
-            }), 400
-        
-        # Sprawdź czy username zawiera tylko dozwolone znaki
-        import re
-        if not re.match("^[a-zA-Z0-9_-]+$", username):
-            return jsonify({
-                'success': False,
-                'error': 'Username może zawierać tylko litery, cyfry, _ i -'
-            }), 400
-        
-        # Utwórz użytkownika - email jest opcjonalny
-        email = data.get('email', '').strip()
-        user_data = {
-            'id': str(int(datetime.now().timestamp() * 1000)),
-            'username': username,
-            'email': email.lower() if email else None,
-            'preferences': data.get('preferences', {}),
-            'created_at': datetime.now().isoformat()
+        users[user_id] = {
+            "nickname": nickname,
+            "password": password,
+            # "email": email, # Nie przechowujemy już adresu e-mail
+            "verified": True # Ustawiamy na True, ponieważ weryfikacja mailowa jest pominięta
         }
-        
-        # Tutaj dodaj logikę zapisu do bazy danych
-        
-        print(f"Użytkownik utworzony: {user_data['id']}")
-        
-        return jsonify({
-            'success': True,
-            'message': 'Użytkownik utworzony pomyślnie',
-            'data': user_data
-        }), 201
-        
-    except Exception as e:
-        print(f"Błąd podczas tworzenia użytkownika: {str(e)}")
-        return jsonify({
-            'success': False,
-            'error': 'Błąd serwera',
-            'details': str(e)
-        }), 500
+        user_ids[nickname] = user_id
 
-@app.route('/api/users', methods=['GET'])
-def get_users():
-    """Pobierz wszystkich użytkowników"""
-    try:
-        # Tutaj dodaj logikę pobierania z bazy danych
-        users = [
-            {
-                'id': '1',
-                'username': 'test_user',
-                'email': 'test@example.com',
-                'created_at': datetime.now().isoformat()
-            }
-        ]
+        # # Generowanie i wysyłanie kodu weryfikacyjnego - USUNIĘTE
+        # verification_code = str(random.randint(100000, 999999))
+        # verification_codes[user_id] = verification_code
         
-        return jsonify({
-            'success': True,
-            'data': users,
-            'count': len(users)
-        })
-        
-    except Exception as e:
-        print(f"Błąd podczas pobierania użytkowników: {str(e)}")
-        return jsonify({
-            'success': False,
-            'error': 'Błąd serwera'
-        }), 500
+        # msg = MIMEText(f"Twój kod weryfikacyjny: {verification_code}")
+        # msg['Subject'] = 'Kod weryfikacyjny TBH.fun'
+        # msg['From'] = EMAIL_ADDRESS
+        # msg['To'] = email
 
-@app.route('/api/user/<user_id>', methods=['GET'])
-def get_user(user_id):
-    """Pobierz użytkownika po ID"""
-    try:
-        # Tutaj dodaj logikę pobierania z bazy danych
-        user = {
-            'id': user_id,
-            'username': 'example_user',
-            'email': 'user@example.com',
-            'created_at': datetime.now().isoformat()
-        }
+        # try:
+        #     with smtplib.SMTP_SSL('smtp.gmail.com', 465) as smtp:
+        #         smtp.login(EMAIL_ADDRESS, EMAIL_PASSWORD)
+        #         smtp.send_message(msg)
+        #     return redirect(url_for('verify_email', user_id=user_id))
+        # except Exception as e:
+        #     print(f"Błąd wysyłania maila: {e}")
+        #     return render_template('register.html', error="Błąd podczas wysyłania e-maila weryfikacyjnego. Spróbuj ponownie później.")
         
-        return jsonify({
-            'success': True,
-            'data': user
-        })
-        
-    except Exception as e:
-        print(f"Błąd podczas pobierania użytkownika: {str(e)}")
-        return jsonify({
-            'success': False,
-            'error': 'Błąd serwera'
-        }), 500
+        # Po rejestracji i pominięciu weryfikacji, logujemy od razu
+        session['user_id'] = user_id
+        return redirect(url_for('index'))
+    return render_template('register.html')
 
-@app.route('/api/user/<user_id>', methods=['PUT'])
-def update_user(user_id):
-    """Aktualizuj użytkownika"""
-    try:
-        data = request.get_json()
-        
-        if not data:
-            return jsonify({
-                'success': False,
-                'error': 'Brak danych do aktualizacji'
-            }), 400
-        
-        # Tutaj dodaj logikę aktualizacji w bazie danych
-        updated_user = {
-            'id': user_id,
-            **data,
-            'updated_at': datetime.now().isoformat()
-        }
-        
-        return jsonify({
-            'success': True,
-            'message': 'Użytkownik zaktualizowany',
-            'data': updated_user
-        })
-        
-    except Exception as e:
-        print(f"Błąd podczas aktualizacji użytkownika: {str(e)}")
-        return jsonify({
-            'success': False,
-            'error': 'Błąd serwera'
-        }), 500
+# # Usunięta trasa do weryfikacji e-mail
+# @app.route('/verify_email/<user_id>', methods=['GET', 'POST'])
+# def verify_email(user_id):
+#     if request.method == 'POST':
+#         code = request.form['code']
+#         if user_id in verification_codes and verification_codes[user_id] == code:
+#             users[user_id]['verified'] = True
+#             del verification_codes[user_id]
+#             session['user_id'] = user_id
+#             return redirect(url_for('index'))
+#         else:
+#             return render_template('verify_email.html', user_id=user_id, error="Nieprawidłowy kod weryfikacyjny")
+#     return render_template('verify_email.html', user_id=user_id)
 
-@app.route('/api/user/<user_id>', methods=['DELETE'])
-def delete_user(user_id):
-    """Usuń użytkownika"""
-    try:
-        # Tutaj dodaj logikę usuwania z bazy danych
-        
-        print(f"Usunięto użytkownika: {user_id}")
-        
-        return jsonify({
-            'success': True,
-            'message': 'Użytkownik usunięty'
-        })
-        
-    except Exception as e:
-        print(f"Błąd podczas usuwania użytkownika: {str(e)}")
-        return jsonify({
-            'success': False,
-            'error': 'Błąd serwera'
-        }), 500
+@app.route('/logout')
+def logout():
+    session.pop('user_id', None)
+    return redirect(url_for('index'))
 
-# ===== ERROR HANDLERS =====
+@app.route('/check_login_status')
+def check_login_status():
+    if 'user_id' in session and session['user_id'] in users:
+        return jsonify(logged_in=True, nickname=users[session['user_id']]['nickname'])
+    return jsonify(logged_in=False)
 
-@app.errorhandler(404)
-def not_found(error):
-    return jsonify({
-        'success': False,
-        'error': 'Endpoint nie istnieje',
-        'path': request.path
-    }), 404
-
-@app.errorhandler(405)
-def method_not_allowed(error):
-    return jsonify({
-        'success': False,
-        'error': 'Metoda nie dozwolona',
-        'method': request.method,
-        'path': request.path
-    }), 405
-
-@app.errorhandler(500)
-def internal_error(error):
-    print(f"Błąd serwera: {str(error)}")
-    return jsonify({
-        'success': False,
-        'error': 'Wewnętrzny błąd serwera'
-    }), 500
-
-# ===== MAIN =====
 if __name__ == '__main__':
-    port = int(os.environ.get('PORT', 5000))
-    debug = os.environ.get('FLASK_ENV') == 'development'
-    
-    print("🚀 Uruchamianie serwera Flask...")
-    print(f"📡 CORS włączony dla: https://jurek362.github.io")
-    print(f"🌍 Port: {port}")
-    print(f"🔧 Debug: {debug}")
-    
-    app.run(
-        host='0.0.0.0',
-        port=port,
-        debug=debug
-    )
+    # Upewnij się, że masz ustawione zmienne środowiskowe EMAIL_USER i EMAIL_PASS
+    # dla oryginalnej wersji. Dla tej wersji nie są one potrzebne.
+    app.run(debug=True) # debug=True w trybie deweloperskim
