@@ -1,35 +1,33 @@
 import os
 import uuid
-# import smtplib # Niepotrzebne, jeśli weryfikacja e-mail jest wyłączona
-# from email.mime.text import MIMEText # Niepotrzebne, jeśli weryfikacja e-mail jest wyłączona
 import random
 from flask import Flask, render_template, request, redirect, url_for, session, jsonify
+from flask_cors import CORS # Nowy import dla obsługi CORS
 
-# Zmodyfikuj inicjalizację Flask, aby wskazać bieżący katalog jako folder szablonów.
-# Zakładamy, że pliki HTML (index.html, home.html, login.html, register.html)
-# znajdują się w tym samym katalogu co ten skrypt Pythona.
-app = Flask(__name__, template_folder='.') # <-- TUTAJ ZMIANA
-
+# Domyślnie Flask szuka szablonów w folderze 'templates'.
+# Jeśli Twoje pliki HTML są nadal w tym samym katalogu co ten skrypt,
+# musisz je przenieść do nowo utworzonego folderu 'templates'.
+# Jeśli absolutnie musisz trzymać je w tym samym katalogu, zmień z powrotem:
+# app = Flask(__name__, template_folder='.')
+app = Flask(__name__)
 app.secret_key = os.urandom(24) # Ustaw losowy klucz sesji
 
-# Zmienne środowiskowe do konfiguracji serwera e-mail
-# EMAIL_ADDRESS = os.environ.get('EMAIL_USER')
-# EMAIL_PASSWORD = os.environ.get('EMAIL_PASS')
+# Konfiguracja CORS: Zezwól na żądania z konkretnej domeny dla tras zaczynających się od /api/
+# Zastąp "https://jurek362.github.io" domeną Twojego frontendu, jeśli jest inna.
+CORS(app, resources={r"/api/*": {"origins": "https://jurek362.github.io"}})
 
 # Prosta "baza danych" w pamięci
 users = {} # {user_id: {"nickname": "...", "password": "...", "verified": True}}
 user_ids = {} # {nickname: user_id}
-# verification_codes = {} # {user_id: code}
 sessions = {} # {session_id: user_id}
 
 @app.route('/')
 def index():
     if 'user_id' in session and session['user_id'] in users:
         user_id = session['user_id']
-        if users[user_id].get('verified', False): # Sprawdzamy, czy użytkownik jest zweryfikowany
+        if users[user_id].get('verified', False):
             return render_template('home.html', nickname=users[user_id]['nickname'])
         else:
-            # Jeśli użytkownik niezweryfikowany (choć w tej wersji zawsze True), przekieruj na logowanie
             return redirect(url_for('login'))
     return render_template('index.html')
 
@@ -41,7 +39,6 @@ def login():
         if nickname in user_ids:
             user_id = user_ids[nickname]
             if users[user_id]['password'] == password:
-                # Jeśli użytkownik istnieje i hasło się zgadza
                 session['user_id'] = user_id
                 return redirect(url_for('index'))
             else:
@@ -52,61 +49,58 @@ def login():
 
 @app.route('/register', methods=['GET', 'POST'])
 def register():
+    # Ta trasa służy do rejestracji poprzez formularz HTML
     if request.method == 'POST':
         nickname = request.form['nickname']
         password = request.form['password']
-        # email = request.form['email'] # Adres e-mail nie jest już używany
         
         if nickname in user_ids:
             return render_template('register.html', error="Nazwa użytkownika już zajęta")
         
-        # Generuj nowy ID dla użytkownika
         user_id = str(uuid.uuid4())
         
         users[user_id] = {
             "nickname": nickname,
             "password": password,
-            # "email": email, # Nie przechowujemy już adresu e-mail
-            "verified": True # Ustawiamy na True, ponieważ weryfikacja mailowa jest pominięta
+            "verified": True # Weryfikacja mailowa jest pominięta
         }
         user_ids[nickname] = user_id
 
-        # # Generowanie i wysyłanie kodu weryfikacyjnego - USUNIĘTE
-        # verification_code = str(random.randint(100000, 999999))
-        # verification_codes[user_id] = verification_code
-        
-        # msg = MIMEText(f"Twój kod weryfikacyjny: {verification_code}")
-        # msg['Subject'] = 'Kod weryfikacyjny TBH.fun'
-        # msg['From'] = EMAIL_ADDRESS
-        # msg['To'] = email
-
-        # try:
-        #     with smtplib.SMTP_SSL('smtp.gmail.com', 465) as smtp:
-        #         smtp.login(EMAIL_ADDRESS, EMAIL_PASSWORD)
-        #         smtp.send_message(msg)
-        #     return redirect(url_for('verify_email', user_id=user_id))
-        # except Exception as e:
-        #     print(f"Błąd wysyłania maila: {e}")
-        #     return render_template('register.html', error="Błąd podczas wysyłania e-maila weryfikacyjnego. Spróbuj ponownie później.")
-        
-        # Po rejestracji i pominięciu weryfikacji, logujemy od razu
         session['user_id'] = user_id
         return redirect(url_for('index'))
     return render_template('register.html')
 
-# # Usunięta trasa do weryfikacji e-mail
-# @app.route('/verify_email/<user_id>', methods=['GET', 'POST'])
-# def verify_email(user_id):
-#     if request.method == 'POST':
-#         code = request.form['code']
-#         if user_id in verification_codes and verification_codes[user_id] == code:
-#             users[user_id]['verified'] = True
-#             del verification_codes[user_id]
-#             session['user_id'] = user_id
-#             return redirect(url_for('index'))
-#         else:
-#             return render_template('verify_email.html', user_id=user_id, error="Nieprawidłowy kod weryfikacyjny")
-#     return render_template('verify_email.html', user_id=user_id)
+# NOWA TRASA API do tworzenia użytkowników z frontendu (np. JavaScript)
+@app.route('/api/create-user', methods=['POST'])
+def api_create_user():
+    # Oczekujemy danych w formacie JSON
+    data = request.get_json()
+    if not data:
+        return jsonify({"error": "Brak danych JSON w żądaniu"}), 400 # Bad Request
+
+    nickname = data.get('nickname')
+    password = data.get('password')
+
+    if not nickname or not password:
+        return jsonify({"error": "Pseudonim i hasło są wymagane"}), 400
+
+    if nickname in user_ids:
+        return jsonify({"error": "Nazwa użytkownika już zajęta"}), 409 # Conflict
+
+    user_id = str(uuid.uuid4())
+    users[user_id] = {
+        "nickname": nickname,
+        "password": password,
+        "verified": True # Weryfikacja mailowa jest pominięta
+    }
+    user_ids[nickname] = user_id
+
+    # Zwracamy odpowiedź JSON zamiast przekierowania
+    return jsonify({
+        "message": "Użytkownik zarejestrowany pomyślnie",
+        "user_id": user_id,
+        "nickname": nickname
+    }), 201 # Created
 
 @app.route('/logout')
 def logout():
@@ -120,7 +114,5 @@ def check_login_status():
     return jsonify(logged_in=False)
 
 if __name__ == '__main__':
-    # Upewnij się, że masz ustawione zmienne środowiskowe EMAIL_USER i EMAIL_PASS
-    # dla oryginalnej wersji. Dla tej wersji nie są one potrzebne.
-    app.run(debug=True) # debug=True w trybie deweloperskim
+    app.run(debug=True)
 
