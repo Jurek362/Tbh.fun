@@ -1,0 +1,332 @@
+<!DOCTYPE html>
+<html lang="pl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>NGL Clone - Anonimowe Wiadomości</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+        }
+
+        .container {
+            background: white;
+            border-radius: 20px;
+            padding: 40px;
+            box-shadow: 0 20px 40px rgba(0,0,0,0.1);
+            max-width: 500px;
+            width: 100%;
+            text-align: center;
+        }
+
+        h1 {
+            color: #333;
+            margin-bottom: 10px;
+            font-size: 2.5em;
+            font-weight: 700;
+        }
+
+        .subtitle {
+            color: #666;
+            margin-bottom: 40px;
+            font-size: 1.1em;
+        }
+
+        .form-group {
+            margin-bottom: 30px;
+            text-align: left;
+        }
+
+        label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: 600;
+            color: #333;
+        }
+
+        input[type="text"] {
+            width: 100%;
+            padding: 15px;
+            border: 2px solid #e1e5e9;
+            border-radius: 10px;
+            font-size: 16px;
+            transition: border-color 0.3s;
+        }
+
+        input[type="text"]:focus {
+            outline: none;
+            border-color: #667eea;
+        }
+
+        .btn {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            padding: 15px 30px;
+            border-radius: 10px;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: transform 0.2s;
+            width: 100%;
+        }
+
+        .btn:hover {
+            transform: translateY(-2px);
+        }
+
+        .btn:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        .result {
+            margin-top: 30px;
+            padding: 20px;
+            border-radius: 10px;
+            display: none;
+        }
+
+        .result.success {
+            background: #d4edda;
+            border: 1px solid #c3e6cb;
+            color: #155724;
+        }
+
+        .result.error {
+            background: #f8d7da;
+            border: 1px solid #f5c6cb;
+            color: #721c24;
+        }
+
+        .link-container {
+            margin-top: 20px;
+            padding: 15px;
+            background: #f8f9fa;
+            border-radius: 10px;
+            border: 1px solid #e9ecef;
+        }
+
+        .generated-link {
+            word-break: break-all;
+            font-family: monospace;
+            font-size: 14px;
+            color: #495057;
+            margin-bottom: 10px;
+        }
+
+        .copy-btn {
+            background: #28a745;
+            font-size: 14px;
+            padding: 8px 16px;
+            margin-top: 10px;
+        }
+
+        .dashboard-link {
+            margin-top: 15px;
+        }
+
+        .dashboard-link a {
+            color: #667eea;
+            text-decoration: none;
+            font-weight: 600;
+        }
+
+        .dashboard-link a:hover {
+            text-decoration: underline;
+        }
+
+        .loading {
+            display: none;
+            margin-top: 20px;
+        }
+
+        .spinner {
+            border: 3px solid #f3f3f3;
+            border-top: 3px solid #667eea;
+            border-radius: 50%;
+            width: 30px;
+            height: 30px;
+            animation: spin 1s linear infinite;
+            margin: 0 auto;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        .features {
+            margin-top: 40px;
+            text-align: left;
+        }
+
+        .features h3 {
+            color: #333;
+            margin-bottom: 15px;
+        }
+
+        .features ul {
+            list-style: none;
+            padding: 0;
+        }
+
+        .features li {
+            padding: 8px 0;
+            color: #666;
+        }
+
+        .features li::before {
+            content: "✓";
+            color: #28a745;
+            font-weight: bold;
+            margin-right: 10px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🔒 NGL Clone</h1>
+        <p class="subtitle">Otrzymuj anonimowe wiadomości od znajomych</p>
+
+        <form id="createUserForm">
+            <div class="form-group">
+                <label for="username">Wybierz swoją nazwę użytkownika:</label>
+                <input type="text" id="username" name="username" placeholder="np. jankowalski" required>
+            </div>
+            <button type="submit" class="btn" id="submitBtn">Stwórz mój link</button>
+        </form>
+
+        <div class="loading" id="loading">
+            <div class="spinner"></div>
+            <p>Tworzenie linku...</p>
+        </div>
+
+        <div class="result" id="result">
+            <div id="resultMessage"></div>
+            <div class="link-container" id="linkContainer" style="display: none;">
+                <strong>Twój link do udostępnienia:</strong>
+                <div class="generated-link" id="generatedLink"></div>
+                <button class="btn copy-btn" onclick="copyLink()">📋 Skopiuj link</button>
+                <div class="dashboard-link">
+                    <a href="#" id="dashboardLink">📊 Przejdź do panelu wiadomości</a>
+                </div>
+            </div>
+        </div>
+
+        <div class="features">
+            <h3>Funkcje:</h3>
+            <ul>
+                <li>Całkowicie anonimowe wiadomości</li>
+                <li>Prywatny panel do czytania wiadomości</li>
+                <li>Bezpieczne i szyfrowane połączenie</li>
+                <li>Łatwe udostępnianie przez link</li>
+            </ul>
+        </div>
+    </div>
+
+    <script>
+        const API_BASE = 'https://your-render-app.onrender.com'; // Zmień na swój URL Render
+        let currentUserId = null;
+
+        document.getElementById('createUserForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            
+            const username = document.getElementById('username').value.trim();
+            const submitBtn = document.getElementById('submitBtn');
+            const loading = document.getElementById('loading');
+            const result = document.getElementById('result');
+            
+            if (!username) {
+                showResult('Wprowadź nazwę użytkownika', 'error');
+                return;
+            }
+
+            // Walidacja username
+            if (username.length < 3) {
+                showResult('Nazwa użytkownika musi mieć co najmniej 3 znaki', 'error');
+                return;
+            }
+
+            submitBtn.disabled = true;
+            loading.style.display = 'block';
+            result.style.display = 'none';
+
+            try {
+                const response = await fetch(`${API_BASE}/api/create-user`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({ username })
+                });
+
+                const data = await response.json();
+
+                if (data.success) {
+                    currentUserId = data.user_id;
+                    showResult('Link został utworzony pomyślnie!', 'success');
+                    showGeneratedLink(data.link, data.username, data.user_id);
+                } else {
+                    showResult(data.error || 'Wystąpił błąd', 'error');
+                }
+            } catch (error) {
+                console.error('Error:', error);
+                showResult('Błąd połączenia z serwerem', 'error');
+            } finally {
+                submitBtn.disabled = false;
+                loading.style.display = 'none';
+            }
+        });
+
+        function showResult(message, type) {
+            const result = document.getElementById('result');
+            const resultMessage = document.getElementById('resultMessage');
+            
+            result.className = `result ${type}`;
+            result.style.display = 'block';
+            resultMessage.textContent = message;
+        }
+
+        function showGeneratedLink(link, username, userId) {
+            const linkContainer = document.getElementById('linkContainer');
+            const generatedLink = document.getElementById('generatedLink');
+            const dashboardLink = document.getElementById('dashboardLink');
+            
+            generatedLink.textContent = link;
+            dashboardLink.href = `dashboard.html?user=${userId}`;
+            linkContainer.style.display = 'block';
+        }
+
+        function copyLink() {
+            const linkText = document.getElementById('generatedLink').textContent;
+            navigator.clipboard.writeText(linkText).then(() => {
+                const copyBtn = document.querySelector('.copy-btn');
+                const originalText = copyBtn.textContent;
+                copyBtn.textContent = '✅ Skopiowano!';
+                copyBtn.style.background = '#28a745';
+                
+                setTimeout(() => {
+                    copyBtn.textContent = originalText;
+                    copyBtn.style.background = '#28a745';
+                }, 2000);
+            }).catch(() => {
+                alert('Nie udało się skopiować linku');
+            });
+        }
+    </script>
+</body>
+</html>
