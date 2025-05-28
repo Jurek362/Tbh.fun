@@ -1,0 +1,366 @@
+<!DOCTYPE html>
+<html lang="pl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Wyślij anonimową wiadomość</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+        }
+
+        .container {
+            background: white;
+            border-radius: 20px;
+            padding: 40px;
+            box-shadow: 0 20px 40px rgba(0,0,0,0.1);
+            max-width: 600px;
+            width: 100%;
+        }
+
+        .header {
+            text-align: center;
+            margin-bottom: 40px;
+        }
+
+        h1 {
+            color: #333;
+            margin-bottom: 10px;
+            font-size: 2.2em;
+        }
+
+        .username {
+            color: #667eea;
+            font-size: 1.3em;
+            font-weight: 600;
+        }
+
+        .subtitle {
+            color: #666;
+            margin-top: 10px;
+            font-size: 1em;
+        }
+
+        .form-group {
+            margin-bottom: 25px;
+        }
+
+        label {
+            display: block;
+            margin-bottom: 10px;
+            font-weight: 600;
+            color: #333;
+            font-size: 1.1em;
+        }
+
+        textarea {
+            width: 100%;
+            min-height: 150px;
+            padding: 15px;
+            border: 2px solid #e1e5e9;
+            border-radius: 10px;
+            font-size: 16px;
+            font-family: inherit;
+            resize: vertical;
+            transition: border-color 0.3s;
+        }
+
+        textarea:focus {
+            outline: none;
+            border-color: #667eea;
+        }
+
+        .char-counter {
+            text-align: right;
+            margin-top: 5px;
+            font-size: 14px;
+            color: #666;
+        }
+
+        .char-counter.warning {
+            color: #ff6b6b;
+        }
+
+        .btn {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            padding: 15px 30px;
+            border-radius: 10px;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: transform 0.2s;
+            width: 100%;
+        }
+
+        .btn:hover {
+            transform: translateY(-2px);
+        }
+
+        .btn:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        .result {
+            margin-top: 30px;
+            padding: 20px;
+            border-radius: 10px;
+            display: none;
+            text-align: center;
+        }
+
+        .result.success {
+            background: #d4edda;
+            border: 1px solid #c3e6cb;
+            color: #155724;
+        }
+
+        .result.error {
+            background: #f8d7da;
+            border: 1px solid #f5c6cb;
+            color: #721c24;
+        }
+
+        .loading {
+            display: none;
+            text-align: center;
+            margin-top: 20px;
+        }
+
+        .spinner {
+            border: 3px solid #f3f3f3;
+            border-top: 3px solid #667eea;
+            border-radius: 50%;
+            width: 30px;
+            height: 30px;
+            animation: spin 1s linear infinite;
+            margin: 0 auto 10px;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        .info-box {
+            background: #e9f4ff;
+            border: 1px solid #b8daff;
+            border-radius: 10px;
+            padding: 20px;
+            margin-bottom: 30px;
+            text-align: center;
+        }
+
+        .info-box h3 {
+            color: #0056b3;
+            margin-bottom: 10px;
+        }
+
+        .info-box p {
+            color: #004085;
+            margin: 0;
+        }
+
+        .back-link {
+            text-align: center;
+            margin-top: 30px;
+        }
+
+        .back-link a {
+            color: #667eea;
+            text-decoration: none;
+            font-weight: 600;
+        }
+
+        .back-link a:hover {
+            text-decoration: underline;
+        }
+
+        .error-page {
+            text-align: center;
+            color: #721c24;
+        }
+
+        .error-page h1 {
+            color: #721c24;
+            margin-bottom: 20px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div id="errorPage" class="error-page" style="display: none;">
+            <h1>❌ Błąd</h1>
+            <p id="errorMessage"></p>
+            <div class="back-link">
+                <a href="index.html">← Powrót do strony głównej</a>
+            </div>
+        </div>
+
+        <div id="mainContent">
+            <div class="header">
+                <h1>📝 Wyślij wiadomość</h1>
+                <div class="username" id="targetUsername">@username</div>
+                <p class="subtitle">Twoja wiadomość będzie całkowicie anonimowa</p>
+            </div>
+
+            <div class="info-box">
+                <h3>🔒 Anonimowość gwarantowana</h3>
+                <p>Nie zapisujemy żadnych informacji o nadawcy. Twoja tożsamość pozostanie tajemnicą.</p>
+            </div>
+
+            <form id="messageForm">
+                <div class="form-group">
+                    <label for="message">Twoja anonimowa wiadomość:</label>
+                    <textarea 
+                        id="message" 
+                        name="message" 
+                        placeholder="Napisz coś miłego... 😊"
+                        maxlength="500"
+                        required
+                    ></textarea>
+                    <div class="char-counter" id="charCounter">0/500</div>
+                </div>
+                
+                <button type="submit" class="btn" id="submitBtn">
+                    🚀 Wyślij anonimowo
+                </button>
+            </form>
+
+            <div class="loading" id="loading">
+                <div class="spinner"></div>
+                <p>Wysyłanie wiadomości...</p>
+            </div>
+
+            <div class="result" id="result">
+                <div id="resultMessage"></div>
+            </div>
+
+            <div class="back-link">
+                <a href="index.html">← Stwórz własny link</a>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const API_BASE = 'https://your-render-app.onrender.com'; // Zmień na swój URL Render
+
+        // Pobierz username z URL
+        const urlParams = new URLSearchParams(window.location.search);
+        const username = urlParams.get('u');
+
+        if (!username) {
+            showError('Nieprawidłowy link. Brak nazwy użytkownika.');
+        } else {
+            document.getElementById('targetUsername').textContent = `@${username}`;
+            checkUserExists(username);
+        }
+
+        // Licznik znaków
+        const messageTextarea = document.getElementById('message');
+        const charCounter = document.getElementById('charCounter');
+
+        messageTextarea.addEventListener('input', function() {
+            const length = this.value.length;
+            charCounter.textContent = `${length}/500`;
+            
+            if (length > 450) {
+                charCounter.classList.add('warning');
+            } else {
+                charCounter.classList.remove('warning');
+            }
+        });
+
+        // Obsługa formularza
+        document.getElementById('messageForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            
+            const message = messageTextarea.value.trim();
+            const submitBtn = document.getElementById('submitBtn');
+            const loading = document.getElementById('loading');
+            const result = document.getElementById('result');
+            
+            if (!message) {
+                showResult('Wiadomość nie może być pusta', 'error');
+                return;
+            }
+
+            submitBtn.disabled = true;
+            loading.style.display = 'block';
+            result.style.display = 'none';
+
+            try {
+                const response = await fetch(`${API_BASE}/api/send-message`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({ 
+                        username: username,
+                        message: message 
+                    })
+                });
+
+                const data = await response.json();
+
+                if (data.success) {
+                    showResult('✅ Wiadomość została wysłana pomyślnie!', 'success');
+                    messageTextarea.value = '';
+                    charCounter.textContent = '0/500';
+                    charCounter.classList.remove('warning');
+                } else {
+                    showResult(data.error || 'Wystąpił błąd podczas wysyłania', 'error');
+                }
+            } catch (error) {
+                console.error('Error:', error);
+                showResult('Błąd połączenia z serwerem', 'error');
+            } finally {
+                submitBtn.disabled = false;
+                loading.style.display = 'none';
+            }
+        });
+
+        async function checkUserExists(username) {
+            try {
+                const response = await fetch(`${API_BASE}/api/user/${username}`);
+                if (!response.ok) {
+                    showError('Użytkownik nie istnieje lub link jest nieprawidłowy.');
+                }
+            } catch (error) {
+                console.error('Error checking user:', error);
+                showError('Nie można zweryfikować użytkownika. Sprawdź połączenie internetowe.');
+            }
+        }
+
+        function showResult(message, type) {
+            const result = document.getElementById('result');
+            const resultMessage = document.getElementById('resultMessage');
+            
+            result.className = `result ${type}`;
+            result.style.display = 'block';
+            resultMessage.textContent = message;
+        }
+
+        function showError(message) {
+            document.getElementById('mainContent').style.display = 'none';
+            document.getElementById('errorPage').style.display = 'block';
+            document.getElementById('errorMessage').textContent = message;
+        }
+    </script>
+</body>
+</html>
