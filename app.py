@@ -7,7 +7,7 @@ import os
 app = Flask(__name__)
 
 # CORS configuration
-CORS(app, origins=['http://localhost:3000', 'https://yourusername.github.io'], 
+CORS(app, origins=['https://tbh-fun.onrender.com', 'jurek362.github.io/tbh.fun'], 
      supports_credentials=True)
 
 # In-memory storage (w produkcji użyj prawdziwej bazy danych jak PostgreSQL)
