@@ -1,4 +1,4 @@
-# app.py - Poprawiony serwer Flask
+# app.py - Naprawiony Flask backend bez duplikatów CORS
 from flask import Flask, request, jsonify
 from flask_cors import CORS
 import json
@@ -7,117 +7,130 @@ from datetime import datetime
 
 app = Flask(__name__)
 
-# ===== KONFIGURACJA CORS - TYLKO JEDNA! =====
-# USUŃ wszystkie inne konfiguracje CORS z kodu!
+# ===== KONFIGURACJA CORS - TYLKO TA JEDNA LINIA! =====
+# USUŃ wszystkie inne konfiguracje CORS!
+CORS(app, origins=['https://jurek362.github.io'])
 
-CORS(app, 
-     origins=['https://jurek362.github.io'],  # Tylko jeden origin
-     methods=['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
-     allow_headers=['Content-Type', 'Authorization', 'X-Requested-With', 'Accept', 'Origin'],
-     supports_credentials=True)
+# ===== USUŃ WSZYSTKIE @app.after_request które dodają nagłówki CORS! =====
+# NIE DODAWAJ żadnych response.headers['Access-Control-Allow-Origin']!
 
-# ===== MIDDLEWARE =====
 @app.before_request
-def before_request():
-    # Debug logging
+def log_request():
+    """Debug logging - usuń w produkcji"""
     print(f"{datetime.now().isoformat()} - {request.method} {request.path}")
-    print(f"Origin: {request.headers.get('Origin')}")
-    
-    # Handle preflight requests
-    if request.method == 'OPTIONS':
-        response = jsonify({'status': 'OK'})
-        response.headers.add('Access-Control-Allow-Origin', 'https://jurek362.github.io')
-        response.headers.add('Access-Control-Allow-Headers', 'Content-Type,Authorization')
-        response.headers.add('Access-Control-Allow-Methods', 'GET,PUT,POST,DELETE,OPTIONS')
-        return response
-
-@app.after_request
-def after_request(response):
-    # Dodatkowe nagłówki bezpieczeństwa
-    response.headers['X-Content-Type-Options'] = 'nosniff'
-    response.headers['X-Frame-Options'] = 'DENY'
-    response.headers['X-XSS-Protection'] = '1; mode=block'
-    
-    # Debug - sprawdź nagłówki CORS
-    print(f"Response headers: {dict(response.headers)}")
-    
-    return response
+    if request.headers.get('Origin'):
+        print(f"Origin: {request.headers.get('Origin')}")
 
 # ===== ROUTES =====
 
-@app.route('/api/health', methods=['GET'])
-def health_check():
-    """Health check endpoint"""
+@app.route('/')
+def home():
+    """Root endpoint"""
     return jsonify({
+        'message': 'Tbh.fun API is running',
         'status': 'OK',
-        'timestamp': datetime.now().isoformat(),
-        'cors': 'enabled'
+        'cors_enabled': True
     })
 
-@app.route('/api/create-user', methods=['POST', 'OPTIONS'])
+@app.route('/api/health')
+def health():
+    """Health check"""
+    return jsonify({
+        'status': 'healthy',
+        'timestamp': datetime.now().isoformat()
+    })
+
+@app.route('/api/create-user', methods=['POST'])
 def create_user():
-    """Create new user endpoint"""
+    """Create new user - główny endpoint który sprawia problemy"""
     try:
-        # Handle preflight
-        if request.method == 'OPTIONS':
-            return jsonify({'status': 'OK'})
-        
-        # Get JSON data
+        # Pobierz dane JSON
         data = request.get_json()
         
         if not data:
             return jsonify({
                 'success': False,
-                'error': 'No JSON data provided'
+                'error': 'Brak danych JSON'
             }), 400
         
-        print(f"Creating user with data: {data}")
+        # Loguj otrzymane dane
+        print(f"Otrzymane dane: {data}")
         
-        # Validate required fields
-        username = data.get('username')
-        email = data.get('email')
+        # Walidacja
+        username = data.get('username', '').strip()
+        email = data.get('email', '').strip()
         
-        if not username or not email:
+        if not username:
             return jsonify({
                 'success': False,
-                'error': 'Username and email are required'
+                'error': 'Username jest wymagany'
+            }), 400
+            
+        if not email:
+            return jsonify({
+                'success': False,
+                'error': 'Email jest wymagany'
             }), 400
         
-        # Create new user object
-        new_user = {
+        # Utwórz użytkownika
+        user_data = {
             'id': str(int(datetime.now().timestamp() * 1000)),
-            'username': username.strip(),
-            'email': email.strip().lower(),
+            'username': username,
+            'email': email.lower(),
             'preferences': data.get('preferences', {}),
             'created_at': datetime.now().isoformat()
         }
         
-        # Here you would typically save to database
-        # For now, we'll just return the user data
+        # Tutaj dodaj logikę zapisu do bazy danych
         
-        print(f"User created successfully: {new_user['id']}")
+        print(f"Użytkownik utworzony: {user_data['id']}")
         
         return jsonify({
             'success': True,
-            'data': {
-                'user': new_user,
-                'message': 'User created successfully'
-            }
+            'message': 'Użytkownik utworzony pomyślnie',
+            'data': user_data
         }), 201
         
     except Exception as e:
-        print(f"Error creating user: {str(e)}")
+        print(f"Błąd podczas tworzenia użytkownika: {str(e)}")
         return jsonify({
             'success': False,
-            'error': 'Internal server error',
-            'message': str(e)
+            'error': 'Błąd serwera',
+            'details': str(e)
+        }), 500
+
+@app.route('/api/users', methods=['GET'])
+def get_users():
+    """Pobierz wszystkich użytkowników"""
+    try:
+        # Tutaj dodaj logikę pobierania z bazy danych
+        users = [
+            {
+                'id': '1',
+                'username': 'test_user',
+                'email': 'test@example.com',
+                'created_at': datetime.now().isoformat()
+            }
+        ]
+        
+        return jsonify({
+            'success': True,
+            'data': users,
+            'count': len(users)
+        })
+        
+    except Exception as e:
+        print(f"Błąd podczas pobierania użytkowników: {str(e)}")
+        return jsonify({
+            'success': False,
+            'error': 'Błąd serwera'
         }), 500
 
 @app.route('/api/user/<user_id>', methods=['GET'])
 def get_user(user_id):
-    """Get user by ID"""
+    """Pobierz użytkownika po ID"""
     try:
-        # Here you would typically fetch from database
+        # Tutaj dodaj logikę pobierania z bazy danych
         user = {
             'id': user_id,
             'username': 'example_user',
@@ -127,25 +140,29 @@ def get_user(user_id):
         
         return jsonify({
             'success': True,
-            'data': {'user': user}
+            'data': user
         })
         
     except Exception as e:
-        print(f"Error fetching user: {str(e)}")
+        print(f"Błąd podczas pobierania użytkownika: {str(e)}")
         return jsonify({
             'success': False,
-            'error': 'Internal server error'
+            'error': 'Błąd serwera'
         }), 500
 
 @app.route('/api/user/<user_id>', methods=['PUT'])
 def update_user(user_id):
-    """Update user by ID"""
+    """Aktualizuj użytkownika"""
     try:
         data = request.get_json()
         
-        print(f"Updating user {user_id} with: {data}")
+        if not data:
+            return jsonify({
+                'success': False,
+                'error': 'Brak danych do aktualizacji'
+            }), 400
         
-        # Here you would typically update in database
+        # Tutaj dodaj logikę aktualizacji w bazie danych
         updated_user = {
             'id': user_id,
             **data,
@@ -154,35 +171,35 @@ def update_user(user_id):
         
         return jsonify({
             'success': True,
-            'data': {'user': updated_user},
-            'message': 'User updated successfully'
+            'message': 'Użytkownik zaktualizowany',
+            'data': updated_user
         })
         
     except Exception as e:
-        print(f"Error updating user: {str(e)}")
+        print(f"Błąd podczas aktualizacji użytkownika: {str(e)}")
         return jsonify({
             'success': False,
-            'error': 'Internal server error'
+            'error': 'Błąd serwera'
         }), 500
 
 @app.route('/api/user/<user_id>', methods=['DELETE'])
 def delete_user(user_id):
-    """Delete user by ID"""
+    """Usuń użytkownika"""
     try:
-        print(f"Deleting user {user_id}")
+        # Tutaj dodaj logikę usuwania z bazy danych
         
-        # Here you would typically delete from database
+        print(f"Usunięto użytkownika: {user_id}")
         
         return jsonify({
             'success': True,
-            'message': 'User deleted successfully'
+            'message': 'Użytkownik usunięty'
         })
         
     except Exception as e:
-        print(f"Error deleting user: {str(e)}")
+        print(f"Błąd podczas usuwania użytkownika: {str(e)}")
         return jsonify({
             'success': False,
-            'error': 'Internal server error'
+            'error': 'Błąd serwera'
         }), 500
 
 # ===== ERROR HANDLERS =====
@@ -191,37 +208,39 @@ def delete_user(user_id):
 def not_found(error):
     return jsonify({
         'success': False,
-        'error': 'Endpoint not found',
+        'error': 'Endpoint nie istnieje',
         'path': request.path
     }), 404
 
+@app.errorhandler(405)
+def method_not_allowed(error):
+    return jsonify({
+        'success': False,
+        'error': 'Metoda nie dozwolona',
+        'method': request.method,
+        'path': request.path
+    }), 405
+
 @app.errorhandler(500)
 def internal_error(error):
-    print(f"Internal server error: {str(error)}")
+    print(f"Błąd serwera: {str(error)}")
     return jsonify({
         'success': False,
-        'error': 'Internal server error'
+        'error': 'Wewnętrzny błąd serwera'
     }), 500
-
-@app.errorhandler(400)
-def bad_request(error):
-    return jsonify({
-        'success': False,
-        'error': 'Bad request',
-        'message': str(error)
-    }), 400
 
 # ===== MAIN =====
 if __name__ == '__main__':
     port = int(os.environ.get('PORT', 5000))
-    debug_mode = os.environ.get('FLASK_ENV') == 'development'
+    debug = os.environ.get('FLASK_ENV') == 'development'
     
-    print(f"🚀 Starting Flask server on port {port}")
-    print(f"📡 CORS enabled for: https://jurek362.github.io")
-    print(f"🌍 Debug mode: {debug_mode}")
+    print("🚀 Uruchamianie serwera Flask...")
+    print(f"📡 CORS włączony dla: https://jurek362.github.io")
+    print(f"🌍 Port: {port}")
+    print(f"🔧 Debug: {debug}")
     
     app.run(
         host='0.0.0.0',
         port=port,
-        debug=debug_mode
+        debug=debug
     )
