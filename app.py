@@ -6,9 +6,13 @@ import os
 
 app = Flask(__name__)
 
-# CORS configuration
-CORS(app, origins=['https://tbh-fun.onrender.com', 'jurek362.github.io/tbh.fun'], 
-     supports_credentials=True)
+# POPRAWIONA konfiguracja CORS
+CORS(app, origins=[
+    'https://jurek362.github.io',  # Dodane https://
+    'https://tbh-fun.onrender.com',
+    'http://localhost:3000',  # dla developmentu
+    'http://127.0.0.1:3000'   # dla developmentu
+], supports_credentials=True)
 
 # In-memory storage (w produkcji użyj prawdziwej bazy danych jak PostgreSQL)
 users = {}
@@ -22,41 +26,62 @@ def generate_message_id():
     """Generuj unikalny ID wiadomości"""
     return secrets.token_hex(12)
 
-@app.route('/api/create-user', methods=['POST'])
+@app.route('/api/create-user', methods=['POST', 'OPTIONS'])
 def create_user():
     """Endpoint do tworzenia nowego użytkownika/linku"""
-    data = request.get_json()
-    username = data.get('username', '').strip()
+    # Obsługa preflight request
+    if request.method == 'OPTIONS':
+        response = jsonify({'status': 'ok'})
+        response.headers.add('Access-Control-Allow-Origin', 'https://jurek362.github.io')
+        response.headers.add('Access-Control-Allow-Headers', 'Content-Type')
+        response.headers.add('Access-Control-Allow-Methods', 'POST')
+        return response
     
-    if not username or len(username) < 3:
-        return jsonify({'error': 'Username musi mieć co najmniej 3 znaki'}), 400
-    
-    # Sprawdź czy username już istnieje
-    for user_id, user in users.items():
-        if user['username'].lower() == username.lower():
-            return jsonify({'error': 'Ta nazwa użytkownika jest już zajęta'}), 400
-    
-    user_id = generate_user_id()
-    user = {
-        'id': user_id,
-        'username': username,
-        'created_at': datetime.now().isoformat(),
-        'message_count': 0
-    }
-    
-    users[user_id] = user
-    messages[user_id] = []
-    
-    return jsonify({
-        'success': True,
-        'user_id': user_id,
-        'username': username,
-        'link': f'{request.scheme}://{request.host}/u/{username}'
-    })
+    try:
+        data = request.get_json()
+        if not data:
+            return jsonify({'error': 'Brak danych JSON'}), 400
+            
+        username = data.get('username', '').strip()
+        
+        if not username or len(username) < 3:
+            return jsonify({'error': 'Username musi mieć co najmniej 3 znaki'}), 400
+        
+        # Sprawdź czy username już istnieje
+        for user_id, user in users.items():
+            if user['username'].lower() == username.lower():
+                return jsonify({'error': 'Ta nazwa użytkownika jest już zajęta'}), 400
+        
+        user_id = generate_user_id()
+        user = {
+            'id': user_id,
+            'username': username,
+            'created_at': datetime.now().isoformat(),
+            'message_count': 0
+        }
+        
+        users[user_id] = user
+        messages[user_id] = []
+        
+        return jsonify({
+            'success': True,
+            'user_id': user_id,
+            'username': username,
+            'link': f'https://jurek362.github.io/tbh.fun/u/{username}'  # Poprawiony link
+        })
+        
+    except Exception as e:
+        return jsonify({'error': f'Błąd serwera: {str(e)}'}), 500
 
-@app.route('/api/user/<username>', methods=['GET'])
+@app.route('/api/user/<username>', methods=['GET', 'OPTIONS'])
 def get_user(username):
     """Endpoint do pobierania informacji o użytkowniku"""
+    if request.method == 'OPTIONS':
+        response = jsonify({'status': 'ok'})
+        response.headers.add('Access-Control-Allow-Origin', 'https://jurek362.github.io')
+        response.headers.add('Access-Control-Allow-Methods', 'GET')
+        return response
+        
     found_user = None
     for user_id, user in users.items():
         if user['username'].lower() == username.lower():
@@ -71,52 +96,72 @@ def get_user(username):
         'message_count': found_user['message_count']
     })
 
-@app.route('/api/send-message', methods=['POST'])
+@app.route('/api/send-message', methods=['POST', 'OPTIONS'])
 def send_message():
     """Endpoint do wysyłania anonimowej wiadomości"""
-    data = request.get_json()
-    username = data.get('username', '').strip()
-    message = data.get('message', '').strip()
-    
-    if not message:
-        return jsonify({'error': 'Wiadomość nie może być pusta'}), 400
-    
-    if len(message) > 500:
-        return jsonify({'error': 'Wiadomość jest zbyt długa (max 500 znaków)'}), 400
-    
-    # Znajdź użytkownika
-    found_user = None
-    user_id = None
-    for uid, user in users.items():
-        if user['username'].lower() == username.lower():
-            found_user = user
-            user_id = uid
-            break
-    
-    if not found_user:
-        return jsonify({'error': 'Użytkownik nie został znaleziony'}), 404
-    
-    # Dodaj wiadomość
-    message_obj = {
-        'id': generate_message_id(),
-        'content': message,
-        'timestamp': datetime.now().isoformat(),
-        'read': False
-    }
-    
-    user_messages = messages.get(user_id, [])
-    user_messages.insert(0, message_obj)  # Dodaj na początek (najnowsze pierwsze)
-    messages[user_id] = user_messages
-    
-    # Zaktualizuj licznik wiadomości
-    found_user['message_count'] = len(user_messages)
-    users[user_id] = found_user
-    
-    return jsonify({'success': True, 'message': 'Wiadomość została wysłana!'})
+    if request.method == 'OPTIONS':
+        response = jsonify({'status': 'ok'})
+        response.headers.add('Access-Control-Allow-Origin', 'https://jurek362.github.io')
+        response.headers.add('Access-Control-Allow-Headers', 'Content-Type')
+        response.headers.add('Access-Control-Allow-Methods', 'POST')
+        return response
+        
+    try:
+        data = request.get_json()
+        if not data:
+            return jsonify({'error': 'Brak danych JSON'}), 400
+            
+        username = data.get('username', '').strip()
+        message = data.get('message', '').strip()
+        
+        if not message:
+            return jsonify({'error': 'Wiadomość nie może być pusta'}), 400
+        
+        if len(message) > 500:
+            return jsonify({'error': 'Wiadomość jest zbyt długa (max 500 znaków)'}), 400
+        
+        # Znajdź użytkownika
+        found_user = None
+        user_id = None
+        for uid, user in users.items():
+            if user['username'].lower() == username.lower():
+                found_user = user
+                user_id = uid
+                break
+        
+        if not found_user:
+            return jsonify({'error': 'Użytkownik nie został znaleziony'}), 404
+        
+        # Dodaj wiadomość
+        message_obj = {
+            'id': generate_message_id(),
+            'content': message,
+            'timestamp': datetime.now().isoformat(),
+            'read': False
+        }
+        
+        user_messages = messages.get(user_id, [])
+        user_messages.insert(0, message_obj)  # Dodaj na początek (najnowsze pierwsze)
+        messages[user_id] = user_messages
+        
+        # Zaktualizuj licznik wiadomości
+        found_user['message_count'] = len(user_messages)
+        users[user_id] = found_user
+        
+        return jsonify({'success': True, 'message': 'Wiadomość została wysłana!'})
+        
+    except Exception as e:
+        return jsonify({'error': f'Błąd serwera: {str(e)}'}), 500
 
-@app.route('/api/messages/<user_id>', methods=['GET'])
+@app.route('/api/messages/<user_id>', methods=['GET', 'OPTIONS'])
 def get_messages(user_id):
     """Endpoint do pobierania wiadomości użytkownika"""
+    if request.method == 'OPTIONS':
+        response = jsonify({'status': 'ok'})
+        response.headers.add('Access-Control-Allow-Origin', 'https://jurek362.github.io')
+        response.headers.add('Access-Control-Allow-Methods', 'GET')
+        return response
+        
     if user_id not in users:
         return jsonify({'error': 'Użytkownik nie został znaleziony'}), 404
     
@@ -126,9 +171,15 @@ def get_messages(user_id):
         'total': len(user_messages)
     })
 
-@app.route('/api/mark-read/<user_id>/<message_id>', methods=['POST'])
+@app.route('/api/mark-read/<user_id>/<message_id>', methods=['POST', 'OPTIONS'])
 def mark_message_read(user_id, message_id):
     """Endpoint do oznaczania wiadomości jako przeczytanej"""
+    if request.method == 'OPTIONS':
+        response = jsonify({'status': 'ok'})
+        response.headers.add('Access-Control-Allow-Origin', 'https://jurek362.github.io')
+        response.headers.add('Access-Control-Allow-Methods', 'POST')
+        return response
+        
     if user_id not in users:
         return jsonify({'error': 'Użytkownik nie został znaleziony'}), 404
     
@@ -141,9 +192,15 @@ def mark_message_read(user_id, message_id):
     messages[user_id] = user_messages
     return jsonify({'success': True})
 
-@app.route('/api/delete-message/<user_id>/<message_id>', methods=['DELETE'])
+@app.route('/api/delete-message/<user_id>/<message_id>', methods=['DELETE', 'OPTIONS'])
 def delete_message(user_id, message_id):
     """Endpoint do usuwania wiadomości"""
+    if request.method == 'OPTIONS':
+        response = jsonify({'status': 'ok'})
+        response.headers.add('Access-Control-Allow-Origin', 'https://jurek362.github.io')
+        response.headers.add('Access-Control-Allow-Methods', 'DELETE')
+        return response
+        
     if user_id not in users:
         return jsonify({'error': 'Użytkownik nie został znaleziony'}), 404
     
@@ -176,6 +233,17 @@ def home():
             'delete_message': '/api/delete-message/<user_id>/<message_id>'
         }
     })
+
+# Dodaj globalne nagłówki CORS dla wszystkich odpowiedzi
+@app.after_request
+def after_request(response):
+    origin = request.headers.get('Origin')
+    if origin in ['https://jurek362.github.io', 'https://tbh-fun.onrender.com', 'http://localhost:3000', 'http://127.0.0.1:3000']:
+        response.headers.add('Access-Control-Allow-Origin', origin)
+        response.headers.add('Access-Control-Allow-Headers', 'Content-Type,Authorization')
+        response.headers.add('Access-Control-Allow-Methods', 'GET,PUT,POST,DELETE,OPTIONS')
+        response.headers.add('Access-Control-Allow-Credentials', 'true')
+    return response
 
 if __name__ == '__main__':
     port = int(os.environ.get('PORT', 5000))
