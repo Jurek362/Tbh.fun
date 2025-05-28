@@ -1,0 +1,18 @@
+{% extends 'base.html' %}
+{% block title %}Strona główna{% endblock %}
+{% block content %}
+<div class="max-w-md mx-auto mt-10 text-center">
+  <h1 class="text-3xl font-bold mb-4 animate__animated animate__bounceIn">Witamy w klonie NGL</h1>
+  <p class="mb-4">Wysyłaj anonimowe wiadomości do swoich znajomych!</p>
+  <form method="POST" class="mb-4">
+    <input name="username" type="text" placeholder="Nazwa użytkownika" required
+           class="w-full px-3 py-2 mb-2 border rounded focus:outline-none focus:ring">
+    <button type="submit"
+            class="w-full py-2 bg-gradient-to-r from-purple-500 via-pink-500 to-red-500 
+                   text-white font-bold rounded-lg animate__animated animate__pulse hover:opacity-90 transition">
+      Wyślij wiadomość
+    </button>
+  </form>
+  <p class="mt-6">Posiadasz konto? <a href="{{ url_for('login') }}" class="text-blue-500 underline">Zaloguj się</a> lub <a href="{{ url_for('register') }}" class="text-blue-500 underline">zarejestruj się</a>, aby sprawdzić skrzynkę odbiorczą.</p>
+</div>
+{% endblock %}
