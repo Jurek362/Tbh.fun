@@ -6,13 +6,8 @@ import os
 
 app = Flask(__name__)
 
-# POPRAWIONA konfiguracja CORS
-CORS(app, origins=[
-    'https://jurek362.github.io',  # Dodane https://
-    'https://tbh-fun.onrender.com',
-    'http://localhost:3000',  # dla developmentu
-    'http://127.0.0.1:3000'   # dla developmentu
-], supports_credentials=True)
+# Wyłącz automatyczne CORS - będziemy obsługiwać to ręcznie
+# CORS(app) - usunięte, żeby uniknąć duplikowania nagłówków
 
 # In-memory storage (w produkcji użyj prawdziwej bazy danych jak PostgreSQL)
 users = {}
@@ -29,13 +24,9 @@ def generate_message_id():
 @app.route('/api/create-user', methods=['POST', 'OPTIONS'])
 def create_user():
     """Endpoint do tworzenia nowego użytkownika/linku"""
-    # Obsługa preflight request
+    # Obsługa preflight request - bez ustawiania nagłówków (robi to @app.after_request)
     if request.method == 'OPTIONS':
-        response = jsonify({'status': 'ok'})
-        response.headers.add('Access-Control-Allow-Origin', 'https://jurek362.github.io')
-        response.headers.add('Access-Control-Allow-Headers', 'Content-Type')
-        response.headers.add('Access-Control-Allow-Methods', 'POST')
-        return response
+        return jsonify({'status': 'ok'})
     
     try:
         data = request.get_json()
@@ -77,10 +68,7 @@ def create_user():
 def get_user(username):
     """Endpoint do pobierania informacji o użytkowniku"""
     if request.method == 'OPTIONS':
-        response = jsonify({'status': 'ok'})
-        response.headers.add('Access-Control-Allow-Origin', 'https://jurek362.github.io')
-        response.headers.add('Access-Control-Allow-Methods', 'GET')
-        return response
+        return jsonify({'status': 'ok'})
         
     found_user = None
     for user_id, user in users.items():
@@ -100,11 +88,7 @@ def get_user(username):
 def send_message():
     """Endpoint do wysyłania anonimowej wiadomości"""
     if request.method == 'OPTIONS':
-        response = jsonify({'status': 'ok'})
-        response.headers.add('Access-Control-Allow-Origin', 'https://jurek362.github.io')
-        response.headers.add('Access-Control-Allow-Headers', 'Content-Type')
-        response.headers.add('Access-Control-Allow-Methods', 'POST')
-        return response
+        return jsonify({'status': 'ok'})
         
     try:
         data = request.get_json()
@@ -157,10 +141,7 @@ def send_message():
 def get_messages(user_id):
     """Endpoint do pobierania wiadomości użytkownika"""
     if request.method == 'OPTIONS':
-        response = jsonify({'status': 'ok'})
-        response.headers.add('Access-Control-Allow-Origin', 'https://jurek362.github.io')
-        response.headers.add('Access-Control-Allow-Methods', 'GET')
-        return response
+        return jsonify({'status': 'ok'})
         
     if user_id not in users:
         return jsonify({'error': 'Użytkownik nie został znaleziony'}), 404
@@ -175,10 +156,7 @@ def get_messages(user_id):
 def mark_message_read(user_id, message_id):
     """Endpoint do oznaczania wiadomości jako przeczytanej"""
     if request.method == 'OPTIONS':
-        response = jsonify({'status': 'ok'})
-        response.headers.add('Access-Control-Allow-Origin', 'https://jurek362.github.io')
-        response.headers.add('Access-Control-Allow-Methods', 'POST')
-        return response
+        return jsonify({'status': 'ok'})
         
     if user_id not in users:
         return jsonify({'error': 'Użytkownik nie został znaleziony'}), 404
@@ -196,10 +174,7 @@ def mark_message_read(user_id, message_id):
 def delete_message(user_id, message_id):
     """Endpoint do usuwania wiadomości"""
     if request.method == 'OPTIONS':
-        response = jsonify({'status': 'ok'})
-        response.headers.add('Access-Control-Allow-Origin', 'https://jurek362.github.io')
-        response.headers.add('Access-Control-Allow-Methods', 'DELETE')
-        return response
+        return jsonify({'status': 'ok'})
         
     if user_id not in users:
         return jsonify({'error': 'Użytkownik nie został znaleziony'}), 404
