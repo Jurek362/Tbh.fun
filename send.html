@@ -21,7 +21,7 @@
             padding: 20px;
         }
 
-        .container {
+       .container {
             background: white;
             border-radius: 20px;
             padding: 40px;
@@ -30,7 +30,7 @@
             width: 100%;
         }
 
-        .header {
+       .header {
             text-align: center;
             margin-bottom: 40px;
         }
@@ -41,19 +41,19 @@
             font-size: 2.2em;
         }
 
-        .username {
+       .username {
             color: #667eea;
             font-size: 1.3em;
             font-weight: 600;
         }
 
-        .subtitle {
+       .subtitle {
             color: #666;
             margin-top: 10px;
             font-size: 1em;
         }
 
-        .form-group {
+       .form-group {
             margin-bottom: 25px;
         }
 
@@ -82,18 +82,18 @@
             border-color: #667eea;
         }
 
-        .char-counter {
+       .char-counter {
             text-align: right;
             margin-top: 5px;
             font-size: 14px;
             color: #666;
         }
 
-        .char-counter.warning {
+       .char-counter.warning {
             color: #ff6b6b;
         }
 
-        .btn {
+       .btn {
             background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
             color: white;
             border: none;
@@ -106,17 +106,17 @@
             width: 100%;
         }
 
-        .btn:hover {
+       .btn:hover {
             transform: translateY(-2px);
         }
 
-        .btn:disabled {
+       .btn:disabled {
             opacity: 0.6;
             cursor: not-allowed;
             transform: none;
         }
 
-        .result {
+       .result {
             margin-top: 30px;
             padding: 20px;
             border-radius: 10px;
@@ -124,25 +124,25 @@
             text-align: center;
         }
 
-        .result.success {
+       .result.success {
             background: #d4edda;
             border: 1px solid #c3e6cb;
             color: #155724;
         }
 
-        .result.error {
+       .result.error {
             background: #f8d7da;
             border: 1px solid #f5c6cb;
             color: #721c24;
         }
 
-        .loading {
+       .loading {
             display: none;
             text-align: center;
             margin-top: 20px;
         }
 
-        .spinner {
+       .spinner {
             border: 3px solid #f3f3f3;
             border-top: 3px solid #667eea;
             border-radius: 50%;
@@ -157,7 +157,7 @@
             100% { transform: rotate(360deg); }
         }
 
-        .info-box {
+       .info-box {
             background: #e9f4ff;
             border: 1px solid #b8daff;
             border-radius: 10px;
@@ -166,37 +166,37 @@
             text-align: center;
         }
 
-        .info-box h3 {
+       .info-box h3 {
             color: #0056b3;
             margin-bottom: 10px;
         }
 
-        .info-box p {
+       .info-box p {
             color: #004085;
             margin: 0;
         }
 
-        .back-link {
+       .back-link {
             text-align: center;
             margin-top: 30px;
         }
 
-        .back-link a {
+       .back-link a {
             color: #667eea;
             text-decoration: none;
             font-weight: 600;
         }
 
-        .back-link a:hover {
+       .back-link a:hover {
             text-decoration: underline;
         }
 
-        .error-page {
+       .error-page {
             text-align: center;
             color: #721c24;
         }
 
-        .error-page h1 {
+       .error-page h1 {
             color: #721c24;
             margin-bottom: 20px;
         }
@@ -227,16 +227,16 @@
             <form id="messageForm">
                 <div class="form-group">
                     <label for="message">Twoja anonimowa wiadomość:</label>
-                    <textarea 
-                        id="message" 
-                        name="message" 
+                    <textarea
+                        id="message"
+                        name="message"
                         placeholder="Napisz coś miłego... 😊"
                         maxlength="500"
                         required
                     ></textarea>
                     <div class="char-counter" id="charCounter">0/500</div>
                 </div>
-                
+
                 <button type="submit" class="btn" id="submitBtn">
                     🚀 Wyślij anonimowo
                 </button>
@@ -260,7 +260,7 @@
     <script>
         const API_BASE = 'https://tbh-fun.onrender.com'; // Zmień na swój URL Render
 
-        // Pobierz username z URL
+        // Pobierz username z URL (parametr 'u')
         const urlParams = new URLSearchParams(window.location.search);
         const username = urlParams.get('u');
 
@@ -278,7 +278,7 @@
         messageTextarea.addEventListener('input', function() {
             const length = this.value.length;
             charCounter.textContent = `${length}/500`;
-            
+
             if (length > 450) {
                 charCounter.classList.add('warning');
             } else {
@@ -289,12 +289,12 @@
         // Obsługa formularza
         document.getElementById('messageForm').addEventListener('submit', async (e) => {
             e.preventDefault();
-            
+
             const message = messageTextarea.value.trim();
             const submitBtn = document.getElementById('submitBtn');
             const loading = document.getElementById('loading');
             const result = document.getElementById('result');
-            
+
             if (!message) {
                 showResult('Wiadomość nie może być pusta', 'error');
                 return;
@@ -305,14 +305,15 @@
             result.style.display = 'none';
 
             try {
+                // Wysyłanie wiadomości do nowego endpointu /api/send-message
                 const response = await fetch(`${API_BASE}/api/send-message`, {
                     method: 'POST',
                     headers: {
                         'Content-Type': 'application/json',
                     },
-                    body: JSON.stringify({ 
-                        username: username,
-                        message: message 
+                    body: JSON.stringify({
+                        username: username, // Wysyłamy pseudonim odbiorcy
+                        message: message
                     })
                 });
 
@@ -324,7 +325,8 @@
                     charCounter.textContent = '0/500';
                     charCounter.classList.remove('warning');
                 } else {
-                    showResult(data.error || 'Wystąpił błąd podczas wysyłania', 'error');
+                    showResult(data.error |
+| 'Wystąpił błąd podczas wysyłania', 'error');
                 }
             } catch (error) {
                 console.error('Error:', error);
@@ -337,8 +339,10 @@
 
         async function checkUserExists(username) {
             try {
+                // Sprawdzanie istnienia użytkownika za pomocą nowego endpointu /api/user/<nickname>
                 const response = await fetch(`${API_BASE}/api/user/${username}`);
-                if (!response.ok) {
+                const data = await response.json();
+                if (!response.ok ||!data.exists) {
                     showError('Użytkownik nie istnieje lub link jest nieprawidłowy.');
                 }
             } catch (error) {
@@ -350,7 +354,7 @@
         function showResult(message, type) {
             const result = document.getElementById('result');
             const resultMessage = document.getElementById('resultMessage');
-            
+
             result.className = `result ${type}`;
             result.style.display = 'block';
             resultMessage.textContent = message;
