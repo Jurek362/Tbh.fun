@@ -4,12 +4,11 @@ import random
 from flask import Flask, render_template, request, redirect, url_for, session, jsonify
 from flask_cors import CORS # Nowy import dla obsługi CORS
 
-# Domyślnie Flask szuka szablonów w folderze 'templates'.
-# Jeśli Twoje pliki HTML są nadal w tym samym katalogu co ten skrypt,
-# musisz je przenieść do nowo utworzonego folderu 'templates'.
-# Jeśli absolutnie musisz trzymać je w tym samym katalogu, zmień z powrotem:
-# app = Flask(__name__, template_folder='.')
-app = Flask(__name__)
+# Zmodyfikuj inicjalizację Flask, aby wskazać bieżący katalog jako folder szablonów.
+# Zakładamy, że pliki HTML (index.html, home.html, login.html, register.html)
+# znajdują się w tym samym katalogu co ten skrypt Pythona.
+app = Flask(__name__, template_folder='.') # <-- TUTAJ ZMIANA: '.' oznacza bieżący katalog
+
 app.secret_key = os.urandom(24) # Ustaw losowy klucz sesji
 
 # Konfiguracja CORS: Zezwól na żądania z konkretnej domeny dla tras zaczynających się od /api/
@@ -70,7 +69,7 @@ def register():
         return redirect(url_for('index'))
     return render_template('register.html')
 
-# NOWA TRASA API do tworzenia użytkowników z frontendu (np. JavaScript)
+# TRASA API do tworzenia użytkowników z frontendu (np. JavaScript)
 @app.route('/api/create-user', methods=['POST'])
 def api_create_user():
     # Oczekujemy danych w formacie JSON
