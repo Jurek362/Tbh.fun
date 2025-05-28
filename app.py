@@ -29,7 +29,7 @@ def index():
     return render_template('index.html')
 
 # TRASA API do tworzenia użytkowników z frontendu (np. JavaScript)
-@app.route('/api/create-user', methods=)
+@app.route('/api/create-user', methods=) # POPRAWIONO: methods=
 def api_create_user():
     """
     Endpoint API do tworzenia nowego użytkownika.
@@ -62,7 +62,7 @@ def api_create_user():
         "nickname": nickname
     }), 201 # Created
 
-@app.route('/api/user/<string:nickname>', methods=)
+@app.route('/api/user/<string:nickname>', methods=) # POPRAWIONO: methods=
 def api_user_exists(nickname):
     """
     Endpoint API do sprawdzania, czy użytkownik o danym pseudonimie istnieje.
@@ -72,7 +72,7 @@ def api_user_exists(nickname):
         return jsonify({"exists": True, "user_id": user_ids[nickname], "nickname": nickname}), 200
     return jsonify({"exists": False, "error": "Użytkownik nie istnieje"}), 404
 
-@app.route('/api/send-message', methods=)
+@app.route('/api/send-message', methods=) # POPRAWIONO: methods=
 def api_send_message():
     """
     Endpoint API do odbierania anonimowych wiadomości.
@@ -93,7 +93,7 @@ def api_send_message():
 
     return jsonify({"success": True, "message": "Wiadomość wysłana pomyślnie"}), 200
 
-@app.route('/api/messages/<string:user_id>', methods=)
+@app.route('/api/messages/<string:user_id>', methods=) # POPRAWIONO: methods=
 def api_get_messages(user_id):
     """
     Endpoint API do pobierania wszystkich wiadomości dla danego user_id.
