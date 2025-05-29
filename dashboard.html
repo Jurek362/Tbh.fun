@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Panel Wiadomości</title>
+    <title>Panel Wiadomości - NGL Clone</title>
     <style>
         * {
             margin: 0;
@@ -15,76 +15,236 @@
             font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
             background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
             min-height: 100vh;
-            display: flex;
-            align-items: center;
-            justify-content: center;
             padding: 20px;
         }
 
-       .container {
+        .container {
+            max-width: 800px;
+            margin: 0 auto;
+        }
+
+        .header {
             background: white;
             border-radius: 20px;
-            padding: 40px;
-            box-shadow: 0 20px 40px rgba(0,0,0,0.1);
-            max-width: 700px;
-            width: 100%;
+            padding: 30px;
+            margin-bottom: 20px;
             text-align: center;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.1);
         }
 
         h1 {
             color: #333;
             margin-bottom: 10px;
             font-size: 2.5em;
-            font-weight: 700;
         }
 
-       .subtitle {
+        .stats {
+            display: flex;
+            justify-content: center;
+            gap: 30px;
+            margin-top: 20px;
+        }
+
+        .stat-item {
+            text-align: center;
+        }
+
+        .stat-number {
+            font-size: 2em;
+            font-weight: bold;
+            color: #667eea;
+        }
+
+        .stat-label {
             color: #666;
-            margin-bottom: 40px;
-            font-size: 1.1em;
+            margin-top: 5px;
         }
 
-       .messages-list {
-            list-style: none;
-            padding: 0;
-            margin-top: 30px;
-            text-align: left;
+        .actions {
+            margin-top: 20px;
+            display: flex;
+            gap: 15px;
+            justify-content: center;
+            flex-wrap: wrap;
         }
 
-       .message-item {
-            background: #f8f9fa;
-            border: 1px solid #e9ecef;
-            border-radius: 10px;
-            padding: 15px 20px;
-            margin-bottom: 15px;
-            font-size: 1.1em;
+        .btn {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            padding: 12px 24px;
+            border-radius: 8px;
+            font-size: 14px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: transform 0.2s;
+            text-decoration: none;
+            display: inline-block;
+        }
+
+        .btn:hover {
+            transform: translateY(-2px);
+        }
+
+        .btn.secondary {
+            background: #28a745;
+        }
+
+        .btn.danger {
+            background: #dc3545;
+        }
+
+        .messages-container {
+            background: white;
+            border-radius: 20px;
+            padding: 30px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.1);
+        }
+
+        .messages-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 30px;
+            flex-wrap: wrap;
+            gap: 15px;
+        }
+
+        .messages-title {
+            font-size: 1.5em;
             color: #333;
-            word-wrap: break-word;
+            font-weight: 600;
         }
 
-       .message-item:last-child {
-            margin-bottom: 0;
+        .filter-buttons {
+            display: flex;
+            gap: 10px;
         }
 
-       .no-messages {
+        .filter-btn {
+            padding: 8px 16px;
+            border: 1px solid #ddd;
+            background: white;
+            border-radius: 20px;
+            cursor: pointer;
+            font-size: 14px;
+            transition: all 0.3s;
+        }
+
+        .filter-btn.active {
+            background: #667eea;
+            color: white;
+            border-color: #667eea;
+        }
+
+        .message-item {
+            border: 1px solid #e9ecef;
+            border-radius: 15px;
+            padding: 20px;
+            margin-bottom: 15px;
+            transition: all 0.3s;
+            position: relative;
+        }
+
+        .message-item:hover {
+            box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+        }
+
+        .message-item.unread {
+            border-left: 4px solid #667eea;
+            background: #f8f9ff;
+        }
+
+        .message-content {
+            font-size: 16px;
+            line-height: 1.6;
+            color: #333;
+            margin-bottom: 15px;
+        }
+
+        .message-footer {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            font-size: 14px;
             color: #666;
-            font-style: italic;
-            margin-top: 20px;
         }
 
-       .loading {
-            display: none;
-            margin-top: 20px;
+        .message-date {
+            display: flex;
+            align-items: center;
+            gap: 10px;
         }
 
-       .spinner {
+        .message-actions {
+            display: flex;
+            gap: 10px;
+        }
+
+        .message-actions button {
+            padding: 6px 12px;
+            border: none;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 12px;
+            transition: all 0.3s;
+        }
+
+        .mark-read-btn {
+            background: #28a745;
+            color: white;
+        }
+
+        .delete-btn {
+            background: #dc3545;
+            color: white;
+        }
+
+        .mark-read-btn:hover {
+            background: #218838;
+        }
+
+        .delete-btn:hover {
+            background: #c82333;
+        }
+
+        .empty-state {
+            text-align: center;
+            padding: 60px 20px;
+            color: #666;
+        }
+
+        .empty-state h3 {
+            margin-bottom: 15px;
+            color: #333;
+        }
+
+        .empty-state p {
+            margin-bottom: 25px;
+        }
+
+        .share-link {
+            word-break: break-all;
+            background: #f8f9fa;
+            padding: 10px;
+            border-radius: 8px;
+            font-family: monospace;
+            margin: 15px 0;
+        }
+
+        .loading {
+            text-align: center;
+            padding: 40px;
+        }
+
+        .spinner {
             border: 3px solid #f3f3f3;
             border-top: 3px solid #667eea;
             border-radius: 50%;
-            width: 30px;
-            height: 30px;
+            width: 40px;
+            height: 40px;
             animation: spin 1s linear infinite;
-            margin: 0 auto;
+            margin: 0 auto 20px;
         }
 
         @keyframes spin {
@@ -92,29 +252,61 @@
             100% { transform: rotate(360deg); }
         }
 
-       .error-page {
+        .error-page {
+            background: white;
+            border-radius: 20px;
+            padding: 40px;
             text-align: center;
             color: #721c24;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.1);
         }
 
-       .error-page h1 {
+        .error-page h1 {
             color: #721c24;
             margin-bottom: 20px;
         }
 
-       .back-link {
+        .back-link {
             text-align: center;
             margin-top: 30px;
         }
 
-       .back-link a {
+        .back-link a {
             color: #667eea;
             text-decoration: none;
             font-weight: 600;
         }
 
-       .back-link a:hover {
+        .back-link a:hover {
             text-decoration: underline;
+        }
+
+        @media (max-width: 768px) {
+            .stats {
+                flex-direction: column;
+                gap: 15px;
+            }
+
+            .actions {
+                flex-direction: column;
+                align-items: center;
+            }
+
+            .messages-header {
+                flex-direction: column;
+                align-items: flex-start;
+            }
+
+            .filter-buttons {
+                width: 100%;
+                justify-content: center;
+            }
+
+            .message-footer {
+                flex-direction: column;
+                align-items: flex-start;
+                gap: 10px;
+            }
         }
     </style>
 </head>
@@ -128,87 +320,281 @@
             </div>
         </div>
 
-        <div id="mainContent">
-            <h1>📥 Twoje anonimowe wiadomości</h1>
-            <p class="subtitle" id="dashboardSubtitle">Ładowanie...</p>
-
-            <div class="loading" id="loading">
-                <div class="spinner"></div>
-                <p>Ładowanie wiadomości...</p>
+        <div id="mainContent" style="display: none;">
+            <div class="header">
+                <h1>📊 Panel Wiadomości</h1>
+                <div class="stats">
+                    <div class="stat-item">
+                        <div class="stat-number" id="totalMessages">0</div>
+                        <div class="stat-label">Wszystkie wiadomości</div>
+                    </div>
+                    <div class="stat-item">
+                        <div class="stat-number" id="unreadMessages">0</div>
+                        <div class="stat-label">Nieprzeczytane</div>
+                    </div>
+                </div>
+                <div class="actions">
+                    <button class="btn" onclick="copyShareLink()">📋 Skopiuj link</button>
+                    <button class="btn secondary" onclick="markAllAsRead()">✅ Oznacz wszystkie jako przeczytane</button>
+                    <a href="index.html" class="btn">← Powrót</a>
+                </div>
+                <div class="share-link" id="shareLink"></div>
             </div>
 
-            <ul class="messages-list" id="messagesList">
-                </ul>
-            <p class="no-messages" id="noMessages" style="display: none;">Brak wiadomości.</p>
+            <div class="messages-container">
+                <div class="messages-header">
+                    <h2 class="messages-title">Twoje wiadomości</h2>
+                    <div class="filter-buttons">
+                        <button class="filter-btn active" onclick="filterMessages('all')">Wszystkie</button>
+                        <button class="filter-btn" onclick="filterMessages('unread')">Nieprzeczytane</button>
+                        <button class="filter-btn" onclick="filterMessages('read')">Przeczytane</button>
+                    </div>
+                </div>
 
-            <div class="back-link">
-                <a href="index.html">← Stwórz własny link</a>
+                <div id="messagesLoading" class="loading">
+                    <div class="spinner"></div>
+                    <p>Ładowanie wiadomości...</p>
+                </div>
+
+                <div id="messagesList"></div>
+
+                <div id="emptyState" class="empty-state" style="display: none;">
+                    <h3>📭 Brak wiadomości</h3>
+                    <p>Nie masz jeszcze żadnych wiadomości. Udostępnij swój link znajomym!</p>
+                    <button class="btn" onclick="copyShareLink()">📋 Skopiuj link do udostępnienia</button>
+                </div>
             </div>
         </div>
     </div>
 
     <script>
-        const API_BASE = 'https://tbh-fun.onrender.com'; // Zmień na swój URL Render
+        const API_BASE = 'https://your-render-app.onrender.com'; // Zmień na swój URL Render
+        
+        let currentUserId = null;
+        let allMessages = [];
+        let currentFilter = 'all';
 
+        // Pobierz user ID z URL
         const urlParams = new URLSearchParams(window.location.search);
-        const userId = urlParams.get('user'); // Oczekuje parametru 'user' (user_id)
+        currentUserId = urlParams.get('user');
 
-        const mainContent = document.getElementById('mainContent');
-        const errorPage = document.getElementById('errorPage');
-        const errorMessage = document.getElementById('errorMessage');
-        const loading = document.getElementById('loading');
-        const messagesList = document.getElementById('messagesList');
-        const noMessages = document.getElementById('noMessages');
-        const dashboardSubtitle = document.getElementById('dashboardSubtitle');
-
-        if (!userId) {
-            showError('Nieprawidłowy link. Brak identyfikatora użytkownika.');
+        if (!currentUserId) {
+            showError('Nieprawidłowy link. Brak ID użytkownika.');
         } else {
-            fetchMessages(userId);
+            loadMessages();
         }
 
-        async function fetchMessages(userId) {
-            loading.style.display = 'block';
-            mainContent.style.display = 'block'; // Ensure main content is visible initially
-            errorPage.style.display = 'none';
-
+        async function loadMessages() {
             try {
-                // Pobieranie wiadomości z nowego endpointu /api/messages/<user_id>
-                const response = await fetch(`${API_BASE}/api/messages/${userId}`);
-                const data = await response.json();
-
-                if (response.ok) {
-                    if (data.messages && data.messages.length > 0) {
-                        messagesList.innerHTML = ''; // Wyczyść poprzednie wiadomości
-                        data.messages.forEach(message => {
-                            const li = document.createElement('li');
-                            li.className = 'message-item';
-                            li.textContent = message;
-                            messagesList.appendChild(li);
-                        });
-                        noMessages.style.display = 'none';
-                        dashboardSubtitle.textContent = `Wiadomości dla @${data.nickname}:`;
-                    } else {
-                        noMessages.style.display = 'block';
-                        dashboardSubtitle.textContent = `Wiadomości dla @${data.nickname}:`;
-                    }
-                } else {
-                    showError(data.error |
-| 'Nie udało się załadować wiadomości.');
+                const response = await fetch(`${API_BASE}/api/messages/${currentUserId}`);
+                
+                if (!response.ok) {
+                    throw new Error('Nie można pobrać wiadomości');
                 }
+
+                const data = await response.json();
+                allMessages = data.messages || [];
+                
+                updateStats();
+                displayMessages();
+                setupShareLink();
+                
+                document.getElementById('mainContent').style.display = 'block';
+                document.getElementById('messagesLoading').style.display = 'none';
             } catch (error) {
-                console.error('Error fetching messages:', error);
-                showError('Błąd połączenia z serwerem. Nie udało się załadować wiadomości.');
-            } finally {
-                loading.style.display = 'none';
+                console.error('Error loading messages:', error);
+                showError('Nie można załadować wiadomości. Sprawdź połączenie internetowe.');
             }
         }
 
-        function showError(message) {
-            mainContent.style.display = 'none';
-            errorPage.style.display = 'block';
-            errorMessage.textContent = message;
+        function updateStats() {
+            const total = allMessages.length;
+            const unread = allMessages.filter(msg => !msg.read).length;
+            
+            document.getElementById('totalMessages').textContent = total;
+            document.getElementById('unreadMessages').textContent = unread;
         }
+
+        function displayMessages() {
+            const messagesList = document.getElementById('messagesList');
+            const emptyState = document.getElementById('emptyState');
+            
+            let filteredMessages = allMessages;
+            
+            if (currentFilter === 'unread') {
+                filteredMessages = allMessages.filter(msg => !msg.read);
+            } else if (currentFilter === 'read') {
+                filteredMessages = allMessages.filter(msg => msg.read);
+            }
+
+            if (filteredMessages.length === 0) {
+                messagesList.innerHTML = '';
+                emptyState.style.display = 'block';
+                return;
+            }
+
+            emptyState.style.display = 'none';
+            
+            messagesList.innerHTML = filteredMessages.map(message => `
+                <div class="message-item ${message.read ? '' : 'unread'}" data-id="${message.id}">
+                    <div class="message-content">${escapeHtml(message.content)}</div>
+                    <div class="message-footer">
+                        <div class="message-date">
+                            <span>${formatDate(message.timestamp)}</span>
+                            ${message.read ? '<span style="color: #28a745;">✓ Przeczytane</span>' : '<span style="color: #667eea; font-weight: 600;">● Nowe</span>'}
+                        </div>
+                        <div class="message-actions">
+                            ${!message.read ? `<button class="mark-read-btn" onclick="markAsRead('${message.id}')">Oznacz jako przeczytane</button>` : ''}
+                            <button class="delete-btn" onclick="deleteMessage('${message.id}')">Usuń</button>
+                        </div>
+                    </div>
+                </div>
+            `).join('');
+        }
+
+        function filterMessages(filter) {
+            currentFilter = filter;
+            
+            // Update active button
+            document.querySelectorAll('.filter-btn').forEach(btn => {
+                btn.classList.remove('active');
+            });
+            event.target.classList.add('active');
+            
+            displayMessages();
+        }
+
+        async function markAsRead(messageId) {
+            try {
+                const response = await fetch(`${API_BASE}/api/mark-read/${currentUserId}/${messageId}`, {
+                    method: 'POST',
+                });
+
+                if (response.ok) {
+                    // Update local data
+                    const message = allMessages.find(msg => msg.id === messageId);
+                    if (message) {
+                        message.read = true;
+                    }
+                    
+                    updateStats();
+                    displayMessages();
+                }
+            } catch (error) {
+                console.error('Error marking message as read:', error);
+                alert('Nie udało się oznaczyć wiadomości jako przeczytanej');
+            }
+        }
+
+        async function deleteMessage(messageId) {
+            if (!confirm('Czy na pewno chcesz usunąć tę wiadomość?')) {
+                return;
+            }
+
+            try {
+                const response = await fetch(`${API_BASE}/api/delete-message/${currentUserId}/${messageId}`, {
+                    method: 'DELETE',
+                });
+
+                if (response.ok) {
+                    // Remove from local data
+                    allMessages = allMessages.filter(msg => msg.id !== messageId);
+                    
+                    updateStats();
+                    displayMessages();
+                }
+            } catch (error) {
+                console.error('Error deleting message:', error);
+                alert('Nie udało się usunąć wiadomości');
+            }
+        }
+
+        async function markAllAsRead() {
+            const unreadMessages = allMessages.filter(msg => !msg.read);
+            
+            if (unreadMessages.length === 0) {
+                alert('Wszystkie wiadomości są już przeczytane');
+                return;
+            }
+
+            if (!confirm(`Czy chcesz oznaczyć ${unreadMessages.length} wiadomości jako przeczytane?`)) {
+                return;
+            }
+
+            try {
+                const promises = unreadMessages.map(msg => 
+                    fetch(`${API_BASE}/api/mark-read/${currentUserId}/${msg.id}`, {
+                        method: 'POST',
+                    })
+                );
+
+                await Promise.all(promises);
+                
+                // Update local data
+                allMessages.forEach(msg => {
+                    msg.read = true;
+                });
+                
+                updateStats();
+                displayMessages();
+            } catch (error) {
+                console.error('Error marking all as read:', error);
+                alert('Nie udało się oznaczyć wszystkich wiadomości jako przeczytanych');
+            }
+        }
+
+        function setupShareLink() {
+            // Pobierz username z local storage lub API
+            const shareLink = `${window.location.origin}/send.html?u=username`; // Będzie zaktualizowane dynamicznie
+            document.getElementById('shareLink').textContent = shareLink;
+        }
+
+        function copyShareLink() {
+            const shareLink = document.getElementById('shareLink').textContent;
+            navigator.clipboard.writeText(shareLink).then(() => {
+                alert('Link został skopiowany do schowka!');
+            }).catch(() => {
+                alert('Nie udało się skopiować linku');
+            });
+        }
+
+        function formatDate(dateString) {
+            const date = new Date(dateString);
+            const now = new Date();
+            const diffMs = now - date;
+            const diffMins = Math.floor(diffMs / 60000);
+            const diffHours = Math.floor(diffMs / 3600000);
+            const diffDays = Math.floor(diffMs / 86400000);
+
+            if (diffMins < 1) return 'Właśnie teraz';
+            if (diffMins < 60) return `${diffMins} min temu`;
+            if (diffHours < 24) return `${diffHours} godz. temu`;
+            if (diffDays < 7) return `${diffDays} dni temu`;
+            
+            return date.toLocaleDateString('pl-PL', {
+                year: 'numeric',
+                month: 'long',
+                day: 'numeric',
+                hour: '2-digit',
+                minute: '2-digit'
+            });
+        }
+
+        function escapeHtml(text) {
+            const div = document.createElement('div');
+            div.textContent = text;
+            return div.innerHTML;
+        }
+
+        function showError(message) {
+            document.getElementById('mainContent').style.display = 'none';
+            document.getElementById('messagesLoading').style.display = 'none';
+            document.getElementById('errorPage').style.display = 'block';
+            document.getElementById('errorMessage').textContent = message;
+        }
+
+        // Auto-refresh messages every 30 seconds
+        setInterval(loadMessages, 30000);
     </script>
 </body>
 </html>
