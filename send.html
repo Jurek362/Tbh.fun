@@ -310,18 +310,46 @@
             result.style.display = 'none';
 
             try {
-                // Najpierw sprawdź czy użytkownik istnieje
-                const checkResponse = await fetch(`${API_BASE}/api/users`);
+                console.log('Sprawdzanie serwera...');
                 
-                if (!checkResponse.ok) {
-                    throw new Error('Nie można połączyć się z serwerem');
+                // Najpierw sprawdź podstawowy endpoint
+                const healthResponse = await fetch(`${API_BASE}/api/health`, {
+                    method: 'GET',
+                    mode: 'cors',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    }
+                });
+                
+                if (!healthResponse.ok) {
+                    throw new Error(`Serwer nie odpowiada (${healthResponse.status})`);
                 }
 
-                const usersData = await checkResponse.json();
+                console.log('Serwer działa, sprawdzanie użytkowników...');
+                
+                // Sprawdź endpoint użytkowników
+                const usersResponse = await fetch(`${API_BASE}/api/users`, {
+                    method: 'GET',
+                    mode: 'cors',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    }
+                });
+                
+                if (!usersResponse.ok) {
+                    throw new Error(`Błąd pobierania użytkowników (${usersResponse.status})`);
+                }
+
+                const usersData = await usersResponse.json();
+                console.log('Dane użytkowników:', usersData);
                 
                 // Sprawdź czy user o podanym username istnieje
-                const userExists = usersData.data && usersData.data.some(user => 
-                    user.username.toLowerCase() === username.toLowerCase()
+                if (!usersData.success || !usersData.data) {
+                    throw new Error('Nieprawidłowa odpowiedź serwera');
+                }
+
+                const userExists = usersData.data.some(user => 
+                    user.username && user.username.toLowerCase() === username.toLowerCase()
                 );
 
                 if (!userExists) {
@@ -329,11 +357,10 @@
                     return;
                 }
 
-                // Jeśli user istnieje, wyślij wiadomość (na razie symulacja)
-                // W przyszłości tutaj będzie prawdziwy endpoint do wysyłania wiadomości
-                
-                // Symulacja wysyłania wiadomości
-                await new Promise(resolve => setTimeout(resolve, 1500));
+                console.log('Użytkownik istnieje, wysyłanie wiadomości...');
+
+                // Symulacja wysyłania wiadomości (na razie brak endpointu)
+                await new Promise(resolve => setTimeout(resolve, 1000));
                 
                 showResult('✅ Wiadomość została wysłana pomyślnie!', 'success');
                 messageTextarea.value = '';
@@ -341,11 +368,16 @@
                 charCounter.classList.remove('warning');
                 
             } catch (error) {
-                console.error('Error:', error);
-                if (error.message.includes('nie istnieje')) {
+                console.error('Szczegóły błędu:', error);
+                
+                if (error.name === 'TypeError' && error.message.includes('fetch')) {
+                    showResult('❌ Błąd CORS lub blokada sieci. Sprawdź konfigurację serwera.', 'error');
+                } else if (error.message.includes('nie istnieje')) {
                     showResult('❌ Użytkownik nie istnieje lub link jest nieprawidłowy.', 'error');
+                } else if (error.message.includes('CORS')) {
+                    showResult('❌ Błąd CORS - serwer nie zezwala na połączenia z tej strony.', 'error');
                 } else {
-                    showResult('Błąd połączenia z serwerem. Spróbuj ponownie.', 'error');
+                    showResult(`❌ Błąd: ${error.message}`, 'error');
                 }
             } finally {
                 submitBtn.disabled = false;
