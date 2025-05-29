@@ -127,11 +127,14 @@
         
         <form id="registerForm" method="POST" action="/register">
             <div class="form-group">
-                <label for="username">Wybierz swoją nazwę użytkownika:</label>
+                <label for="username">Wprowadź swoją nazwę użytkownika:</label>
                 <input type="text" id="username" name="username" placeholder="twoja-nazwa" required>
+                <small style="color: #666; font-size: 12px; margin-top: 5px; display: block;">
+                    Wprowadź istniejącą nazwę aby się zalogować, lub nową aby utworzyć konto
+                </small>
             </div>
             
-            <button type="submit" class="btn">Stwórz mój link</button>
+            <button type="submit" class="btn">Zaloguj / Stwórz konto</button>
         </form>
         
         <div id="message"></div>
@@ -219,7 +222,12 @@
                     // Zapisz użytkownika w cookies na 30 dni
                     setCookie('anonlink_user', username, 30);
                     
-                    messageDiv.innerHTML = '<div class="success">Konto utworzone! Przekierowuję...</div>';
+                    if (data.isNew) {
+                        messageDiv.innerHTML = '<div class="success">Konto utworzone! Przekierowuję...</div>';
+                    } else {
+                        messageDiv.innerHTML = '<div class="success">Zalogowano! Przekierowuję...</div>';
+                    }
+                    
                     setTimeout(() => {
                         window.location.href = 'https://jurek362.github.io/Tbh.fun/dashboard.html?user=' + username;
                     }, 1500);
