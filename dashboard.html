@@ -281,6 +281,17 @@
             text-decoration: underline;
         }
 
+        .debug-info {
+            background: #f8f9fa;
+            border: 1px solid #dee2e6;
+            border-radius: 8px;
+            padding: 15px;
+            margin: 20px 0;
+            font-family: monospace;
+            font-size: 12px;
+            color: #495057;
+        }
+
         @media (max-width: 768px) {
             .stats {
                 flex-direction: column;
@@ -315,6 +326,10 @@
         <div id="errorPage" class="error-page" style="display: none;">
             <h1>❌ Błąd</h1>
             <p id="errorMessage"></p>
+            <div class="debug-info" id="debugInfo" style="display: none;">
+                <strong>Debug Info:</strong><br>
+                <span id="debugDetails"></span>
+            </div>
             <div class="back-link">
                 <a href="index.html">← Powrót do strony głównej</a>
             </div>
@@ -368,31 +383,62 @@
     </div>
 
     <script>
-        const API_BASE = 'https://tbh-fun.onrender.com'; // Zmień na swój URL Render
+        const API_BASE = 'https://tbh-fun.onrender.com';
         
         let currentUserId = null;
+        let currentUsername = null;
         let allMessages = [];
         let currentFilter = 'all';
 
-        // Pobierz user ID z URL
-        const urlParams = new URLSearchParams(window.location.search);
-        currentUserId = urlParams.get('user');
+        // Inicjalizacja - pobierz parametry z URL
+        function initializeDashboard() {
+            const urlParams = new URLSearchParams(window.location.search);
+            currentUserId = urlParams.get('user') || urlParams.get('id');
+            currentUsername = urlParams.get('username');
 
-        if (!currentUserId) {
-            showError('Nieprawidłowy link. Brak ID użytkownika.');
-        } else {
+            console.log('URL params:', {
+                user: urlParams.get('user'),
+                id: urlParams.get('id'),
+                username: urlParams.get('username'),
+                currentUserId: currentUserId
+            });
+
+            // Debug info
+            const debugDetails = document.getElementById('debugDetails');
+            debugDetails.innerHTML = `
+                URL: ${window.location.href}<br>
+                User ID: ${currentUserId}<br>
+                Username: ${currentUsername}<br>
+                All URL params: ${window.location.search}
+            `;
+
+            if (!currentUserId) {
+                showError('Nieprawidłowy link. Brak ID użytkownika.');
+                document.getElementById('debugInfo').style.display = 'block';
+                return;
+            }
+
             loadMessages();
         }
 
         async function loadMessages() {
             try {
+                console.log(`Ładowanie wiadomości dla użytkownika: ${currentUserId}`);
+                
                 const response = await fetch(`${API_BASE}/api/messages/${currentUserId}`);
                 
+                console.log('Response status:', response.status);
+                console.log('Response headers:', response.headers);
+
                 if (!response.ok) {
-                    throw new Error('Nie można pobrać wiadomości');
+                    const errorText = await response.text();
+                    console.error('API Error:', errorText);
+                    throw new Error(`HTTP ${response.status}: ${errorText}`);
                 }
 
                 const data = await response.json();
+                console.log('Received data:', data);
+                
                 allMessages = data.messages || [];
                 
                 updateStats();
@@ -401,9 +447,11 @@
                 
                 document.getElementById('mainContent').style.display = 'block';
                 document.getElementById('messagesLoading').style.display = 'none';
+                
             } catch (error) {
                 console.error('Error loading messages:', error);
-                showError('Nie można załadować wiadomości. Sprawdź połączenie internetowe.');
+                showError(`Nie można załadować wiadomości: ${error.message}`);
+                document.getElementById('debugInfo').style.display = 'block';
             }
         }
 
@@ -471,7 +519,6 @@
                 });
 
                 if (response.ok) {
-                    // Update local data
                     const message = allMessages.find(msg => msg.id === messageId);
                     if (message) {
                         message.read = true;
@@ -497,7 +544,6 @@
                 });
 
                 if (response.ok) {
-                    // Remove from local data
                     allMessages = allMessages.filter(msg => msg.id !== messageId);
                     
                     updateStats();
@@ -530,7 +576,6 @@
 
                 await Promise.all(promises);
                 
-                // Update local data
                 allMessages.forEach(msg => {
                     msg.read = true;
                 });
@@ -544,8 +589,9 @@
         }
 
         function setupShareLink() {
-            // Pobierz username z local storage lub API
-            const shareLink = `${window.location.origin}/send.html?u=username`; // Będzie zaktualizowane dynamicznie
+            const shareLink = currentUsername 
+                ? `${window.location.origin}/send.html?u=${currentUsername}`
+                : `${window.location.origin}/send.html?u=${currentUserId}`;
             document.getElementById('shareLink').textContent = shareLink;
         }
 
@@ -595,6 +641,9 @@
 
         // Auto-refresh messages every 30 seconds
         setInterval(loadMessages, 30000);
+
+        // Initialize when page loads
+        window.addEventListener('DOMContentLoaded', initializeDashboard);
     </script>
 </body>
 </html>
