@@ -23,13 +23,16 @@
             <button class="btn back-btn" onclick="window.location.href = '/'">← Powrót</button>
             <h3 style="text-align: center; margin-bottom: 20px; color: #333;">Wyślij anonimową wiadomość do <span id="targetUser">@{{ user_profile.username }}</span></h3>
             
-            <div style="text-align: center; margin-bottom: 20px;">
-                <img src="{{ user_profile.avatar }}" alt="Zdjęcie profilowe użytkownika" style="width: 80px; height: 80px; border-radius: 50%; object-fit: cover; border: 3px solid #667eea;">
-                <p style="font-weight: 600; color: #667eea; margin-top: 10px;">@{{ user_profile.username }}</p>
+            <div class="profile-display">
+                <img src="{{ user_profile.avatar }}" alt="Zdjęcie profilowe użytkownika" class="profile-avatar">
+                <p class="profile-username">@{{ user_profile.username }}</p>
             </div>
 
             <form method="post" action="/send_message/{{ user_profile.uid }}">
-                <textarea name="messageText" id="messageText" class="message-textarea" placeholder="Napisz swoją anonimową wiadomość tutaj..." maxlength="500"></textarea>
+                <div class="textarea-wrapper">
+                    <textarea name="messageText" id="messageText" class="message-textarea" placeholder="Napisz swoją anonimową wiadomość tutaj..." maxlength="500"></textarea>
+                    <button type="button" class="dice-button" aria-label="Generuj losowe pytanie">🎲</button>
+                </div>
                 <div class="message-counter">
                     <span id="charCount">0</span>/500 znaków
                 </div>
@@ -44,13 +47,13 @@
 
     <script>
         document.addEventListener('DOMContentLoaded', function() {
-            // Set a unique device ID if not already present in localStorage
+            // Ustaw unikalne ID urządzenia, jeśli nie jest jeszcze obecne w localStorage
             if (!localStorage.getItem('deviceId')) {
                 localStorage.setItem('deviceId', 'anonmsg-' + Date.now() + '-' + Math.random().toString(36).substring(2, 9));
             }
             document.getElementById('deviceId').value = localStorage.getItem('deviceId');
 
-            // Character counter for the message textarea
+            // Licznik znaków dla pola tekstowego wiadomości
             const messageTextarea = document.getElementById('messageText');
             const charCountSpan = document.getElementById('charCount');
 
@@ -59,15 +62,38 @@
                     const count = this.value.length;
                     charCountSpan.textContent = count;
                     if (count > 500) {
-                        this.style.borderColor = '#f44336'; // Red border for overflow
-                        charCountSpan.style.color = '#f44336'; // Red text for overflow
+                        this.style.borderColor = '#f44336'; // Czerwona ramka dla przekroczenia limitu
+                        charCountSpan.style.color = '#f44336'; // Czerwony tekst dla przekroczenia limitu
                     } else {
-                        this.style.borderColor = '#e1e5e9'; // Default border
-                        charCountSpan.style.color = '#666'; // Default text
+                        this.style.borderColor = '#e1e5e9'; // Domyślna ramka
+                        charCountSpan.style.color = '#666'; // Domyślny kolor tekstu
                     }
                 });
-                // Initialize counter on load
+                // Zainicjuj licznik przy ładowaniu
                 charCountSpan.textContent = messageTextarea.value.length;
+            }
+
+            // Funkcjonalność przycisku "kostki": wypełnij pole tekstowe losowym pytaniem
+            const diceButton = document.querySelector('.dice-button');
+            const sampleQuestions = [
+                "Jaka jest Twoja ulubiona piosenka?",
+                "Co najbardziej lubisz robić w wolnym czasie?",
+                "Jaka jest Twoja największa pasja?",
+                "Co Cię ostatnio zaskoczyło?",
+                "Gdybyś mógł/mogła podróżować w czasie, gdzie byś się udał/udała?",
+                "Jaka jest Twoja ulubiona książka/film?",
+                "Co sprawia, że się uśmiechasz?"
+            ];
+
+            if (diceButton && messageTextarea) {
+                diceButton.addEventListener('click', function(e) {
+                    e.preventDefault(); // Zapobiegaj wysłaniu formularza
+                    const randomIndex = Math.floor(Math.random() * sampleQuestions.length);
+                    messageTextarea.value = sampleQuestions[randomIndex];
+                    messageTextarea.focus();
+                    // Ręcznie wywołaj zdarzenie 'input', aby zaktualizować licznik znaków
+                    messageTextarea.dispatchEvent(new Event('input')); 
+                });
             }
         });
     </script>
