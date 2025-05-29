@@ -161,19 +161,19 @@
                 return;
             }
             
-            fetch('/register', {
+            fetch('https://tbh-fun.onrender.com/register', {
                 method: 'POST',
                 headers: {
-                    'Content-Type': 'application/x-www-form-urlencoded',
+                    'Content-Type': 'application/json',
                 },
-                body: 'username=' + encodeURIComponent(username)
+                body: JSON.stringify({username: username})
             })
             .then(response => response.json())
             .then(data => {
                 if (data.success) {
                     messageDiv.innerHTML = '<div class="success">Konto utworzone! Przekierowuję...</div>';
                     setTimeout(() => {
-                        window.location.href = '/dashboard?user=' + username;
+                        window.location.href = 'https://jurek362.github.io/Tbh.fun/dashboard.html?user=' + username;
                     }, 1500);
                 } else {
                     messageDiv.innerHTML = '<div class="error">' + data.message + '</div>';
