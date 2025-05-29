@@ -27,22 +27,15 @@
             background: white;
             border-radius: 20px;
             padding: 30px;
-            margin-bottom: 30px;
-            box-shadow: 0 20px 40px rgba(0,0,0,0.1);
+            margin-bottom: 20px;
             text-align: center;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.1);
         }
 
-        .header h1 {
+        h1 {
             color: #333;
             margin-bottom: 10px;
-            font-size: 2.2em;
-        }
-
-        .username {
-            color: #667eea;
-            font-size: 1.3em;
-            font-weight: 600;
-            margin-bottom: 20px;
+            font-size: 2.5em;
         }
 
         .stats {
@@ -52,145 +45,124 @@
             margin-top: 20px;
         }
 
-        .stat {
+        .stat-item {
             text-align: center;
         }
 
         .stat-number {
             font-size: 2em;
-            font-weight: 700;
+            font-weight: bold;
             color: #667eea;
         }
 
         .stat-label {
             color: #666;
-            font-size: 0.9em;
+            margin-top: 5px;
         }
 
         .actions {
+            margin-top: 20px;
             display: flex;
             gap: 15px;
             justify-content: center;
-            margin-top: 20px;
+            flex-wrap: wrap;
         }
 
         .btn {
-            padding: 10px 20px;
-            border-radius: 10px;
-            text-decoration: none;
-            font-weight: 600;
-            transition: transform 0.2s;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
             border: none;
-            cursor: pointer;
+            padding: 12px 24px;
+            border-radius: 8px;
             font-size: 14px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: transform 0.2s;
+            text-decoration: none;
+            display: inline-block;
         }
 
         .btn:hover {
             transform: translateY(-2px);
         }
 
-        .btn-primary {
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            color: white;
+        .btn.secondary {
+            background: #28a745;
         }
 
-        .btn-secondary {
-            background: #f8f9fa;
-            color: #495057;
-            border: 1px solid #e9ecef;
+        .btn.danger {
+            background: #dc3545;
         }
 
-        .messages-section {
+        .messages-container {
             background: white;
             border-radius: 20px;
             padding: 30px;
-            box-shadow: 0 20px 40px rgba(0,0,0,0.1);
+            box-shadow: 0 10px 30px rgba(0,0,0,0.1);
         }
 
-        .section-header {
+        .messages-header {
             display: flex;
             justify-content: space-between;
             align-items: center;
             margin-bottom: 30px;
+            flex-wrap: wrap;
+            gap: 15px;
         }
 
-        .section-title {
+        .messages-title {
             font-size: 1.5em;
             color: #333;
             font-weight: 600;
         }
 
-        .refresh-btn {
-            background: #28a745;
-            color: white;
-            border: none;
+        .filter-buttons {
+            display: flex;
+            gap: 10px;
+        }
+
+        .filter-btn {
             padding: 8px 16px;
-            border-radius: 8px;
+            border: 1px solid #ddd;
+            background: white;
+            border-radius: 20px;
             cursor: pointer;
             font-size: 14px;
-            transition: all 0.2s;
+            transition: all 0.3s;
         }
 
-        .refresh-btn:hover {
-            background: #218838;
-            transform: translateY(-1px);
-        }
-
-        .refresh-btn:disabled {
-            opacity: 0.6;
-            cursor: not-allowed;
-            transform: none;
-        }
-
-        .loading {
-            text-align: center;
-            padding: 40px;
-            color: #666;
-        }
-
-        .spinner {
-            border: 3px solid #f3f3f3;
-            border-top: 3px solid #667eea;
-            border-radius: 50%;
-            width: 30px;
-            height: 30px;
-            animation: spin 1s linear infinite;
-            margin: 0 auto 15px;
-        }
-
-        @keyframes spin {
-            0% { transform: rotate(0deg); }
-            100% { transform: rotate(360deg); }
+        .filter-btn.active {
+            background: #667eea;
+            color: white;
+            border-color: #667eea;
         }
 
         .message-item {
-            background: #f8f9fa;
             border: 1px solid #e9ecef;
             border-radius: 15px;
             padding: 20px;
-            margin-bottom: 20px;
+            margin-bottom: 15px;
             transition: all 0.3s;
             position: relative;
         }
 
         .message-item:hover {
-            transform: translateY(-2px);
             box-shadow: 0 5px 15px rgba(0,0,0,0.1);
         }
 
         .message-item.unread {
             border-left: 4px solid #667eea;
-            background: #f0f4ff;
+            background: #f8f9ff;
         }
 
         .message-content {
             font-size: 16px;
-            line-height: 1.5;
+            line-height: 1.6;
             color: #333;
             margin-bottom: 15px;
         }
 
-        .message-meta {
+        .message-footer {
             display: flex;
             justify-content: space-between;
             align-items: center;
@@ -198,38 +170,42 @@
             color: #666;
         }
 
-        .message-time {
-            font-style: italic;
-        }
-
-        .message-status {
+        .message-date {
             display: flex;
             align-items: center;
             gap: 10px;
         }
 
-        .unread-badge {
-            background: #667eea;
-            color: white;
-            padding: 2px 8px;
-            border-radius: 12px;
+        .message-actions {
+            display: flex;
+            gap: 10px;
+        }
+
+        .message-actions button {
+            padding: 6px 12px;
+            border: none;
+            border-radius: 6px;
+            cursor: pointer;
             font-size: 12px;
-            font-weight: 600;
+            transition: all 0.3s;
         }
 
         .mark-read-btn {
-            background: #17a2b8;
+            background: #28a745;
             color: white;
-            border: none;
-            padding: 4px 12px;
-            border-radius: 6px;
-            font-size: 12px;
-            cursor: pointer;
-            transition: background 0.2s;
+        }
+
+        .delete-btn {
+            background: #dc3545;
+            color: white;
         }
 
         .mark-read-btn:hover {
-            background: #138496;
+            background: #218838;
+        }
+
+        .delete-btn:hover {
+            background: #c82333;
         }
 
         .empty-state {
@@ -244,42 +220,50 @@
         }
 
         .empty-state p {
-            margin-bottom: 30px;
-            line-height: 1.6;
+            margin-bottom: 25px;
         }
 
         .share-link {
-            background: #e9f4ff;
-            border: 1px solid #b8daff;
-            border-radius: 10px;
-            padding: 15px;
-            margin-top: 20px;
             word-break: break-all;
+            background: #f8f9fa;
+            padding: 10px;
+            border-radius: 8px;
+            font-family: monospace;
+            margin: 15px 0;
         }
 
-        .share-link strong {
-            color: #0056b3;
-        }
-
-        .copy-link-btn {
-            background: #007bff;
-            color: white;
-            border: none;
-            padding: 5px 15px;
-            border-radius: 5px;
-            font-size: 12px;
-            cursor: pointer;
-            margin-left: 10px;
-        }
-
-        .error-message {
-            background: #f8d7da;
-            border: 1px solid #f5c6cb;
-            color: #721c24;
-            padding: 20px;
-            border-radius: 10px;
+        .loading {
             text-align: center;
-            margin: 20px 0;
+            padding: 40px;
+        }
+
+        .spinner {
+            border: 3px solid #f3f3f3;
+            border-top: 3px solid #667eea;
+            border-radius: 50%;
+            width: 40px;
+            height: 40px;
+            animation: spin 1s linear infinite;
+            margin: 0 auto 20px;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        .error-page {
+            background: white;
+            border-radius: 20px;
+            padding: 40px;
+            text-align: center;
+            color: #721c24;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.1);
+        }
+
+        .error-page h1 {
+            color: #721c24;
+            margin-bottom: 20px;
         }
 
         .back-link {
@@ -288,26 +272,16 @@
         }
 
         .back-link a {
-            color: white;
+            color: #667eea;
             text-decoration: none;
             font-weight: 600;
-            opacity: 0.9;
         }
 
         .back-link a:hover {
-            opacity: 1;
             text-decoration: underline;
         }
 
         @media (max-width: 768px) {
-            .container {
-                padding: 10px;
-            }
-
-            .header, .messages-section {
-                padding: 20px;
-            }
-
             .stats {
                 flex-direction: column;
                 gap: 15px;
@@ -318,166 +292,403 @@
                 align-items: center;
             }
 
-            .section-header {
+            .messages-header {
                 flex-direction: column;
-                gap: 15px;
-                align-items: stretch;
+                align-items: flex-start;
+            }
+
+            .filter-buttons {
+                width: 100%;
+                justify-content: center;
+            }
+
+            .message-footer {
+                flex-direction: column;
+                align-items: flex-start;
+                gap: 10px;
             }
         }
     </style>
 </head>
 <body>
     <div class="container">
-        <!-- Header -->
-        <div class="header">
-            <h1>📱 Panel Wiadomości</h1>
-            <div class="username" id="userUsername">@loading...</div>
-            
-            <div class="stats">
-                <div class="stat">
-                    <div class="stat-number" id="totalMessages">0</div>
-                    <div class="stat-label">Wszystkie</div>
-                </div>
-                <div class="stat">
-                    <div class="stat-number" id="unreadMessages">0</div>
-                    <div class="stat-label">Nieprzeczytane</div>
-                </div>
-            </div>
-
-            <div class="actions">
-                <button class="btn btn-primary" onclick="copyShareLink()">📋 Skopiuj mój link</button>
-                <a href="index.html" class="btn btn-secondary">🏠 Strona główna</a>
-            </div>
-
-            <div class="share-link" id="shareLinkContainer" style="display: none;">
-                <strong>Twój link do udostępnienia:</strong><br>
-                <span id="shareLink"></span>
-                <button class="copy-link-btn" onclick="copyShareLink()">Skopiuj</button>
+        <div id="errorPage" class="error-page" style="display: none;">
+            <h1>❌ Błąd</h1>
+            <p id="errorMessage"></p>
+            <div class="back-link">
+                <a href="index.html">← Powrót do strony głównej</a>
             </div>
         </div>
 
-        <!-- Messages Section -->
-        <div class="messages-section">
-            <div class="section-header">
-                <h2 class="section-title">📬 Twoje wiadomości</h2>
-                <button class="refresh-btn" id="refreshBtn" onclick="loadMessages()">
-                    🔄 Odśwież
-                </button>
+        <div id="mainContent" style="display: none;">
+            <div class="header">
+                <h1>📊 Panel Wiadomości</h1>
+                <div class="stats">
+                    <div class="stat-item">
+                        <div class="stat-number" id="totalMessages">0</div>
+                        <div class="stat-label">Wszystkie wiadomości</div>
+                    </div>
+                    <div class="stat-item">
+                        <div class="stat-number" id="unreadMessages">0</div>
+                        <div class="stat-label">Nieprzeczytane</div>
+                    </div>
+                </div>
+                <div class="actions">
+                    <button class="btn" onclick="copyShareLink()">📋 Skopiuj link</button>
+                    <button class="btn secondary" onclick="markAllAsRead()">✅ Oznacz wszystkie jako przeczytane</button>
+                    <a href="index.html" class="btn">← Powrót</a>
+                </div>
+                <div class="share-link" id="shareLink"></div>
             </div>
 
-            <div id="messagesContainer">
-                <div class="loading">
+            <div class="messages-container">
+                <div class="messages-header">
+                    <h2 class="messages-title">Twoje wiadomości</h2>
+                    <div class="filter-buttons">
+                        <button class="filter-btn active" onclick="filterMessages('all')">Wszystkie</button>
+                        <button class="filter-btn" onclick="filterMessages('unread')">Nieprzeczytane</button>
+                        <button class="filter-btn" onclick="filterMessages('read')">Przeczytane</button>
+                    </div>
+                </div>
+
+                <div id="messagesLoading" class="loading">
                     <div class="spinner"></div>
                     <p>Ładowanie wiadomości...</p>
                 </div>
-            </div>
-        </div>
 
-        <div class="back-link">
-            <a href="index.html">← Wróć do strony głównej</a>
+                <div id="messagesList"></div>
+
+                <div id="emptyState" class="empty-state" style="display: none;">
+                    <h3>📭 Brak wiadomości</h3>
+                    <p>Nie masz jeszcze żadnych wiadomości. Udostępnij swój link znajomym!</p>
+                    <button class="btn" onclick="copyShareLink()">📋 Skopiuj link do udostępnienia</button>
+                </div>
+            </div>
         </div>
     </div>
 
     <script>
         const API_BASE = 'https://tbh-fun.onrender.com'; // Zmień na swój URL Render
+        
         let currentUserId = null;
-        let userUsername = null;
-        let shareUrl = null;
+        let currentUserData = null;
+        let allMessages = [];
+        let currentFilter = 'all';
 
-        // Pobierz user ID z URL
+        // Pobierz user ID z URL - obsługa zarówno 'user' jak i 'id'
         const urlParams = new URLSearchParams(window.location.search);
-        const userId = urlParams.get('user');
+        currentUserId = urlParams.get('user') || urlParams.get('id') || urlParams.get('user_id');
 
-        if (!userId) {
-            showError('Brak ID użytkownika w URL. Przejdź przez główną stronę.');
+        if (!currentUserId) {
+            showError('Nieprawidłowy link. Brak ID użytkownika.');
         } else {
-            currentUserId = userId;
             loadUserData();
-            loadMessages();
-            
-            // Auto-refresh co 30 sekund
-            setInterval(loadMessages, 30000);
         }
 
         async function loadUserData() {
             try {
-                const response = await fetch(`${API_BASE}/api/user/${currentUserId}`);
-                const data = await response.json();
-
-                if (data.success) {
-                    userUsername = data.data.username;
-                    shareUrl = data.data.link;
-                    
-                    document.getElementById('userUsername').textContent = `@${userUsername}`;
-                    document.getElementById('shareLink').textContent = shareUrl;
-                } else {
-                    showError('Nie można załadować danych użytkownika: ' + data.error);
+                // Najpierw pobierz dane użytkownika
+                const userResponse = await fetch(`${API_BASE}/api/user/${currentUserId}`);
+                
+                if (!userResponse.ok) {
+                    throw new Error('Nie można pobrać danych użytkownika');
                 }
+
+                const userData = await userResponse.json();
+                if (!userData.success) {
+                    throw new Error(userData.error || 'Błąd pobierania danych użytkownika');
+                }
+
+                currentUserData = userData.data;
+                setupShareLink();
+                
+                // Następnie pobierz wiadomości
+                await loadMessages();
+                
             } catch (error) {
                 console.error('Error loading user data:', error);
-                showError('Błąd podczas ładowania danych użytkownika');
+                showError('Nie można załadować danych użytkownika. Sprawdź czy link jest prawidłowy.');
             }
         }
 
         async function loadMessages() {
-            const refreshBtn = document.getElementById('refreshBtn');
-            const messagesContainer = document.getElementById('messagesContainer');
-            
-            refreshBtn.disabled = true;
-            refreshBtn.textContent = '🔄 Ładowanie...';
-
             try {
                 const response = await fetch(`${API_BASE}/api/messages/${currentUserId}`);
-                const data = await response.json();
-
-                if (data.success) {
-                    updateStats(data.count, data.unread_count);
-                    renderMessages(data.data);
-                } else {
-                    showError('Nie można załadować wiadomości: ' + data.error);
+                
+                if (!response.ok) {
+                    // Jeśli endpoint nie istnieje, pokaż pustą listę
+                    if (response.status === 404) {
+                        allMessages = [];
+                        updateStats();
+                        displayMessages();
+                        setupShareLink();
+                        document.getElementById('mainContent').style.display = 'block';
+                        document.getElementById('messagesLoading').style.display = 'none';
+                        return;
+                    }
+                    throw new Error('Nie można pobrać wiadomości');
                 }
+
+                const data = await response.json();
+                
+                if (data.success) {
+                    allMessages = data.data || data.messages || [];
+                } else {
+                    allMessages = [];
+                }
+                
+                updateStats();
+                displayMessages();
+                
+                document.getElementById('mainContent').style.display = 'block';
+                document.getElementById('messagesLoading').style.display = 'none';
             } catch (error) {
                 console.error('Error loading messages:', error);
-                showError('Błąd połączenia z serwerem');
-            } finally {
-                refreshBtn.disabled = false;
-                refreshBtn.textContent = '🔄 Odśwież';
+                // Nie pokazuj błędu - po prostu pokaż pustą listę
+                allMessages = [];
+                updateStats();
+                displayMessages();
+                document.getElementById('mainContent').style.display = 'block';
+                document.getElementById('messagesLoading').style.display = 'none';
             }
         }
 
-        function updateStats(total, unread) {
+        function updateStats() {
+            const total = allMessages.length;
+            const unread = allMessages.filter(msg => !msg.read).length;
+            
             document.getElementById('totalMessages').textContent = total;
             document.getElementById('unreadMessages').textContent = unread;
         }
 
-        function renderMessages(messages) {
-            const container = document.getElementById('messagesContainer');
+        function displayMessages() {
+            const messagesList = document.getElementById('messagesList');
+            const emptyState = document.getElementById('emptyState');
             
-            if (messages.length === 0) {
-                container.innerHTML = `
-                    <div class="empty-state">
-                        <h3>📭 Brak wiadomości</h3>
-                        <p>Jeszcze nikt nie wysłał Ci wiadomości.<br>
-                        Udostępnij swój link znajomym!</p>
-                        <button class="btn btn-primary" onclick="copyShareLink()">
-                            📋 Skopiuj mój link
-                        </button>
-                    </div>
-                `;
+            let filteredMessages = allMessages;
+            
+            if (currentFilter === 'unread') {
+                filteredMessages = allMessages.filter(msg => !msg.read);
+            } else if (currentFilter === 'read') {
+                filteredMessages = allMessages.filter(msg => msg.read);
+            }
+
+            if (filteredMessages.length === 0) {
+                messagesList.innerHTML = '';
+                emptyState.style.display = 'block';
                 return;
             }
 
-            const messagesHTML = messages.map(message => `
-                <div class="message-item ${!message.read ? 'unread' : ''}">
-                    <div class="message-content">${escapeHtml(message.message)}</div>
-                    <div class="message-meta">
-                        <span class="message-time">${formatTime(message.timestamp)}</span>
-                        <div class="message-status">
-                            ${!message.read ? `
-                                <span class="unread-badge">NOWE</span>
-                                <button class="mark-read-btn" onclick="markAsRead('${message.id}')">
-                                    Oznacz jako przeczytane
-                                </button>
-                            ` : '✅ Przeczytane'}
+            emptyState.style.display = 'none';
+            
+            messagesList.innerHTML = filteredMessages.map(message => `
+                <div class="message-item ${message.read ? '' : 'unread'}" data-id="${message.id}">
+                    <div class="message-content">${escapeHtml(message.content || message.text || 'Pusta wiadomość')}</div>
+                    <div class="message-footer">
+                        <div class="message-date">
+                            <span>${formatDate(message.timestamp || message.created_at || new Date().toISOString())}</span>
+                            ${message.read ? '<span style="color: #28a745;">✓ Przeczytane</span>' : '<span style="color: #667eea; font-weight: 600;">● Nowe</span>'}
                         </div>
-    </div>
+                        <div class="message-actions">
+                            ${!message.read ? `<button class="mark-read-btn" onclick="markAsRead('${message.id}')">Oznacz jako przeczytane</button>` : ''}
+                            <button class="delete-btn" onclick="deleteMessage('${message.id}')">Usuń</button>
+                        </div>
+                    </div>
+                </div>
+            `).join('');
+        }
+
+        function filterMessages(filter) {
+            currentFilter = filter;
+            
+            // Update active button
+            document.querySelectorAll('.filter-btn').forEach(btn => {
+                btn.classList.remove('active');
+            });
+            event.target.classList.add('active');
+            
+            displayMessages();
+        }
+
+        async function markAsRead(messageId) {
+            try {
+                const response = await fetch(`${API_BASE}/api/mark-read/${currentUserId}/${messageId}`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    }
+                });
+
+                if (response.ok) {
+                    // Update local data
+                    const message = allMessages.find(msg => msg.id === messageId);
+                    if (message) {
+                        message.read = true;
+                    }
+                    
+                    updateStats();
+                    displayMessages();
+                } else {
+                    throw new Error('Błąd serwera');
+                }
+            } catch (error) {
+                console.error('Error marking message as read:', error);
+                alert('Nie udało się oznaczyć wiadomości jako przeczytanej');
+            }
+        }
+
+        async function deleteMessage(messageId) {
+            if (!confirm('Czy na pewno chcesz usunąć tę wiadomość?')) {
+                return;
+            }
+
+            try {
+                const response = await fetch(`${API_BASE}/api/delete-message/${currentUserId}/${messageId}`, {
+                    method: 'DELETE',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    }
+                });
+
+                if (response.ok) {
+                    // Remove from local data
+                    allMessages = allMessages.filter(msg => msg.id !== messageId);
+                    
+                    updateStats();
+                    displayMessages();
+                } else {
+                    throw new Error('Błąd serwera');
+                }
+            } catch (error) {
+                console.error('Error deleting message:', error);
+                alert('Nie udało się usunąć wiadomości');
+            }
+        }
+
+        async function markAllAsRead() {
+            const unreadMessages = allMessages.filter(msg => !msg.read);
+            
+            if (unreadMessages.length === 0) {
+                alert('Wszystkie wiadomości są już przeczytane');
+                return;
+            }
+
+            if (!confirm(`Czy chcesz oznaczyć ${unreadMessages.length} wiadomości jako przeczytane?`)) {
+                return;
+            }
+
+            try {
+                const promises = unreadMessages.map(msg => 
+                    fetch(`${API_BASE}/api/mark-read/${currentUserId}/${msg.id}`, {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                        }
+                    })
+                );
+
+                await Promise.all(promises);
+                
+                // Update local data
+                allMessages.forEach(msg => {
+                    msg.read = true;
+                });
+                
+                updateStats();
+                displayMessages();
+            } catch (error) {
+                console.error('Error marking all as read:', error);
+                alert('Nie udało się oznaczyć wszystkich wiadomości jako przeczytanych');
+            }
+        }
+
+        function setupShareLink() {
+            let shareLink = '';
+            
+            if (currentUserData && currentUserData.username) {
+                // Użyj username jeśli dostępny
+                shareLink = `${window.location.origin}/send.html?u=${currentUserData.username}`;
+            } else {
+                // Fallback na ID
+                shareLink = `${window.location.origin}/send.html?id=${currentUserId}`;
+            }
+            
+            document.getElementById('shareLink').textContent = shareLink;
+        }
+
+        function copyShareLink() {
+            const shareLink = document.getElementById('shareLink').textContent;
+            if (navigator.clipboard) {
+                navigator.clipboard.writeText(shareLink).then(() => {
+                    alert('Link został skopiowany do schowka!');
+                }).catch(() => {
+                    // Fallback method
+                    fallbackCopy(shareLink);
+                });
+            } else {
+                fallbackCopy(shareLink);
+            }
+        }
+
+        function fallbackCopy(text) {
+            const textArea = document.createElement('textarea');
+            textArea.value = text;
+            document.body.appendChild(textArea);
+            textArea.select();
+            try {
+                document.execCommand('copy');
+                alert('Link został skopiowany do schowka!');
+            } catch (err) {
+                alert('Nie udało się skopiować linku. Skopiuj go ręcznie: ' + text);
+            }
+            document.body.removeChild(textArea);
+        }
+
+        function formatDate(dateString) {
+            try {
+                const date = new Date(dateString);
+                const now = new Date();
+                const diffMs = now - date;
+                const diffMins = Math.floor(diffMs / 60000);
+                const diffHours = Math.floor(diffMs / 3600000);
+                const diffDays = Math.floor(diffMs / 86400000);
+
+                if (diffMins < 1) return 'Właśnie teraz';
+                if (diffMins < 60) return `${diffMins} min temu`;
+                if (diffHours < 24) return `${diffHours} godz. temu`;
+                if (diffDays < 7) return `${diffDays} dni temu`;
+                
+                return date.toLocaleDateString('pl-PL', {
+                    year: 'numeric',
+                    month: 'long',
+                    day: 'numeric',
+                    hour: '2-digit',
+                    minute: '2-digit'
+                });
+            } catch (error) {
+                return 'Nieznana data';
+            }
+        }
+
+        function escapeHtml(text) {
+            const div = document.createElement('div');
+            div.textContent = text || '';
+            return div.innerHTML;
+        }
+
+        function showError(message) {
+            document.getElementById('mainContent').style.display = 'none';
+            document.getElementById('messagesLoading').style.display = 'none';
+            document.getElementById('errorPage').style.display = 'block';
+            document.getElementById('errorMessage').textContent = message;
+        }
+
+        // Auto-refresh messages every 30 seconds
+        setInterval(() => {
+            if (currentUserId) {
+                loadMessages();
+            }
+        }, 30000);
+    </script>
+</body>
+</html>
