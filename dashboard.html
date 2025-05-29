@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Panel wiadomości - NGL Clone</title>
+    <title>Panel Wiadomości - Tbh.fun</title>
     <style>
         * {
             margin: 0;
@@ -23,100 +23,88 @@
             margin: 0 auto;
             background: white;
             border-radius: 20px;
-            padding: 30px;
+            padding: 40px;
             box-shadow: 0 20px 40px rgba(0,0,0,0.1);
         }
 
         .header {
             text-align: center;
             margin-bottom: 40px;
-            padding-bottom: 30px;
-            border-bottom: 2px solid #f8f9fa;
+            padding-bottom: 20px;
+            border-bottom: 2px solid #f0f0f0;
         }
 
         h1 {
             color: #333;
             margin-bottom: 10px;
-            font-size: 2.5em;
+            font-size: 2.2em;
         }
 
         .user-info {
-            background: #f8f9fa;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
             padding: 20px;
             border-radius: 15px;
             margin-bottom: 30px;
+            text-align: center;
         }
 
         .username {
-            color: #667eea;
             font-size: 1.5em;
             font-weight: 600;
             margin-bottom: 10px;
         }
 
-        .share-link {
-            font-family: monospace;
-            background: #e9ecef;
+        .user-link {
+            background: rgba(255,255,255,0.2);
             padding: 10px;
             border-radius: 8px;
+            font-family: monospace;
             word-break: break-all;
-            margin: 10px 0;
+            margin-bottom: 10px;
         }
 
-        .controls {
-            display: flex;
-            gap: 15px;
-            margin-bottom: 30px;
-            flex-wrap: wrap;
-        }
-
-        .btn {
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            color: white;
+        .copy-btn {
+            background: rgba(255,255,255,0.3);
             border: none;
-            padding: 12px 24px;
-            border-radius: 10px;
-            font-size: 14px;
-            font-weight: 600;
+            color: white;
+            padding: 8px 16px;
+            border-radius: 5px;
             cursor: pointer;
-            transition: transform 0.2s;
+            font-weight: 600;
+            transition: background 0.3s;
         }
 
-        .btn:hover {
-            transform: translateY(-2px);
-        }
-
-        .btn.secondary {
-            background: #6c757d;
-        }
-
-        .btn.success {
-            background: #28a745;
+        .copy-btn:hover {
+            background: rgba(255,255,255,0.4);
         }
 
         .stats {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-            gap: 20px;
+            display: flex;
+            justify-content: space-around;
             margin-bottom: 30px;
+            text-align: center;
         }
 
-        .stat-card {
+        .stat-item {
             background: #f8f9fa;
             padding: 20px;
-            border-radius: 15px;
-            text-align: center;
+            border-radius: 10px;
+            border: 1px solid #e9ecef;
+            flex: 1;
+            margin: 0 10px;
         }
 
         .stat-number {
             font-size: 2em;
-            font-weight: bold;
+            font-weight: 700;
             color: #667eea;
+            margin-bottom: 5px;
         }
 
         .stat-label {
             color: #666;
-            margin-top: 5px;
+            font-size: 0.9em;
         }
 
         .messages-section {
@@ -124,29 +112,47 @@
         }
 
         .section-title {
+            font-size: 1.5em;
             color: #333;
             margin-bottom: 20px;
-            font-size: 1.3em;
-            font-weight: 600;
+            display: flex;
+            align-items: center;
+            gap: 10px;
         }
 
-        .message {
-            background: #f8f9fa;
+        .refresh-btn {
+            background: #28a745;
+            color: white;
+            border: none;
+            padding: 8px 12px;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 12px;
+            margin-left: auto;
+        }
+
+        .refresh-btn:hover {
+            background: #218838;
+        }
+
+        .message-card {
+            background: #fff;
             border: 1px solid #e9ecef;
-            border-radius: 15px;
+            border-radius: 10px;
             padding: 20px;
             margin-bottom: 15px;
-            position: relative;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.05);
+            transition: transform 0.2s;
         }
 
-        .message.unread {
-            background: #e7f3ff;
-            border-color: #b8daff;
+        .message-card:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 20px rgba(0,0,0,0.1);
         }
 
         .message-content {
-            font-size: 16px;
-            line-height: 1.5;
+            font-size: 1.1em;
+            line-height: 1.6;
             color: #333;
             margin-bottom: 15px;
         }
@@ -155,23 +161,25 @@
             display: flex;
             justify-content: space-between;
             align-items: center;
-            font-size: 14px;
+            font-size: 0.9em;
             color: #666;
         }
 
         .message-date {
-            font-size: 12px;
+            background: #f0f0f0;
+            padding: 5px 10px;
+            border-radius: 15px;
         }
 
-        .message-actions {
-            display: flex;
-            gap: 10px;
+        .no-messages {
+            text-align: center;
+            padding: 60px 20px;
+            color: #666;
         }
 
-        .btn-small {
-            padding: 6px 12px;
-            font-size: 12px;
-            border-radius: 6px;
+        .no-messages-icon {
+            font-size: 4em;
+            margin-bottom: 20px;
         }
 
         .loading {
@@ -195,63 +203,42 @@
             100% { transform: rotate(360deg); }
         }
 
-        .empty-state {
-            text-align: center;
-            padding: 60px 20px;
-            color: #666;
-        }
-
-        .empty-state h3 {
-            margin-bottom: 15px;
-            color: #333;
-        }
-
-        .filter-buttons {
-            display: flex;
-            gap: 10px;
-            margin-bottom: 20px;
-            flex-wrap: wrap;
-        }
-
-        .filter-btn {
-            background: #e9ecef;
-            color: #495057;
-            border: 1px solid #ced4da;
-            padding: 8px 16px;
-            border-radius: 8px;
-            cursor: pointer;
-            transition: all 0.3s;
-        }
-
-        .filter-btn.active {
-            background: #667eea;
-            color: white;
-            border-color: #667eea;
-        }
-
-        .error-message {
+        .error {
             background: #f8d7da;
             border: 1px solid #f5c6cb;
             color: #721c24;
-            padding: 15px;
+            padding: 20px;
             border-radius: 10px;
             margin-bottom: 20px;
-            display: none;
+            text-align: center;
+        }
+
+        .back-link {
+            text-align: center;
+            margin-top: 30px;
+        }
+
+        .back-link a {
+            color: #667eea;
+            text-decoration: none;
+            font-weight: 600;
+        }
+
+        .back-link a:hover {
+            text-decoration: underline;
         }
 
         @media (max-width: 768px) {
-            .controls {
-                flex-direction: column;
-            }
-            
             .stats {
-                grid-template-columns: 1fr;
+                flex-direction: column;
             }
             
-            .message-meta {
-                flex-direction: column;
-                align-items: flex-start;
-                gap: 10px;
+            .stat-item {
+                margin: 5px 0;
+            }
+            
+            .container {
+                padding: 20px;
             }
         }
     </style>
@@ -259,47 +246,36 @@
 <body>
     <div class="container">
         <div class="header">
-            <h1>📬 Twoje wiadomości</h1>
+            <h1>📊 Panel Wiadomości</h1>
         </div>
 
-        <div class="user-info" id="userInfo">
-            <div class="username" id="displayUsername">@loading...</div>
-            <div>Twój link do udostępnienia:</div>
-            <div class="share-link" id="shareLink">Loading...</div>
-            <button class="btn success btn-small" onclick="copyShareLink()">📋 Skopiuj link</button>
+        <div id="errorMessage" class="error" style="display: none;"></div>
+
+        <div id="userInfo" class="user-info" style="display: none;">
+            <div class="username" id="displayUsername">@username</div>
+            <div class="user-link" id="displayLink">Ładowanie...</div>
+            <button class="copy-btn" onclick="copyUserLink()">📋 Skopiuj link</button>
         </div>
 
-        <div class="stats" id="stats">
-            <div class="stat-card">
+        <div class="stats">
+            <div class="stat-item">
                 <div class="stat-number" id="totalMessages">0</div>
-                <div class="stat-label">Wszystkie wiadomości</div>
+                <div class="stat-label">Wszystkich wiadomości</div>
             </div>
-            <div class="stat-card">
-                <div class="stat-number" id="unreadMessages">0</div>
-                <div class="stat-label">Nieprzeczytane</div>
-            </div>
-            <div class="stat-card">
+            <div class="stat-item">
                 <div class="stat-number" id="todayMessages">0</div>
                 <div class="stat-label">Dzisiaj</div>
             </div>
+            <div class="stat-item">
+                <div class="stat-number" id="thisWeekMessages">0</div>
+                <div class="stat-label">Ten tydzień</div>
+            </div>
         </div>
-
-        <div class="controls">
-            <button class="btn" onclick="loadMessages()">🔄 Odśwież</button>
-            <button class="btn secondary" onclick="markAllAsRead()">✅ Oznacz wszystkie jako przeczytane</button>
-            <button class="btn secondary" onclick="deleteAllMessages()" style="background: #dc3545;">🗑️ Usuń wszystkie</button>
-        </div>
-
-        <div class="error-message" id="errorMessage"></div>
 
         <div class="messages-section">
             <div class="section-title">
-                Wiadomości
-                <div class="filter-buttons">
-                    <button class="filter-btn active" onclick="filterMessages('all')">Wszystkie</button>
-                    <button class="filter-btn" onclick="filterMessages('unread')">Nieprzeczytane</button>
-                    <button class="filter-btn" onclick="filterMessages('today')">Dzisiaj</button>
-                </div>
+                💬 Twoje wiadomości
+                <button class="refresh-btn" onclick="loadMessages()">🔄 Odśwież</button>
             </div>
 
             <div class="loading" id="loading">
@@ -308,306 +284,181 @@
             </div>
 
             <div id="messagesContainer">
-                <!-- Messages will be loaded here -->
+                <!-- Wiadomości będą tutaj -->
             </div>
+        </div>
 
-            <div class="empty-state" id="emptyState" style="display: none;">
-                <h3>📭 Brak wiadomości</h3>
-                <p>Udostępnij swój link znajomym, aby otrzymać pierwsze anonimowe wiadomości!</p>
-            </div>
+        <div class="back-link">
+            <a href="index.html">← Powrót do strony głównej</a>
         </div>
     </div>
 
     <script>
-        const API_BASE = 'https://tbh-fun.onrender.com'; // Zmień na swój URL Render
-        
-        // Get user ID from URL
+        const API_BASE = 'https://tbh-fun.onrender.com';
+        let currentUserId = null;
+        let currentUser = null;
+
+        // Pobierz user ID z URL
         const urlParams = new URLSearchParams(window.location.search);
-        const userId = urlParams.get('user');
-        
-        let currentFilter = 'all';
-        let messages = [];
-        let userInfo = null;
+        currentUserId = urlParams.get('user');
 
-        // Initialize dashboard
-        document.addEventListener('DOMContentLoaded', function() {
-            if (!userId) {
-                showError('Brak ID użytkownika w URL');
-                return;
-            }
-            
-            loadUserInfo();
-            loadMessages();
-        });
+        if (!currentUserId) {
+            showError('Nieprawidłowy link. Brak ID użytkownika.');
+        } else {
+            loadUserData();
+        }
 
-        // Load user information
-        async function loadUserInfo() {
+        async function loadUserData() {
             try {
-                const response = await fetch(`${API_BASE}/api/user/${userId}`);
-                const data = await response.json();
+                showLoading(true);
                 
+                // Pobierz dane użytkownika po ID
+                const response = await fetch(`${API_BASE}/api/user-by-id/${currentUserId}`);
+                const data = await response.json();
+
                 if (data.success) {
-                    userInfo = data.data;
-                    updateUserDisplay();
+                    currentUser = data.data;
+                    displayUserInfo(currentUser);
+                    await loadMessages();
                 } else {
-                    showError('Nie można załadować informacji o użytkowniku');
+                    showError(data.error || 'Nie można załadować danych użytkownika');
                 }
             } catch (error) {
-                console.error('Error loading user info:', error);
+                console.error('Error loading user data:', error);
                 showError('Błąd połączenia z serwerem');
+            } finally {
+                showLoading(false);
             }
         }
 
-        // Update user display
-        function updateUserDisplay() {
-            if (userInfo) {
-                document.getElementById('displayUsername').textContent = `@${userInfo.username}`;
-                document.getElementById('shareLink').textContent = `https://jurek362.github.io/Tbh.fun/send.html?u=${userInfo.username}`;
-            }
+        function displayUserInfo(user) {
+            document.getElementById('displayUsername').textContent = `@${user.username}`;
+            document.getElementById('displayLink').textContent = user.link;
+            document.getElementById('userInfo').style.display = 'block';
         }
 
-        // Load messages - THIS WAS THE MISSING FUNCTION!
         async function loadMessages() {
-            const loading = document.getElementById('loading');
-            const messagesContainer = document.getElementById('messagesContainer');
-            const emptyState = document.getElementById('emptyState');
-            
-            loading.style.display = 'block';
-            messagesContainer.innerHTML = '';
-            emptyState.style.display = 'none';
-            hideError();
-            
+            if (!currentUserId) return;
+
             try {
-                const response = await fetch(`${API_BASE}/api/messages/${userId}`);
-                const data = await response.json();
+                showLoading(true);
                 
+                const response = await fetch(`${API_BASE}/api/messages/${currentUserId}`);
+                const data = await response.json();
+
                 if (data.success) {
-                    messages = data.data || [];
-                    updateStats();
-                    displayMessages();
+                    displayMessages(data.data);
+                    updateStats(data.data);
                 } else {
                     showError(data.error || 'Nie można załadować wiadomości');
                 }
             } catch (error) {
                 console.error('Error loading messages:', error);
-                showError('Błąd połączenia z serwerem');
+                showError('Błąd podczas ładowania wiadomości');
             } finally {
-                loading.style.display = 'none';
+                showLoading(false);
             }
         }
 
-        // Display messages based on current filter
-        function displayMessages() {
-            const messagesContainer = document.getElementById('messagesContainer');
-            const emptyState = document.getElementById('emptyState');
+        function displayMessages(messages) {
+            const container = document.getElementById('messagesContainer');
             
-            let filteredMessages = messages;
-            
-            // Apply filter
-            switch (currentFilter) {
-                case 'unread':
-                    filteredMessages = messages.filter(msg => !msg.read);
-                    break;
-                case 'today':
-                    const today = new Date().toDateString();
-                    filteredMessages = messages.filter(msg => 
-                        new Date(msg.created_at).toDateString() === today
-                    );
-                    break;
-                default:
-                    filteredMessages = messages;
-            }
-            
-            if (filteredMessages.length === 0) {
-                messagesContainer.innerHTML = '';
-                emptyState.style.display = 'block';
+            if (!messages || messages.length === 0) {
+                container.innerHTML = `
+                    <div class="no-messages">
+                        <div class="no-messages-icon">📭</div>
+                        <h3>Brak wiadomości</h3>
+                        <p>Gdy ktoś wyśle Ci anonimową wiadomość, pojawi się tutaj.</p>
+                        <p style="margin-top: 15px; color: #999;">
+                            Udostępnij swój link znajomym!
+                        </p>
+                    </div>
+                `;
                 return;
             }
-            
-            emptyState.style.display = 'none';
-            
-            messagesContainer.innerHTML = filteredMessages.map(message => `
-                <div class="message ${!message.read ? 'unread' : ''}" data-id="${message.id}">
-                    <div class="message-content">${escapeHtml(message.content)}</div>
+
+            container.innerHTML = messages.map(message => `
+                <div class="message-card">
+                    <div class="message-content">${escapeHtml(message.message)}</div>
                     <div class="message-meta">
-                        <div class="message-date">${formatDate(message.created_at)}</div>
-                        <div class="message-actions">
-                            ${!message.read ? `<button class="btn btn-small" onclick="markAsRead('${message.id}')">Oznacz jako przeczytane</button>` : ''}
-                            <button class="btn btn-small" style="background: #dc3545;" onclick="deleteMessage('${message.id}')">Usuń</button>
-                        </div>
+                        <span>📨 Anonimowa wiadomość</span>
+                        <span class="message-date">${formatDate(message.created_at)}</span>
                     </div>
                 </div>
             `).join('');
         }
 
-        // Update statistics
-        function updateStats() {
+        function updateStats(messages) {
+            const total = messages.length;
+            const today = getTodayMessages(messages);
+            const thisWeek = getThisWeekMessages(messages);
+
+            document.getElementById('totalMessages').textContent = total;
+            document.getElementById('todayMessages').textContent = today;
+            document.getElementById('thisWeekMessages').textContent = thisWeek;
+        }
+
+        function getTodayMessages(messages) {
             const today = new Date().toDateString();
-            const unreadCount = messages.filter(msg => !msg.read).length;
-            const todayCount = messages.filter(msg => 
+            return messages.filter(msg => 
                 new Date(msg.created_at).toDateString() === today
             ).length;
+        }
+
+        function getThisWeekMessages(messages) {
+            const oneWeekAgo = new Date();
+            oneWeekAgo.setDate(oneWeekAgo.getDate() - 7);
             
-            document.getElementById('totalMessages').textContent = messages.length;
-            document.getElementById('unreadMessages').textContent = unreadCount;
-            document.getElementById('todayMessages').textContent = todayCount;
+            return messages.filter(msg => 
+                new Date(msg.created_at) >= oneWeekAgo
+            ).length;
         }
 
-        // Filter messages
-        function filterMessages(filter) {
-            currentFilter = filter;
-            
-            // Update active filter button
-            document.querySelectorAll('.filter-btn').forEach(btn => {
-                btn.classList.remove('active');
-            });
-            event.target.classList.add('active');
-            
-            displayMessages();
-        }
+        function formatDate(dateString) {
+            const date = new Date(dateString);
+            const now = new Date();
+            const diffMs = now - date;
+            const diffMins = Math.floor(diffMs / 60000);
+            const diffHours = Math.floor(diffMins / 60);
+            const diffDays = Math.floor(diffHours / 24);
 
-        // Mark message as read
-        async function markAsRead(messageId) {
-            try {
-                const response = await fetch(`${API_BASE}/api/message/${messageId}/read`, {
-                    method: 'PUT'
-                });
-                
-                const data = await response.json();
-                
-                if (data.success) {
-                    // Update local message status
-                    const message = messages.find(msg => msg.id === messageId);
-                    if (message) {
-                        message.read = true;
-                    }
-                    updateStats();
-                    displayMessages();
-                } else {
-                    showError('Nie można oznaczyć wiadomości jako przeczytanej');
-                }
-            } catch (error) {
-                console.error('Error marking as read:', error);
-                showError('Błąd połączenia z serwerem');
+            if (diffMins < 60) {
+                return `${diffMins} min temu`;
+            } else if (diffHours < 24) {
+                return `${diffHours} godz. temu`;
+            } else if (diffDays < 7) {
+                return `${diffDays} dni temu`;
+            } else {
+                return date.toLocaleDateString('pl-PL');
             }
         }
 
-        // Mark all messages as read
-        async function markAllAsRead() {
-            if (!confirm('Czy na pewno chcesz oznaczyć wszystkie wiadomości jako przeczytane?')) {
-                return;
-            }
-            
-            try {
-                const response = await fetch(`${API_BASE}/api/messages/${userId}/read-all`, {
-                    method: 'PUT'
-                });
-                
-                const data = await response.json();
-                
-                if (data.success) {
-                    // Update local messages status
-                    messages.forEach(msg => msg.read = true);
-                    updateStats();
-                    displayMessages();
-                } else {
-                    showError('Nie można oznaczyć wszystkich wiadomości jako przeczytanych');
-                }
-            } catch (error) {
-                console.error('Error marking all as read:', error);
-                showError('Błąd połączenia z serwerem');
-            }
-        }
-
-        // Delete message
-        async function deleteMessage(messageId) {
-            if (!confirm('Czy na pewno chcesz usunąć tę wiadomość?')) {
-                return;
-            }
-            
-            try {
-                const response = await fetch(`${API_BASE}/api/message/${messageId}`, {
-                    method: 'DELETE'
-                });
-                
-                const data = await response.json();
-                
-                if (data.success) {
-                    // Remove message from local array
-                    messages = messages.filter(msg => msg.id !== messageId);
-                    updateStats();
-                    displayMessages();
-                } else {
-                    showError('Nie można usunąć wiadomości');
-                }
-            } catch (error) {
-                console.error('Error deleting message:', error);
-                showError('Błąd połączenia z serwerem');
-            }
-        }
-
-        // Delete all messages
-        async function deleteAllMessages() {
-            if (!confirm('Czy na pewno chcesz usunąć WSZYSTKIE wiadomości? Ta operacja jest nieodwracalna!')) {
-                return;
-            }
-            
-            try {
-                const response = await fetch(`${API_BASE}/api/messages/${userId}`, {
-                    method: 'DELETE'
-                });
-                
-                const data = await response.json();
-                
-                if (data.success) {
-                    messages = [];
-                    updateStats();
-                    displayMessages();
-                } else {
-                    showError('Nie można usunąć wszystkich wiadomości');
-                }
-            } catch (error) {
-                console.error('Error deleting all messages:', error);
-                showError('Błąd połączenia z serwerem');
-            }
-        }
-
-        // Copy share link
-        function copyShareLink() {
-            const shareLink = document.getElementById('shareLink').textContent;
-            navigator.clipboard.writeText(shareLink).then(() => {
-                const btn = event.target;
-                const originalText = btn.textContent;
-                btn.textContent = '✅ Skopiowano!';
-                
-                setTimeout(() => {
-                    btn.textContent = originalText;
-                }, 2000);
-            }).catch(() => {
-                alert('Nie udało się skopiować linku');
-            });
-        }
-
-        // Utility functions
         function escapeHtml(text) {
             const div = document.createElement('div');
             div.textContent = text;
             return div.innerHTML;
         }
 
-        function formatDate(dateString) {
-            const date = new Date(dateString);
-            const now = new Date();
-            const diffTime = Math.abs(now - date);
-            const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+        function copyUserLink() {
+            if (!currentUser) return;
             
-            if (diffDays === 1) {
-                return `Dzisiaj, ${date.toLocaleTimeString('pl-PL', { hour: '2-digit', minute: '2-digit' })}`;
-            } else if (diffDays === 2) {
-                return `Wczoraj, ${date.toLocaleTimeString('pl-PL', { hour: '2-digit', minute: '2-digit' })}`;
-            } else {
-                return date.toLocaleDateString('pl-PL') + ', ' + date.toLocaleTimeString('pl-PL', { hour: '2-digit', minute: '2-digit' });
-            }
+            navigator.clipboard.writeText(currentUser.link).then(() => {
+                const btn = document.querySelector('.copy-btn');
+                const originalText = btn.textContent;
+                btn.textContent = '✅ Skopiowano!';
+                btn.style.background = 'rgba(40, 167, 69, 0.8)';
+                
+                setTimeout(() => {
+                    btn.textContent = originalText;
+                    btn.style.background = 'rgba(255,255,255,0.3)';
+                }, 2000);
+            }).catch(() => {
+                alert('Nie udało się skopiować linku');
+            });
+        }
+
+        function showLoading(show) {
+            document.getElementById('loading').style.display = show ? 'block' : 'none';
         }
 
         function showError(message) {
@@ -616,12 +467,12 @@
             errorDiv.style.display = 'block';
         }
 
-        function hideError() {
-            document.getElementById('errorMessage').style.display = 'none';
-        }
-
-        // Auto-refresh messages every 30 seconds
-        setInterval(loadMessages, 30000);
+        // Auto-refresh co 30 sekund
+        setInterval(() => {
+            if (currentUserId) {
+                loadMessages();
+            }
+        }, 30000);
     </script>
 </body>
 </html>
