@@ -3,490 +3,73 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Wyślij anonimową wiadomość</title>
-    <style>
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
-        }
-
-        body {
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            min-height: 100vh;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            padding: 20px;
-        }
-
-        .container {
-            background: white;
-            border-radius: 20px;
-            padding: 40px;
-            box-shadow: 0 20px 40px rgba(0,0,0,0.1);
-            max-width: 600px;
-            width: 100%;
-        }
-
-        .header {
-            text-align: center;
-            margin-bottom: 40px;
-        }
-
-        h1 {
-            color: #333;
-            margin-bottom: 10px;
-            font-size: 2.2em;
-        }
-
-        .username {
-            color: #667eea;
-            font-size: 1.3em;
-            font-weight: 600;
-        }
-
-        .subtitle {
-            color: #666;
-            margin-top: 10px;
-            font-size: 1em;
-        }
-
-        .form-group {
-            margin-bottom: 25px;
-        }
-
-        label {
-            display: block;
-            margin-bottom: 10px;
-            font-weight: 600;
-            color: #333;
-            font-size: 1.1em;
-        }
-
-        textarea {
-            width: 100%;
-            min-height: 150px;
-            padding: 15px;
-            border: 2px solid #e1e5e9;
-            border-radius: 10px;
-            font-size: 16px;
-            font-family: inherit;
-            resize: vertical;
-            transition: border-color 0.3s;
-        }
-
-        textarea:focus {
-            outline: none;
-            border-color: #667eea;
-        }
-
-        .char-counter {
-            text-align: right;
-            margin-top: 5px;
-            font-size: 14px;
-            color: #666;
-        }
-
-        .char-counter.warning {
-            color: #ff6b6b;
-        }
-
-        .btn {
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            color: white;
-            border: none;
-            padding: 15px 30px;
-            border-radius: 10px;
-            font-size: 16px;
-            font-weight: 600;
-            cursor: pointer;
-            transition: transform 0.2s;
-            width: 100%;
-        }
-
-        .btn:hover {
-            transform: translateY(-2px);
-        }
-
-        .btn:disabled {
-            opacity: 0.6;
-            cursor: not-allowed;
-            transform: none;
-        }
-
-        .result {
-            margin-top: 30px;
-            padding: 20px;
-            border-radius: 10px;
-            display: none;
-            text-align: center;
-        }
-
-        .result.success {
-            background: #d4edda;
-            border: 1px solid #c3e6cb;
-            color: #155724;
-        }
-
-        .result.error {
-            background: #f8d7da;
-            border: 1px solid #f5c6cb;
-            color: #721c24;
-        }
-
-        .loading {
-            display: none;
-            text-align: center;
-            margin-top: 20px;
-        }
-
-        .spinner {
-            border: 3px solid #f3f3f3;
-            border-top: 3px solid #667eea;
-            border-radius: 50%;
-            width: 30px;
-            height: 30px;
-            animation: spin 1s linear infinite;
-            margin: 0 auto 10px;
-        }
-
-        @keyframes spin {
-            0% { transform: rotate(0deg); }
-            100% { transform: rotate(360deg); }
-        }
-
-        .info-box {
-            background: #e9f4ff;
-            border: 1px solid #b8daff;
-            border-radius: 10px;
-            padding: 20px;
-            margin-bottom: 30px;
-            text-align: center;
-        }
-
-        .info-box h3 {
-            color: #0056b3;
-            margin-bottom: 10px;
-        }
-
-        .info-box p {
-            color: #004085;
-            margin: 0;
-        }
-
-        .back-link {
-            text-align: center;
-            margin-top: 30px;
-        }
-
-        .back-link a {
-            color: #667eea;
-            text-decoration: none;
-            font-weight: 600;
-        }
-
-        .back-link a:hover {
-            text-decoration: underline;
-        }
-
-        .error-page {
-            text-align: center;
-            color: #721c24;
-        }
-
-        .error-page h1 {
-            color: #721c24;
-            margin-bottom: 20px;
-        }
-
-        .debug-info {
-            background: #f8f9fa;
-            border: 1px solid #e9ecef;
-            border-radius: 5px;
-            padding: 15px;
-            margin-top: 20px;
-            font-family: monospace;
-            font-size: 12px;
-            text-align: left;
-            display: none;
-        }
-
-        .debug-toggle {
-            margin-top: 10px;
-            font-size: 12px;
-            color: #666;
-            cursor: pointer;
-            text-decoration: underline;
-        }
-    </style>
+    <title>AnonMsg - Wyślij do @{{ user_profile.username }}</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+    <meta name="robots" content="noindex">
+    <meta property="og:title" content="Wyślij anonimową wiadomość do @{{ user_profile.username }}!" />
+    <meta property="og:description" content="Kliknij link, aby wysłać mi anonimową wiadomość!" />
+    <meta property="og:image" content="https://placehold.co/600x315/667eea/ffffff?text=AnonMsg" /> <meta name="twitter:card" content="summary_large_image" />
+    <meta name="twitter:site" content="@AnonMsgApp" />
+    <meta name="twitter:creator" content="@AnonMsgApp" />
 </head>
 <body>
     <div class="container">
-        <div id="errorPage" class="error-page" style="display: none;">
-            <h1>❌ Błąd</h1>
-            <p id="errorMessage"></p>
-            <div class="debug-toggle" onclick="toggleDebug()">Pokaż szczegóły techniczne</div>
-            <div id="debugInfo" class="debug-info"></div>
-            <div class="back-link">
-                <a href="index.html">← Powrót do strony głównej</a>
-            </div>
+        <div class="logo">
+            <h1>AnonMsg</h1>
+            <p>Wyślij anonimową wiadomość</p>
         </div>
 
-        <div id="mainContent">
-            <div class="header">
-                <h1>📝 Wyślij wiadomość</h1>
-                <div class="username" id="targetUsername">@username</div>
-                <p class="subtitle">Twoja wiadomość będzie całkowicie anonimowa</p>
+        <div class="card" id="messageSection">
+            <button class="btn back-btn" onclick="window.location.href = '/'">← Powrót</button>
+            <h3 style="text-align: center; margin-bottom: 20px; color: #333;">Wyślij anonimową wiadomość do <span id="targetUser">@{{ user_profile.username }}</span></h3>
+            
+            <div style="text-align: center; margin-bottom: 20px;">
+                <img src="{{ user_profile.avatar }}" alt="Zdjęcie profilowe użytkownika" style="width: 80px; height: 80px; border-radius: 50%; object-fit: cover; border: 3px solid #667eea;">
+                <p style="font-weight: 600; color: #667eea; margin-top: 10px;">@{{ user_profile.username }}</p>
             </div>
 
-            <div class="info-box">
-                <h3>🔒 Anonimowość gwarantowana</h3>
-                <p>Nie zapisujemy żadnych informacji o nadawcy. Twoja tożsamość pozostanie tajemnicą.</p>
-            </div>
-
-            <form id="messageForm">
-                <div class="form-group">
-                    <label for="message">Twoja anonimowa wiadomość:</label>
-                    <textarea 
-                        id="message" 
-                        name="message" 
-                        placeholder="Napisz coś miłego... 😊"
-                        maxlength="500"
-                        required
-                    ></textarea>
-                    <div class="char-counter" id="charCounter">0/500</div>
+            <form method="post" action="/send_message/{{ user_profile.uid }}">
+                <textarea name="messageText" id="messageText" class="message-textarea" placeholder="Napisz swoją anonimową wiadomość tutaj..." maxlength="500"></textarea>
+                <div class="message-counter">
+                    <span id="charCount">0</span>/500 znaków
                 </div>
-                
-                <button type="submit" class="btn" id="submitBtn">
-                    🚀 Wyślij anonimowo
-                </button>
+                <input type="hidden" name="deviceId" id="deviceId" value="placeholder_device_id"> <button class="btn" type="submit">Wyślij Anonimowo</button>
             </form>
+        </div>
 
-            <div class="loading" id="loading">
-                <div class="spinner"></div>
-                <p>Wysyłanie wiadomości...</p>
-            </div>
-
-            <div class="result" id="result">
-                <div id="resultMessage"></div>
-            </div>
-
-            <div class="back-link">
-                <a href="index.html">← Stwórz własny link</a>
-            </div>
+        <div class="footer">
+            <p>Wszystkie wiadomości są całkowicie anonimowe</p>
         </div>
     </div>
 
     <script>
-        const API_BASE = 'https://tbh-fun.onrender.com';
-        let debugMode = false;
-
-        // Pobierz username z URL
-        const urlParams = new URLSearchParams(window.location.search);
-        const username = urlParams.get('u');
-
-        if (!username) {
-            showError('Nieprawidłowy link. Brak nazwy użytkownika.', 'Missing username parameter');
-        } else {
-            document.getElementById('targetUsername').textContent = `@${username}`;
-            checkUserExists(username);
-        }
-
-        // Licznik znaków
-        const messageTextarea = document.getElementById('message');
-        const charCounter = document.getElementById('charCounter');
-
-        messageTextarea.addEventListener('input', function() {
-            const length = this.value.length;
-            charCounter.textContent = `${length}/500`;
-            
-            if (length > 450) {
-                charCounter.classList.add('warning');
-            } else {
-                charCounter.classList.remove('warning');
+        document.addEventListener('DOMContentLoaded', function() {
+            // Set a unique device ID if not already present in localStorage
+            if (!localStorage.getItem('deviceId')) {
+                localStorage.setItem('deviceId', 'anonmsg-' + Date.now() + '-' + Math.random().toString(36).substring(2, 9));
             }
-        });
+            document.getElementById('deviceId').value = localStorage.getItem('deviceId');
 
-        // Obsługa formularza
-        document.getElementById('messageForm').addEventListener('submit', async (e) => {
-            e.preventDefault();
-            
-            const message = messageTextarea.value.trim();
-            const submitBtn = document.getElementById('submitBtn');
-            const loading = document.getElementById('loading');
-            const result = document.getElementById('result');
-            
-            if (!message) {
-                showResult('Wiadomość nie może być pusta', 'error');
-                return;
-            }
+            // Character counter for the message textarea
+            const messageTextarea = document.getElementById('messageText');
+            const charCountSpan = document.getElementById('charCount');
 
-            submitBtn.disabled = true;
-            loading.style.display = 'block';
-            result.style.display = 'none';
-
-            try {
-                console.log('Wysyłanie żądania...', { username, message: message.substring(0, 50) + '...' });
-                
-                const response = await fetch(`${API_BASE}/api/send-message`, {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json',
-                        'Accept': 'application/json',
-                        'Origin': 'https://jurek362.github.io'
-                    },
-                    mode: 'cors',
-                    credentials: 'omit',
-                    body: JSON.stringify({ 
-                        username: username,
-                        message: message 
-                    })
-                });
-
-                console.log('Odpowiedź:', response.status, response.statusText);
-
-                if (!response.ok) {
-                    throw new Error(`HTTP ${response.status}: ${response.statusText}`);
-                }
-
-                const data = await response.json();
-                console.log('Dane:', data);
-
-                if (data.success) {
-                    showResult('✅ Wiadomość została wysłana pomyślnie!', 'success');
-                    messageTextarea.value = '';
-                    charCounter.textContent = '0/500';
-                    charCounter.classList.remove('warning');
-                } else {
-                    showResult(data.error || 'Wystąpił błąd podczas wysyłania', 'error');
-                }
-            } catch (error) {
-                console.error('Error:', error);
-                
-                let errorMsg = '❌ Błąd CORS lub blokada sieci. Sprawdź konfigurację serwera';
-                
-                if (error.name === 'TypeError' && error.message.includes('fetch')) {
-                    errorMsg = '🌐 Brak połączenia z serwerem. Sprawdź czy serwer działa.';
-                } else if (error.message.includes('CORS')) {
-                    errorMsg = '🚫 Błąd CORS. Serwer musi być skonfigurowany do obsługi żądań z GitHub Pages.';
-                } else if (error.message.includes('HTTP')) {
-                    errorMsg = `⚠️ Błąd serwera: ${error.message}`;
-                }
-                
-                showResult(errorMsg, 'error');
-                showError(errorMsg, `Error details: ${error.message}\nURL: ${API_BASE}/api/send-message\nMethod: POST\nOrigin: https://jurek362.github.io`);
-            } finally {
-                submitBtn.disabled = false;
-                loading.style.display = 'none';
-            }
-        });
-
-        async function checkUserExists(username) {
-            try {
-                console.log('Sprawdzanie użytkownika:', username);
-                
-                // Najpierw sprawdź debug endpoint
-                const debugResponse = await fetch(`${API_BASE}/api/debug/users`, {
-                    method: 'GET',
-                    headers: {
-                        'Accept': 'application/json',
-                        'Origin': 'https://jurek362.github.io'
-                    },
-                    mode: 'cors',
-                    credentials: 'omit'
-                });
-                
-                if (debugResponse.ok) {
-                    const debugData = await debugResponse.json();
-                    console.log('Debug - dostępni użytkownicy:', debugData);
-                }
-                
-                // Teraz sprawdź konkretnego użytkownika
-                const response = await fetch(`${API_BASE}/api/user/${username}`, {
-                    method: 'GET',
-                    headers: {
-                        'Accept': 'application/json',
-                        'Origin': 'https://jurek362.github.io'
-                    },
-                    mode: 'cors',
-                    credentials: 'omit'
-                });
-                
-                console.log('Status użytkownika:', response.status);
-                
-                if (!response.ok) {
-                    const errorData = await response.json();
-                    console.log('Błąd użytkownika:', errorData);
-                    
-                    if (response.status === 404) {
-                        showError(
-                            `Użytkownik "${username}" nie istnieje lub link jest nieprawidłowy.`, 
-                            `User ${username} not found (404)\nDostępni użytkownicy: ${errorData.available_users ? errorData.available_users.join(', ') : 'brak'}`
-                        );
+            if (messageTextarea && charCountSpan) {
+                messageTextarea.addEventListener('input', function() {
+                    const count = this.value.length;
+                    charCountSpan.textContent = count;
+                    if (count > 500) {
+                        this.style.borderColor = '#f44336'; // Red border for overflow
+                        charCountSpan.style.color = '#f44336'; // Red text for overflow
                     } else {
-                        showError('Błąd podczas weryfikacji użytkownika.', `HTTP ${response.status}: ${response.statusText}`);
+                        this.style.borderColor = '#e1e5e9'; // Default border
+                        charCountSpan.style.color = '#666'; // Default text
                     }
-                } else {
-                    const userData = await response.json();
-                    console.log('Użytkownik istnieje:', userData);
-                }
-            } catch (error) {
-                console.error('Error checking user:', error);
-                showError('❌ Błąd CORS lub blokada sieci. Sprawdź konfigurację serwera', `Network error: ${error.message}\nSprawdź czy serwer ${API_BASE} działa`);
-            }
-        }
-
-        function showResult(message, type) {
-            const result = document.getElementById('result');
-            const resultMessage = document.getElementById('resultMessage');
-            
-            result.className = `result ${type}`;
-            result.style.display = 'block';
-            resultMessage.textContent = message;
-        }
-
-        function showError(message, debugInfo = '') {
-            document.getElementById('mainContent').style.display = 'none';
-            document.getElementById('errorPage').style.display = 'block';
-            document.getElementById('errorMessage').textContent = message;
-            
-            if (debugInfo) {
-                document.getElementById('debugInfo').textContent = debugInfo;
-            }
-        }
-
-        function toggleDebug() {
-            const debugInfo = document.getElementById('debugInfo');
-            const toggle = document.querySelector('.debug-toggle');
-            
-            if (debugInfo.style.display === 'none' || !debugInfo.style.display) {
-                debugInfo.style.display = 'block';
-                toggle.textContent = 'Ukryj szczegóły techniczne';
-            } else {
-                debugInfo.style.display = 'none';
-                toggle.textContent = 'Pokaż szczegóły techniczne';
-            }
-        }
-
-        // Test połączenia z API
-        async function testConnection() {
-            try {
-                console.log('Testowanie połączenia z API...');
-                const response = await fetch(`${API_BASE}/api/health`, {
-                    method: 'GET',
-                    mode: 'cors',
-                    credentials: 'omit'
                 });
-                console.log('Test połączenia:', response.status === 200 ? 'OK' : 'FAILED');
-            } catch (error) {
-                console.error('Test połączenia nie powiódł się:', error);
+                // Initialize counter on load
+                charCountSpan.textContent = messageTextarea.value.length;
             }
-        }
-
-        // Uruchom test przy ładowaniu strony
-        testConnection();
+        });
     </script>
 </body>
 </html>
