@@ -387,6 +387,23 @@
             try {
                 console.log('Sprawdzanie użytkownika:', username);
                 
+                // Najpierw sprawdź debug endpoint
+                const debugResponse = await fetch(`${API_BASE}/api/debug/users`, {
+                    method: 'GET',
+                    headers: {
+                        'Accept': 'application/json',
+                        'Origin': 'https://jurek362.github.io'
+                    },
+                    mode: 'cors',
+                    credentials: 'omit'
+                });
+                
+                if (debugResponse.ok) {
+                    const debugData = await debugResponse.json();
+                    console.log('Debug - dostępni użytkownicy:', debugData);
+                }
+                
+                // Teraz sprawdź konkretnego użytkownika
                 const response = await fetch(`${API_BASE}/api/user/${username}`, {
                     method: 'GET',
                     headers: {
@@ -400,15 +417,24 @@
                 console.log('Status użytkownika:', response.status);
                 
                 if (!response.ok) {
+                    const errorData = await response.json();
+                    console.log('Błąd użytkownika:', errorData);
+                    
                     if (response.status === 404) {
-                        showError('Użytkownik nie istnieje lub link jest nieprawidłowy.', `User ${username} not found (404)`);
+                        showError(
+                            `Użytkownik "${username}" nie istnieje lub link jest nieprawidłowy.`, 
+                            `User ${username} not found (404)\nDostępni użytkownicy: ${errorData.available_users ? errorData.available_users.join(', ') : 'brak'}`
+                        );
                     } else {
                         showError('Błąd podczas weryfikacji użytkownika.', `HTTP ${response.status}: ${response.statusText}`);
                     }
+                } else {
+                    const userData = await response.json();
+                    console.log('Użytkownik istnieje:', userData);
                 }
             } catch (error) {
                 console.error('Error checking user:', error);
-                showError('❌ Błąd CORS lub blokada sieci. Sprawdź konfigurację serwera', `Network error: ${error.message}`);
+                showError('❌ Błąd CORS lub blokada sieci. Sprawdź konfigurację serwera', `Network error: ${error.message}\nSprawdź czy serwer ${API_BASE} działa`);
             }
         }
 
