@@ -1,10 +1,9 @@
-
 <!DOCTYPE html>
 <html lang="pl">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Panel WiadomoĹci - NGL Clone</title>
+    <title>Panel Wiadomości - NGL Clone</title>
     <style>
         * {
             margin: 0;
@@ -325,24 +324,24 @@
 <body>
     <div class="container">
         <div id="errorPage" class="error-page" style="display: none;">
-            <h1>â BĹÄd</h1>
+            <h1>❌ Błąd</h1>
             <p id="errorMessage"></p>
             <div class="debug-info" id="debugInfo" style="display: none;">
                 <strong>Debug Info:</strong><br>
                 <span id="debugDetails"></span>
             </div>
             <div class="back-link">
-                <a href="index.html">â PowrĂłt do strony gĹĂłwnej</a>
+                <a href="index.html">← Powrót do strony głównej</a>
             </div>
         </div>
 
         <div id="mainContent" style="display: none;">
             <div class="header">
-                <h1>đ Panel WiadomoĹci</h1>
+                <h1>📊 Panel Wiadomości</h1>
                 <div class="stats">
                     <div class="stat-item">
                         <div class="stat-number" id="totalMessages">0</div>
-                        <div class="stat-label">Wszystkie wiadomoĹci</div>
+                        <div class="stat-label">Wszystkie wiadomości</div>
                     </div>
                     <div class="stat-item">
                         <div class="stat-number" id="unreadMessages">0</div>
@@ -350,16 +349,16 @@
                     </div>
                 </div>
                 <div class="actions">
-                    <button class="btn" onclick="copyShareLink()">đ Skopiuj link</button>
-                    <button class="btn secondary" onclick="markAllAsRead()">â Oznacz wszystkie jako przeczytane</button>
-                    <a href="index.html" class="btn">â PowrĂłt</a>
+                    <button class="btn" onclick="copyShareLink()">📋 Skopiuj link</button>
+                    <button class="btn secondary" onclick="markAllAsRead()">✅ Oznacz wszystkie jako przeczytane</button>
+                    <a href="index.html" class="btn">← Powrót</a>
                 </div>
                 <div class="share-link" id="shareLink"></div>
             </div>
 
             <div class="messages-container">
                 <div class="messages-header">
-                    <h2 class="messages-title">Twoje wiadomoĹci</h2>
+                    <h2 class="messages-title">Twoje wiadomości</h2>
                     <div class="filter-buttons">
                         <button class="filter-btn active" onclick="filterMessages('all')">Wszystkie</button>
                         <button class="filter-btn" onclick="filterMessages('unread')">Nieprzeczytane</button>
@@ -369,15 +368,15 @@
 
                 <div id="messagesLoading" class="loading">
                     <div class="spinner"></div>
-                    <p>Ĺadowanie wiadomoĹci...</p>
+                    <p>Ładowanie wiadomości...</p>
                 </div>
 
                 <div id="messagesList"></div>
 
                 <div id="emptyState" class="empty-state" style="display: none;">
-                    <h3>đ­ Brak wiadomoĹci</h3>
-                    <p>Nie masz jeszcze Ĺźadnych wiadomoĹci. UdostÄpnij swĂłj link znajomym!</p>
-                    <button class="btn" onclick="copyShareLink()">đ Skopiuj link do udostÄpnienia</button>
+                    <h3>📭 Brak wiadomości</h3>
+                    <p>Nie masz jeszcze żadnych wiadomości. Udostępnij swój link znajomym!</p>
+                    <button class="btn" onclick="copyShareLink()">📋 Skopiuj link do udostępnienia</button>
                 </div>
             </div>
         </div>
@@ -414,7 +413,7 @@
             `;
 
             if (!currentUserId) {
-                showError('NieprawidĹowy link. Brak ID uĹźytkownika.');
+                showError('Nieprawidłowy link. Brak ID użytkownika.');
                 document.getElementById('debugInfo').style.display = 'block';
                 return;
             }
@@ -424,7 +423,7 @@
 
         async function loadMessages() {
             try {
-                console.log(`Ĺadowanie wiadomoĹci dla uĹźytkownika: ${currentUserId}`);
+                console.log(`Ładowanie wiadomości dla użytkownika: ${currentUserId}`);
                 
                 const response = await fetch(`${API_BASE}/api/messages/${currentUserId}`);
                 
@@ -451,7 +450,7 @@
                 
             } catch (error) {
                 console.error('Error loading messages:', error);
-                showError(`Nie moĹźna zaĹadowaÄ wiadomoĹci: ${error.message}`);
+                showError(`Nie można załadować wiadomości: ${error.message}`);
                 document.getElementById('debugInfo').style.display = 'block';
             }
         }
@@ -490,11 +489,11 @@
                     <div class="message-footer">
                         <div class="message-date">
                             <span>${formatDate(message.timestamp)}</span>
-                            ${message.read ? '<span style="color: #28a745;">â Przeczytane</span>' : '<span style="color: #667eea; font-weight: 600;">â Nowe</span>'}
+                            ${message.read ? '<span style="color: #28a745;">✓ Przeczytane</span>' : '<span style="color: #667eea; font-weight: 600;">● Nowe</span>'}
                         </div>
                         <div class="message-actions">
                             ${!message.read ? `<button class="mark-read-btn" onclick="markAsRead('${message.id}')">Oznacz jako przeczytane</button>` : ''}
-                            <button class="delete-btn" onclick="deleteMessage('${message.id}')">UsuĹ</button>
+                            <button class="delete-btn" onclick="deleteMessage('${message.id}')">Usuń</button>
                         </div>
                     </div>
                 </div>
@@ -530,12 +529,12 @@
                 }
             } catch (error) {
                 console.error('Error marking message as read:', error);
-                alert('Nie udaĹo siÄ oznaczyÄ wiadomoĹci jako przeczytanej');
+                alert('Nie udało się oznaczyć wiadomości jako przeczytanej');
             }
         }
 
         async function deleteMessage(messageId) {
-            if (!confirm('Czy na pewno chcesz usunÄÄ tÄ wiadomoĹÄ?')) {
+            if (!confirm('Czy na pewno chcesz usunąć tę wiadomość?')) {
                 return;
             }
 
@@ -552,7 +551,7 @@
                 }
             } catch (error) {
                 console.error('Error deleting message:', error);
-                alert('Nie udaĹo siÄ usunÄÄ wiadomoĹci');
+                alert('Nie udało się usunąć wiadomości');
             }
         }
 
@@ -560,11 +559,11 @@
             const unreadMessages = allMessages.filter(msg => !msg.read);
             
             if (unreadMessages.length === 0) {
-                alert('Wszystkie wiadomoĹci sÄ juĹź przeczytane');
+                alert('Wszystkie wiadomości są już przeczytane');
                 return;
             }
 
-            if (!confirm(`Czy chcesz oznaczyÄ ${unreadMessages.length} wiadomoĹci jako przeczytane?`)) {
+            if (!confirm(`Czy chcesz oznaczyć ${unreadMessages.length} wiadomości jako przeczytane?`)) {
                 return;
             }
 
@@ -585,7 +584,7 @@
                 displayMessages();
             } catch (error) {
                 console.error('Error marking all as read:', error);
-                alert('Nie udaĹo siÄ oznaczyÄ wszystkich wiadomoĹci jako przeczytanych');
+                alert('Nie udało się oznaczyć wszystkich wiadomości jako przeczytanych');
             }
         }
 
@@ -599,9 +598,9 @@
         function copyShareLink() {
             const shareLink = document.getElementById('shareLink').textContent;
             navigator.clipboard.writeText(shareLink).then(() => {
-                alert('Link zostaĹ skopiowany do schowka!');
+                alert('Link został skopiowany do schowka!');
             }).catch(() => {
-                alert('Nie udaĹo siÄ skopiowaÄ linku');
+                alert('Nie udało się skopiować linku');
             });
         }
 
@@ -613,7 +612,7 @@
             const diffHours = Math.floor(diffMs / 3600000);
             const diffDays = Math.floor(diffMs / 86400000);
 
-            if (diffMins < 1) return 'WĹaĹnie teraz';
+            if (diffMins < 1) return 'Właśnie teraz';
             if (diffMins < 60) return `${diffMins} min temu`;
             if (diffHours < 24) return `${diffHours} godz. temu`;
             if (diffDays < 7) return `${diffDays} dni temu`;
