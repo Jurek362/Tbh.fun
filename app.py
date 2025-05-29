@@ -1,4 +1,4 @@
-from flask import Flask, render_template, request, jsonify, redirect, url_for
+from flask import Flask, request, jsonify, redirect, url_for
 import json
 import os
 from datetime import datetime
@@ -33,7 +33,11 @@ def is_valid_username(username):
 @app.route('/')
 def index():
     """Strona główna"""
-    return render_template('index.html')
+    try:
+        with open('index.html', 'r', encoding='utf-8') as f:
+            return f.read()
+    except FileNotFoundError:
+        return "Brak pliku index.html", 404
 
 @app.route('/dashboard')
 def dashboard():
@@ -46,7 +50,11 @@ def dashboard():
     if user not in data['users']:
         return redirect(url_for('index'))
     
-    return render_template('dashboard.html')
+    try:
+        with open('dashboard.html', 'r', encoding='utf-8') as f:
+            return f.read()
+    except FileNotFoundError:
+        return "Brak pliku dashboard.html", 404
 
 @app.route('/send')
 def send_message_page():
@@ -59,7 +67,11 @@ def send_message_page():
     if to_user not in data['users']:
         return redirect(url_for('index'))
     
-    return render_template('send.html')
+    try:
+        with open('send.html', 'r', encoding='utf-8') as f:
+            return f.read()
+    except FileNotFoundError:
+        return "Brak pliku send.html", 404
 
 @app.route('/register', methods=['POST'])
 def register():
@@ -80,4 +92,96 @@ def register():
             'message': 'Ta nazwa użytkownika jest już zajęta'
         })
     
-    # Stwórz nowego uż
+    # Stwórz nowego użytkownika
+    data['users'][username] = {
+        'created_at': datetime.now().isoformat(),
+        'message_count': 0
+    }
+    
+    # Inicjalizuj listę wiadomości dla użytkownika
+    if username not in data['messages']:
+        data['messages'][username] = []
+    
+    save_data(data)
+    
+    return jsonify({
+        'success': True,
+        'message': 'Konto zostało utworzone pomyślnie'
+    })
+
+@app.route('/send_message', methods=['POST'])
+def send_message():
+    """Wyślij wiadomość do użytkownika"""
+    to_user = request.form.get('to', '').strip().lower()
+    message_content = request.form.get('message', '').strip()
+    
+    if not to_user or not message_content:
+        return jsonify({
+            'success': False,
+            'message': 'Brak odbiorcy lub wiadomości'
+        })
+    
+    if len(message_content) > 1000:
+        return jsonify({
+            'success': False,
+            'message': 'Wiadomość jest za długa (max 1000 znaków)'
+        })
+    
+    data = load_data()
+    
+    if to_user not in data['users']:
+        return jsonify({
+            'success': False,
+            'message': 'Użytkownik nie istnieje'
+        })
+    
+    # Dodaj wiadomość
+    message = {
+        'content': message_content,
+        'timestamp': datetime.now().isoformat(),
+        'id': len(data['messages'].get(to_user, [])) + 1
+    }
+    
+    if to_user not in data['messages']:
+        data['messages'][to_user] = []
+    
+    data['messages'][to_user].append(message)
+    data['users'][to_user]['message_count'] = len(data['messages'][to_user])
+    
+    save_data(data)
+    
+    return jsonify({
+        'success': True,
+        'message': 'Wiadomość została wysłana'
+    })
+
+@app.route('/messages')
+def get_messages():
+    """Pobierz wiadomości użytkownika"""
+    user = request.args.get('user', '').strip().lower()
+    
+    if not user:
+        return jsonify({
+            'success': False,
+            'message': 'Brak nazwy użytkownika'
+        })
+    
+    data = load_data()
+    
+    if user not in data['users']:
+        return jsonify({
+            'success': False,
+            'message': 'Użytkownik nie istnieje'
+        })
+    
+    messages = data['messages'].get(user, [])
+    # Sortuj wiadomości od najnowszych
+    messages.sort(key=lambda x: x['timestamp'], reverse=True)
+    
+    return jsonify({
+        'success': True,
+        'messages': messages
+    })
+
+if __name__ == '__main__':
+    app.run(debug=True, host='0.0.0.0', port=5000)
