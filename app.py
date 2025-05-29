@@ -28,7 +28,7 @@ def init_db():
                 id INTEGER PRIMARY KEY AUTOINCREMENT,
                 uid TEXT UNIQUE NOT NULL,
                 username TEXT UNIQUE NOT NULL,
-                avatar TEXT DEFAULT 'https://placehold.co/40x40/EC1187/ffffff?text=AV', -- External URL for avatar
+                avatar TEXT DEFAULT 'https://placehold.co/40x40/667eea/ffffff?text=AV', -- External URL for avatar with new style colors
                 region TEXT DEFAULT 'PL',
                 game_id TEXT
             )
@@ -53,7 +53,7 @@ def init_db():
         cursor.execute("SELECT COUNT(*) FROM users WHERE username = 'lsjulia_t'")
         if cursor.fetchone()[0] == 0:
             default_uid = str(uuid.uuid4()) # Generate a unique ID for the default user
-            default_avatar_url = 'https://placehold.co/40x40/EC1187/ffffff?text=LS'
+            default_avatar_url = 'https://placehold.co/40x40/667eea/ffffff?text=LS' # Avatar matching new style
             cursor.execute("INSERT INTO users (uid, username, avatar, region, game_id) VALUES (?, ?, ?, ?, ?)",
                            (default_uid, 'lsjulia_t', default_avatar_url, 'PL', 'some_game_id'))
             db.commit()
@@ -106,7 +106,7 @@ def user_profile(username):
         # If user does not exist, create a new one.
         new_uid = str(uuid.uuid4())
         # Use a placeholder avatar URL that includes the first letter of the username.
-        new_avatar_url = f'https://placehold.co/40x40/EC1187/ffffff?text={username[0].upper()}'
+        new_avatar_url = f'https://placehold.co/40x40/667eea/ffffff?text={username[0].upper()}'
         try:
             db.execute("INSERT INTO users (uid, username, avatar, region, game_id) VALUES (?, ?, ?, ?, ?)",
                        (new_uid, username, new_avatar_url, 'PL', str(uuid.uuid4()))) # Assign a new game_id
@@ -142,8 +142,8 @@ def send_message_post(uid):
     Handles the submission of anonymous messages via POST request.
     Saves the message to the database and redirects to a confirmation page.
     """
-    question = request.form.get('question')
-    device_id = request.form.get('deviceId')
+    question = request.form.get('messageText') # Changed from 'question' to 'messageText' to match new HTML
+    device_id = request.form.get('deviceId') # Assuming deviceId is still passed
 
     if not question or not question.strip(): # Ensure message is not empty or just whitespace
         return "Treść wiadomości nie może być pusta.", 400
