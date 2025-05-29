@@ -93,6 +93,11 @@
             transform: none;
         }
 
+        .btn.secondary {
+            background: #28a745;
+            margin-top: 10px;
+        }
+
         .result {
             margin-top: 30px;
             padding: 20px;
@@ -195,6 +200,32 @@
             font-weight: bold;
             margin-right: 10px;
         }
+
+        .existing-account {
+            background: #e9f7ef;
+            border: 1px solid #c3e6cb;
+            border-radius: 10px;
+            padding: 20px;
+            margin-bottom: 30px;
+            text-align: center;
+        }
+
+        .existing-account h3 {
+            color: #155724;
+            margin-bottom: 15px;
+        }
+
+        .existing-account p {
+            color: #155724;
+            margin-bottom: 15px;
+        }
+
+        .username-display {
+            font-family: monospace;
+            font-weight: bold;
+            color: #667eea;
+            font-size: 1.2em;
+        }
     </style>
 </head>
 <body>
@@ -202,13 +233,27 @@
         <h1>🔒 NGL Clone</h1>
         <p class="subtitle">Otrzymuj anonimowe wiadomości od znajomych</p>
 
-        <form id="createUserForm">
-            <div class="form-group">
-                <label for="username">Wybierz swoją nazwę użytkownika:</label>
-                <input type="text" id="username" name="username" placeholder="np. jankowalski" required>
-            </div>
-            <button type="submit" class="btn" id="submitBtn">Stwórz mój link</button>
-        </form>
+        <!-- Sekcja dla istniejącego konta -->
+        <div id="existingAccount" class="existing-account" style="display: none;">
+            <h3>👋 Witaj ponownie!</h3>
+            <p>Masz już konto: <span class="username-display" id="existingUsername"></span></p>
+            <button class="btn" onclick="goToDashboard()">📊 Przejdź do panelu</button>
+            <button class="btn secondary" onclick="copyExistingLink()">📋 Skopiuj link</button>
+            <p style="margin-top: 15px; font-size: 14px; color: #666;">
+                <a href="#" onclick="createNewAccount()" style="color: #dc3545;">Stwórz nowe konto</a>
+            </p>
+        </div>
+
+        <!-- Formularz tworzenia nowego konta -->
+        <div id="newAccountForm">
+            <form id="createUserForm">
+                <div class="form-group">
+                    <label for="username">Wybierz swoją nazwę użytkownika:</label>
+                    <input type="text" id="username" name="username" placeholder="np. jankowalski" required>
+                </div>
+                <button type="submit" class="btn" id="submitBtn">Stwórz mój link</button>
+            </form>
+        </div>
 
         <div class="loading" id="loading">
             <div class="spinner"></div>
@@ -240,8 +285,74 @@
 
     <script>
         const API_BASE = 'https://tbh-fun.onrender.com'; // Zmień na swój URL Render
-        let currentUserId = null;
+        let currentUserData = null;
 
+        // Funkcje do obsługi cookies
+        function setCookie(name, value, days) {
+            const expires = new Date();
+            expires.setTime(expires.getTime() + (days * 24 * 60 * 60 * 1000));
+            document.cookie = `${name}=${value};expires=${expires.toUTCString()};path=/`;
+        }
+
+        function getCookie(name) {
+            const nameEQ = name + "=";
+            const ca = document.cookie.split(';');
+            for(let i = 0; i < ca.length; i++) {
+                let c = ca[i];
+                while (c.charAt(0) === ' ') c = c.substring(1, c.length);
+                if (c.indexOf(nameEQ) === 0) return c.substring(nameEQ.length, c.length);
+            }
+            return null;
+        }
+
+        function deleteCookie(name) {
+            document.cookie = `${name}=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;`;
+        }
+
+        // Sprawdź czy użytkownik ma już zapisane konto
+        function checkExistingAccount() {
+            const savedUserData = getCookie('tbh_user_data');
+            if (savedUserData) {
+                try {
+                    currentUserData = JSON.parse(decodeURIComponent(savedUserData));
+                    showExistingAccount();
+                } catch (e) {
+                    console.error('Błąd przy wczytywaniu danych z cookies:', e);
+                    deleteCookie('tbh_user_data');
+                }
+            }
+        }
+
+        function showExistingAccount() {
+            document.getElementById('existingAccount').style.display = 'block';
+            document.getElementById('newAccountForm').style.display = 'none';
+            document.getElementById('existingUsername').textContent = `@${currentUserData.username}`;
+        }
+
+        function createNewAccount() {
+            deleteCookie('tbh_user_data');
+            document.getElementById('existingAccount').style.display = 'none';
+            document.getElementById('newAccountForm').style.display = 'block';
+            currentUserData = null;
+        }
+
+        function goToDashboard() {
+            if (currentUserData) {
+                window.location.href = `dashboard.html?user=${currentUserData.user_id}`;
+            }
+        }
+
+        function copyExistingLink() {
+            if (currentUserData) {
+                navigator.clipboard.writeText(currentUserData.link).then(() => {
+                    alert('Link został skopiowany do schowka!');
+                }).catch(() => {
+                    alert('Nie udało się skopiować linku');
+                });
+            }
+        }
+
+        // Obsługa formularza
         document.getElementById('createUserForm').addEventListener('submit', async (e) => {
             e.preventDefault();
             
@@ -261,6 +372,16 @@
                 return;
             }
 
+            if (username.length > 20) {
+                showResult('Nazwa użytkownika nie może być dłuższa niż 20 znaków', 'error');
+                return;
+            }
+
+            if (!/^[a-zA-Z0-9_-]+$/.test(username)) {
+                showResult('Nazwa użytkownika może zawierać tylko litery, cyfry, _ i -', 'error');
+                return;
+            }
+
             submitBtn.disabled = true;
             loading.style.display = 'block';
             result.style.display = 'none';
@@ -275,13 +396,20 @@
                 });
 
                 const data = await response.json();
-                console.log('Server response:', data); // Debug log
 
                 if (data.success) {
-                    // WAŻNE: Pobierz user_id z odpowiedzi serwera
-                    currentUserId = data.data.user_id; // Poprawione z data.user_id na data.data.user_id
+                    const userData = {
+                        user_id: data.user_id,
+                        username: data.username,
+                        link: data.link
+                    };
+                    
+                    // Zapisz dane w cookies na 30 dni
+                    setCookie('tbh_user_data', encodeURIComponent(JSON.stringify(userData)), 30);
+                    
+                    currentUserData = userData;
                     showResult('Link został utworzony pomyślnie!', 'success');
-                    showGeneratedLink(data.data.link, data.data.username, currentUserId);
+                    showGeneratedLink(data.link, data.username, data.user_id);
                 } else {
                     showResult(data.error || 'Wystąpił błąd', 'error');
                 }
@@ -304,14 +432,11 @@
         }
 
         function showGeneratedLink(link, username, userId) {
-            console.log('Setting up link with user ID:', userId); // Debug log
-            
             const linkContainer = document.getElementById('linkContainer');
             const generatedLink = document.getElementById('generatedLink');
             const dashboardLink = document.getElementById('dashboardLink');
             
             generatedLink.textContent = link;
-            // WAŻNE: Ustaw prawidłowy link do dashboardu z user_id
             dashboardLink.href = `dashboard.html?user=${userId}`;
             linkContainer.style.display = 'block';
         }
@@ -332,6 +457,11 @@
                 alert('Nie udało się skopiować linku');
             });
         }
+
+        // Inicjalizacja przy załadowaniu strony
+        document.addEventListener('DOMContentLoaded', function() {
+            checkExistingAccount();
+        });
     </script>
 </body>
 </html>
