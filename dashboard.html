@@ -158,6 +158,7 @@
                 <div class="share-link" id="shareLink">Ładowanie...</div>
                 <button class="btn" onclick="copyLink()">📋 Skopiuj link</button>
                 <button class="btn btn-secondary" onclick="shareLink()">📤 Udostępnij</button>
+                <button class="btn btn-secondary" onclick="logout()" style="background: #dc3545; margin-top: 10px;">🚪 Wyloguj</button>
             </div>
             
             <div class="stats">
@@ -187,17 +188,51 @@
     <script>
         let currentUser = '';
         
-        // Pobierz nazwę użytkownika z URL
+        // Funkcje do obsługi cookies
+        function setCookie(name, value, days) {
+            const expires = new Date();
+            expires.setTime(expires.getTime() + (days * 24 * 60 * 60 * 1000));
+            document.cookie = name + '=' + value + ';expires=' + expires.toUTCString() + ';path=/';
+        }
+        
+        function getCookie(name) {
+            const nameEQ = name + "=";
+            const ca = document.cookie.split(';');
+            for(let i = 0; i < ca.length; i++) {
+                let c = ca[i];
+                while (c.charAt(0) == ' ') c = c.substring(1, c.length);
+                if (c.indexOf(nameEQ) == 0) return c.substring(nameEQ.length, c.length);
+            }
+            return null;
+        }
+        
+        function deleteCookie(name) {
+            document.cookie = name + '=; Path=/; Expires=Thu, 01 Jan 1970 00:00:01 GMT;';
+        }
+        
+        // Pobierz nazwę użytkownika z URL lub cookies
         const urlParams = new URLSearchParams(window.location.search);
-        currentUser = urlParams.get('user');
+        currentUser = urlParams.get('user') || getCookie('anonlink_user');
         
         if (!currentUser) {
             window.location.href = 'https://jurek362.github.io/Tbh.fun/';
+        } else {
+            // Zapisz w cookies jeśli przyszedł z URL
+            if (urlParams.get('user')) {
+                setCookie('anonlink_user', currentUser, 30);
+            }
         }
         
         // Ustaw link do udostępnienia
         const shareUrl = 'https://jurek362.github.io/Tbh.fun/send.html?to=' + currentUser;
         document.getElementById('shareLink').textContent = shareUrl;
+        
+        function logout() {
+            if (confirm('Czy na pewno chcesz się wylogować?')) {
+                deleteCookie('anonlink_user');
+                window.location.href = 'https://jurek362.github.io/Tbh.fun/';
+            }
+        }
         
         function copyLink() {
             navigator.clipboard.writeText(shareUrl).then(() => {
