@@ -200,6 +200,26 @@
             color: #721c24;
             margin-bottom: 20px;
         }
+
+        .debug-info {
+            background: #f8f9fa;
+            border: 1px solid #e9ecef;
+            border-radius: 5px;
+            padding: 15px;
+            margin-top: 20px;
+            font-family: monospace;
+            font-size: 12px;
+            text-align: left;
+            display: none;
+        }
+
+        .debug-toggle {
+            margin-top: 10px;
+            font-size: 12px;
+            color: #666;
+            cursor: pointer;
+            text-decoration: underline;
+        }
     </style>
 </head>
 <body>
@@ -207,6 +227,8 @@
         <div id="errorPage" class="error-page" style="display: none;">
             <h1>❌ Błąd</h1>
             <p id="errorMessage"></p>
+            <div class="debug-toggle" onclick="toggleDebug()">Pokaż szczegóły techniczne</div>
+            <div id="debugInfo" class="debug-info"></div>
             <div class="back-link">
                 <a href="index.html">← Powrót do strony głównej</a>
             </div>
@@ -258,17 +280,18 @@
     </div>
 
     <script>
-        const API_BASE = 'https://tbh-fun.onrender.com'; // Twój URL Render
+        const API_BASE = 'https://tbh-fun.onrender.com';
+        let debugMode = false;
 
         // Pobierz username z URL
         const urlParams = new URLSearchParams(window.location.search);
         const username = urlParams.get('u');
 
         if (!username) {
-            showError('Nieprawidłowy link. Brak nazwy użytkownika.');
+            showError('Nieprawidłowy link. Brak nazwy użytkownika.', 'Missing username parameter');
         } else {
             document.getElementById('targetUsername').textContent = `@${username}`;
-            // Nie sprawdzamy czy user istnieje - po prostu pokazujemy formularz
+            checkUserExists(username);
         }
 
         // Licznik znaków
@@ -300,90 +323,94 @@
                 return;
             }
 
-            if (!username) {
-                showResult('Nieprawidłowy link - brak nazwy użytkownika', 'error');
-                return;
-            }
-
             submitBtn.disabled = true;
             loading.style.display = 'block';
             result.style.display = 'none';
 
             try {
-                console.log('Sprawdzanie serwera...');
+                console.log('Wysyłanie żądania...', { username, message: message.substring(0, 50) + '...' });
                 
-                // Najpierw sprawdź podstawowy endpoint
-                const healthResponse = await fetch(`${API_BASE}/api/health`, {
-                    method: 'GET',
-                    mode: 'cors',
+                const response = await fetch(`${API_BASE}/api/send-message`, {
+                    method: 'POST',
                     headers: {
                         'Content-Type': 'application/json',
-                    }
-                });
-                
-                if (!healthResponse.ok) {
-                    throw new Error(`Serwer nie odpowiada (${healthResponse.status})`);
-                }
-
-                console.log('Serwer działa, sprawdzanie użytkowników...');
-                
-                // Sprawdź endpoint użytkowników
-                const usersResponse = await fetch(`${API_BASE}/api/users`, {
-                    method: 'GET',
+                        'Accept': 'application/json',
+                        'Origin': 'https://jurek362.github.io'
+                    },
                     mode: 'cors',
-                    headers: {
-                        'Content-Type': 'application/json',
-                    }
+                    credentials: 'omit',
+                    body: JSON.stringify({ 
+                        username: username,
+                        message: message 
+                    })
                 });
-                
-                if (!usersResponse.ok) {
-                    throw new Error(`Błąd pobierania użytkowników (${usersResponse.status})`);
+
+                console.log('Odpowiedź:', response.status, response.statusText);
+
+                if (!response.ok) {
+                    throw new Error(`HTTP ${response.status}: ${response.statusText}`);
                 }
 
-                const usersData = await usersResponse.json();
-                console.log('Dane użytkowników:', usersData);
-                
-                // Sprawdź czy user o podanym username istnieje
-                if (!usersData.success || !usersData.data) {
-                    throw new Error('Nieprawidłowa odpowiedź serwera');
+                const data = await response.json();
+                console.log('Dane:', data);
+
+                if (data.success) {
+                    showResult('✅ Wiadomość została wysłana pomyślnie!', 'success');
+                    messageTextarea.value = '';
+                    charCounter.textContent = '0/500';
+                    charCounter.classList.remove('warning');
+                } else {
+                    showResult(data.error || 'Wystąpił błąd podczas wysyłania', 'error');
                 }
-
-                const userExists = usersData.data.some(user => 
-                    user.username && user.username.toLowerCase() === username.toLowerCase()
-                );
-
-                if (!userExists) {
-                    showResult('❌ Użytkownik nie istnieje lub link jest nieprawidłowy.', 'error');
-                    return;
-                }
-
-                console.log('Użytkownik istnieje, wysyłanie wiadomości...');
-
-                // Symulacja wysyłania wiadomości (na razie brak endpointu)
-                await new Promise(resolve => setTimeout(resolve, 1000));
-                
-                showResult('✅ Wiadomość została wysłana pomyślnie!', 'success');
-                messageTextarea.value = '';
-                charCounter.textContent = '0/500';
-                charCounter.classList.remove('warning');
-                
             } catch (error) {
-                console.error('Szczegóły błędu:', error);
+                console.error('Error:', error);
+                
+                let errorMsg = '❌ Błąd CORS lub blokada sieci. Sprawdź konfigurację serwera';
                 
                 if (error.name === 'TypeError' && error.message.includes('fetch')) {
-                    showResult('❌ Błąd CORS lub blokada sieci. Sprawdź konfigurację serwera.', 'error');
-                } else if (error.message.includes('nie istnieje')) {
-                    showResult('❌ Użytkownik nie istnieje lub link jest nieprawidłowy.', 'error');
+                    errorMsg = '🌐 Brak połączenia z serwerem. Sprawdź czy serwer działa.';
                 } else if (error.message.includes('CORS')) {
-                    showResult('❌ Błąd CORS - serwer nie zezwala na połączenia z tej strony.', 'error');
-                } else {
-                    showResult(`❌ Błąd: ${error.message}`, 'error');
+                    errorMsg = '🚫 Błąd CORS. Serwer musi być skonfigurowany do obsługi żądań z GitHub Pages.';
+                } else if (error.message.includes('HTTP')) {
+                    errorMsg = `⚠️ Błąd serwera: ${error.message}`;
                 }
+                
+                showResult(errorMsg, 'error');
+                showError(errorMsg, `Error details: ${error.message}\nURL: ${API_BASE}/api/send-message\nMethod: POST\nOrigin: https://jurek362.github.io`);
             } finally {
                 submitBtn.disabled = false;
                 loading.style.display = 'none';
             }
         });
+
+        async function checkUserExists(username) {
+            try {
+                console.log('Sprawdzanie użytkownika:', username);
+                
+                const response = await fetch(`${API_BASE}/api/user/${username}`, {
+                    method: 'GET',
+                    headers: {
+                        'Accept': 'application/json',
+                        'Origin': 'https://jurek362.github.io'
+                    },
+                    mode: 'cors',
+                    credentials: 'omit'
+                });
+                
+                console.log('Status użytkownika:', response.status);
+                
+                if (!response.ok) {
+                    if (response.status === 404) {
+                        showError('Użytkownik nie istnieje lub link jest nieprawidłowy.', `User ${username} not found (404)`);
+                    } else {
+                        showError('Błąd podczas weryfikacji użytkownika.', `HTTP ${response.status}: ${response.statusText}`);
+                    }
+                }
+            } catch (error) {
+                console.error('Error checking user:', error);
+                showError('❌ Błąd CORS lub blokada sieci. Sprawdź konfigurację serwera', `Network error: ${error.message}`);
+            }
+        }
 
         function showResult(message, type) {
             const result = document.getElementById('result');
@@ -394,11 +421,46 @@
             resultMessage.textContent = message;
         }
 
-        function showError(message) {
+        function showError(message, debugInfo = '') {
             document.getElementById('mainContent').style.display = 'none';
             document.getElementById('errorPage').style.display = 'block';
             document.getElementById('errorMessage').textContent = message;
+            
+            if (debugInfo) {
+                document.getElementById('debugInfo').textContent = debugInfo;
+            }
         }
+
+        function toggleDebug() {
+            const debugInfo = document.getElementById('debugInfo');
+            const toggle = document.querySelector('.debug-toggle');
+            
+            if (debugInfo.style.display === 'none' || !debugInfo.style.display) {
+                debugInfo.style.display = 'block';
+                toggle.textContent = 'Ukryj szczegóły techniczne';
+            } else {
+                debugInfo.style.display = 'none';
+                toggle.textContent = 'Pokaż szczegóły techniczne';
+            }
+        }
+
+        // Test połączenia z API
+        async function testConnection() {
+            try {
+                console.log('Testowanie połączenia z API...');
+                const response = await fetch(`${API_BASE}/api/health`, {
+                    method: 'GET',
+                    mode: 'cors',
+                    credentials: 'omit'
+                });
+                console.log('Test połączenia:', response.status === 200 ? 'OK' : 'FAILED');
+            } catch (error) {
+                console.error('Test połączenia nie powiódł się:', error);
+            }
+        }
+
+        // Uruchom test przy ładowaniu strony
+        testConnection();
     </script>
 </body>
 </html>
