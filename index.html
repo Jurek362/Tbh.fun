@@ -4,7 +4,278 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>AnonMsg - Strona Główna</title>
-    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+    <style>
+        /* Global reset */
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        /* Body styling with a gradient background */
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); /* Purple-blue gradient */
+            min-height: 100vh; /* Full viewport height */
+            color: #333; /* Default text color */
+            display: flex; /* Use flexbox for centering content */
+            align-items: center; /* Center content vertically */
+            justify-content: center; /* Center content horizontally */
+            padding: 20px; /* Add some padding for smaller screens */
+        }
+
+        /* Main container for the app content */
+        .container {
+            max-width: 600px;
+            margin: 0 auto;
+            padding: 0; /* Removed padding here as it's in body */
+            width: 100%; /* Ensure container takes full width up to max-width */
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+        }
+
+        /* Logo section styling */
+        .logo {
+            text-align: center;
+            margin-bottom: 40px;
+        }
+
+        .logo h1 {
+            color: white;
+            font-size: 3rem;
+            font-weight: 700;
+            text-shadow: 0 4px 15px rgba(0,0,0,0.2); /* Subtle shadow for depth */
+            margin-bottom: 10px;
+        }
+
+        .logo p {
+            color: rgba(255,255,255,0.8); /* Slightly transparent white */
+            font-size: 1.1rem;
+        }
+
+        /* Card styling for main sections */
+        .card {
+            background: white;
+            padding: 40px;
+            border-radius: 20px;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.1); /* Larger shadow for floating effect */
+            margin-bottom: 20px;
+            backdrop-filter: blur(10px); /* Frosted glass effect */
+            -webkit-backdrop-filter: blur(10px); /* For Safari support */
+        }
+
+        /* Profile input section */
+        .profile-section {
+            text-align: center;
+            margin-bottom: 30px;
+        }
+
+        .profile-input {
+            width: 100%;
+            padding: 15px;
+            border: 2px solid #e1e5e9; /* Light grey border */
+            border-radius: 12px;
+            font-size: 1rem;
+            margin-bottom: 15px;
+            transition: all 0.3s ease; /* Smooth transition for focus */
+        }
+
+        .profile-input:focus {
+            outline: none;
+            border-color: #667eea; /* Highlight border on focus */
+            box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1); /* Subtle glow on focus */
+        }
+
+        /* General button styling */
+        .btn {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); /* Button gradient */
+            color: white;
+            border: none;
+            padding: 15px 30px;
+            border-radius: 12px;
+            font-size: 1rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease; /* Smooth transitions for hover/active */
+            width: 100%;
+            margin-bottom: 10px;
+            text-decoration: none; /* For anchor tags acting as buttons */
+            display: inline-block; /* For anchor tags */
+            text-align: center; /* For anchor tags */
+        }
+
+        .btn:hover {
+            transform: translateY(-2px); /* Lift effect on hover */
+            box-shadow: 0 10px 25px rgba(102, 126, 234, 0.3); /* Enhanced shadow on hover */
+        }
+
+        .btn:active {
+            transform: translateY(0); /* Press down effect on click */
+        }
+
+        /* Message form specific styles (not directly used on index.html, but included for consistency) */
+        .message-form { }
+        .message-textarea { }
+        .message-counter { }
+        .link-display { }
+        .generated-link { }
+        .messages-section { }
+        .message-item { }
+        .message-time { }
+        .message-text { }
+        .empty-state { }
+
+
+        /* Footer styling */
+        .footer {
+            text-align: center;
+            margin-top: 40px;
+            color: rgba(255,255,255,0.7);
+        }
+
+        /* Notification pop-up */
+        .notification {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            background: #4CAF50; /* Green for success */
+            color: white;
+            padding: 15px 20px;
+            border-radius: 12px;
+            box-shadow: 0 10px 25px rgba(0,0,0,0.2);
+            transform: translateX(400px); /* Start off-screen */
+            transition: transform 0.3s ease; /* Slide-in animation */
+            z-index: 1000;
+            min-width: 250px; /* Ensure notification is wide enough */
+            text-align: center;
+        }
+
+        .notification.show {
+            transform: translateX(0); /* Slide into view */
+        }
+
+        /* Specific button styles */
+        .back-btn {
+            background: #6c757d; /* Grey background for back button */
+            margin-bottom: 20px;
+        }
+        .back-btn:hover {
+            background: #5a6268;
+        }
+        .btn.success-btn { /* Changed from [onclick="showMessages()"] to a class */
+            background: #28a745; /* Green for check messages button */
+        }
+        .btn.success-btn:hover {
+            background: #218838;
+        }
+        .btn.info-btn { /* Changed from [onclick="shareLink()"] to a class */
+            background: #17a2b8; /* Blue for share button */
+        }
+        .btn.info-btn:hover {
+            background: #138496;
+        }
+
+        /* New UI elements for send.html (included here for completeness of inline CSS, though not directly used by index.html) */
+        .profile-display {
+            text-align: center;
+            margin-bottom: 25px;
+            padding: 15px;
+            background-color: #f8f9fa; /* Light background for profile info */
+            border-radius: 15px;
+            box-shadow: inset 0 1px 3px rgba(0,0,0,0.1); /* Inner shadow */
+        }
+
+        .profile-avatar {
+            width: 90px; /* Slightly larger avatar */
+            height: 90px;
+            border-radius: 50%;
+            object-fit: cover;
+            border: 4px solid #667eea; /* Stronger border */
+            box-shadow: 0 0 0 5px rgba(102, 126, 234, 0.2); /* Outer glow */
+            margin-bottom: 10px;
+        }
+
+        .profile-username {
+            font-weight: 700; /* Bolder username */
+            color: #667eea; /* Primary color */
+            font-size: 1.3rem;
+        }
+
+        .textarea-wrapper {
+            position: relative;
+            margin-bottom: 20px; /* Space below the textarea */
+        }
+
+        .textarea-wrapper .message-textarea {
+            margin-bottom: 0; /* Remove default margin */
+            padding-right: 50px; /* Make space for the dice button */
+        }
+
+        .textarea-wrapper .dice-button {
+            position: absolute;
+            right: 15px;
+            bottom: 15px;
+            background: none;
+            border: none;
+            font-size: 1.8rem; /* Larger dice icon */
+            cursor: pointer;
+            transition: transform 0.2s ease;
+            padding: 5px; /* Make clickable area larger */
+        }
+
+        .textarea-wrapper .dice-button:hover {
+            transform: scale(1.1);
+        }
+        .textarea-wrapper .dice-button:active {
+            transform: scale(0.9);
+        }
+
+        /* Responsive adjustments */
+        @media (max-width: 480px) {
+            body {
+                padding: 10px; /* Reduce overall padding on very small screens */
+            }
+            .container {
+                padding: 0;
+            }
+            .card {
+                padding: 25px;
+            }
+            .logo h1 {
+                font-size: 2.2rem;
+            }
+            .logo p {
+                font-size: 1rem;
+            }
+            .btn {
+                padding: 12px 20px;
+                font-size: 0.95rem;
+            }
+            .profile-avatar {
+                width: 70px;
+                height: 70px;
+            }
+            .profile-username {
+                font-size: 1.1rem;
+            }
+            .message-textarea {
+                min-height: 120px;
+                padding: 15px;
+            }
+            .textarea-wrapper .dice-button {
+                font-size: 1.5rem;
+                right: 10px;
+                bottom: 10px;
+            }
+            .notification {
+                top: 10px;
+                right: 10px;
+                min-width: unset;
+                width: calc(100% - 20px);
+            }
+        }
+    </style>
 </head>
 <body>
     <div class="container">
@@ -13,12 +284,48 @@
             <p>Otrzymuj anonimowe wiadomości od znajomych</p>
         </div>
 
-        <div class="card" id="mainSection">
-            <div class="profile-section">
-                <h3 style="text-align: center; margin-bottom: 20px; color: #333;">Stwórz swój profil lub sprawdź wiadomości</h3>
-                <input type="text" id="usernameInput" class="profile-input" placeholder="Wpisz swoją nazwę użytkownika" maxlength="20">
-                <button class="btn" onclick="redirectToUserProfile()">Stwórz / Przejdź do Profilu</button>
-                <button class="btn success-btn" onclick="redirectToDashboard()">Sprawdź Wiadomości</button>
+        <div class="card" id="authSection">
+            <h3 style="text-align: center; margin-bottom: 20px; color: #333;">Zarejestruj się lub Zaloguj</h3>
+            
+            {% with messages = get_flashed_messages(with_categories=true) %}
+                {% if messages %}
+                    <div class="flash-messages" style="margin-bottom: 20px;">
+                        {% for category, message in messages %}
+                            <div class="notification {{ category }} show" style="position: relative; top: auto; right: auto; transform: none; margin-bottom: 10px; background: {% if category == 'error' %}#f44336{% elif category == 'success' %}#4CAF50{% else %}#17a2b8{% endif %};">
+                                {{ message }}
+                            </div>
+                        {% endfor %}
+                    </div>
+                {% endif %}
+            {% endwith %}
+
+            <form method="POST" action="/register" style="margin-bottom: 30px;">
+                <h4 style="margin-bottom: 15px; color: #555;">Rejestracja</h4>
+                <input type="text" name="username" class="profile-input" placeholder="Nazwa użytkownika" maxlength="20" required>
+                <input type="password" name="password" class="profile-input" placeholder="Hasło (min. 6 znaków)" required>
+                <button type="submit" class="btn">Zarejestruj się</button>
+            </form>
+
+            <form method="POST" action="/login">
+                <h4 style="margin-bottom: 15px; color: #555;">Logowanie</h4>
+                <input type="text" name="username" class="profile-input" placeholder="Nazwa użytkownika" required>
+                <input type="password" name="password" class="profile-input" placeholder="Hasło" required>
+                <button type="submit" class="btn success-btn">Zaloguj się</button>
+            </form>
+
+            {% if current_user.is_authenticated %}
+                <div style="text-align: center; margin-top: 30px;">
+                    <p style="color: #555; margin-bottom: 10px;">Jesteś zalogowany jako <strong>@{{ current_user.username }}</strong></p>
+                    <button class="btn info-btn" onclick="window.location.href='/dashboard'">Przejdź do Dashboardu</button>
+                    <button class="btn back-btn" onclick="window.location.href='/logout'">Wyloguj się</button>
+                </div>
+            {% endif %}
+
+            <div style="text-align: center; margin-top: 30px;">
+                <p style="color: #666; font-size: 0.9rem;">
+                    Chcesz wysłać wiadomość do kogoś? Wpisz jego nazwę użytkownika w adresie URL, np. <br>
+                    <code style="background: #f0f0f0; padding: 5px 10px; border-radius: 5px;">/lsjulia_t</code>
+                </p>
             </div>
         </div>
 
@@ -26,59 +333,6 @@
             <p>Wszystkie wiadomości są całkowicie anonimowe</p>
         </div>
     </div>
-
-    <div class="notification" id="notification"></div>
-
-    <script>
-        // Funkcja do wyświetlania tymczasowych powiadomień
-        function showNotification(text, type = 'success') {
-            const notification = document.getElementById('notification');
-            if (!notification) return;
-
-            notification.textContent = text;
-            notification.style.background = type === 'success' ? '#4CAF50' : '#f44336';
-            notification.classList.add('show');
-            
-            setTimeout(() => {
-                notification.classList.remove('show');
-            }, 3000);
-        }
-
-        // Funkcja przekierowująca do profilu użytkownika
-        function redirectToUserProfile() {
-            const username = document.getElementById('usernameInput').value.trim();
-            if (!username) {
-                showNotification('Wpisz nazwę użytkownika!', 'error');
-                return;
-            }
-            if (username.length < 3) {
-                showNotification('Nazwa użytkownika musi mieć minimum 3 znaki!', 'error');
-                return;
-            }
-            if (!/^[a-zA-Z0-9_]+$/.test(username)) {
-                showNotification('Nazwa użytkownika może zawierać tylko litery, cyfry i podkreślenia!', 'error');
-                return;
-            }
-            window.location.href = '/' + username;
-        }
-
-        // Funkcja przekierowująca do dashboardu
-        function redirectToDashboard() {
-            const username = document.getElementById('usernameInput').value.trim();
-            if (!username) {
-                showNotification('Wpisz nazwę użytkownika!', 'error');
-                return;
-            }
-            if (username.length < 3) {
-                showNotification('Nazwa użytkownika musi mieć minimum 3 znaki!', 'error');
-                return;
-            }
-            if (!/^[a-zA-Z0-9_]+$/.test(username)) {
-                showNotification('Nazwa użytkownika może zawierać tylko litery, cyfry i podkreślenia!', 'error');
-                return;
-            }
-            window.location.href = '/dashboard/' + username;
-        }
-    </script>
 </body>
 </html>
+
