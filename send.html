@@ -222,7 +222,7 @@
         </form>
         
         <div class="back-link">
-            <a href="/">← Stwórz własny link</a>
+            <a href="https://jurek362.github.io/Tbh.fun/">← Stwórz własny link</a>
         </div>
     </div>
     
@@ -277,12 +277,15 @@
             sendBtn.textContent = '📤 Wysyłanie...';
             
             // Wyślij wiadomość
-            fetch('/send_message', {
+            fetch('https://tbh-fun.onrender.com/send_message', {
                 method: 'POST',
                 headers: {
-                    'Content-Type': 'application/x-www-form-urlencoded',
+                    'Content-Type': 'application/json',
                 },
-                body: `to=${encodeURIComponent(recipient)}&message=${encodeURIComponent(message)}`
+                body: JSON.stringify({
+                    to: recipient,
+                    message: message
+                })
             })
             .then(response => response.json())
             .then(data => {
@@ -339,4 +342,4 @@
         }
     </script>
 </body>
-</html>
+    </html>
