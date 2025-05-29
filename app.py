@@ -1,99 +1,108 @@
 import os
 import uuid
-# import smtplib # Nieużywane, jeśli funkcjonalność e-mail jest wyłączona
-# import random # Nieużywane
-# from email.mime.text import MIMEText # Nieużywane
+import random
 from flask import Flask, render_template, request, redirect, url_for, session, jsonify
+from flask_cors import CORS
 
-app = Flask(__name__)
-app.secret_key = os.urandom(24)
+# Zmodyfikuj inicjalizację Flask, aby wskazać bieżący katalog jako folder szablonów.
+app = Flask(__name__, template_folder='.')
 
-# Zmienne środowiskowe do konfiguracji serwera e-mail (obecnie nieużywane)
-# EMAIL_ADDRESS = os.environ.get('EMAIL_USER')
-# EMAIL_PASSWORD = os.environ.get('EMAIL_PASS')
+app.secret_key = os.urandom(24) # Ustaw losowy klucz sesji
+
+# Konfiguracja CORS: Zezwól na żądania z konkretnej domeny dla tras zaczynających się od /api/
+CORS(app, resources={r"/api/*": {"origins": "https://jurek362.github.io"}})
 
 # Prosta "baza danych" w pamięci
-# UWAGA: Dane w tych słownikach są tracone po każdym restarcie aplikacji na Render.
-# Do trwałego przechowywania danych rozważ użycie bazy danych (np. PostgreSQL, SQLite, Redis).
-users = {}  # {user_id: {"nickname": "...", "password": "...", "verified": True/False}}
-user_ids = {}  # {nickname: user_id}
+# Zmieniona struktura: {user_id: {"nickname": "...", "messages":}}
+users = {}
+user_ids = {} # {nickname: user_id}
+
+# Usunięto trasy /login, /register (formularzowe), /logout, /check_login_status
+# Aplikacja działa bez logowania/hasła, użytkownicy są tworzeni przez API
 
 @app.route('/')
 def index():
-    if 'user_id' in session and session['user_id'] in users:
-        user_id = session['user_id']
-        if users[user_id].get('verified', False):
-            return render_template('home.html', nickname=users[user_id]['nickname'])
-        else:
-            # Ten scenariusz jest mało prawdopodobny, jeśli 'verified' jest zawsze True po rejestracji.
-            return redirect(url_for('login'))
+    """
+    Główna strona aplikacji. Po prostu renderuje index.html.
+    Nie ma już logiki sesji/logowania na tej trasie.
+    """
     return render_template('index.html')
 
-@app.route('/login', methods=['GET', 'POST'])
-def login():
-    if request.method == 'POST':
-        nickname = request.form.get('nickname') # Użyj .get() dla bezpieczeństwa
-        password = request.form.get('password')
+# TRASA API do tworzenia użytkowników z frontendu (np. JavaScript)
+@app.route('/api/create-user', methods=) # POPRAWIONO: methods=
+def api_create_user():
+    """
+    Endpoint API do tworzenia nowego użytkownika.
+    Wymaga tylko pseudonimu. Generuje unikalne user_id.
+    """
+    data = request.get_json()
+    if not data:
+        return jsonify({"error": "Brak danych JSON w żądaniu"}), 400 # Bad Request
 
-        if not nickname or not password:
-            return render_template('login.html', error="Wprowadź nazwę użytkownika i hasło.")
+    nickname = data.get('username') # Frontend wysyła 'username'
 
-        if nickname in user_ids:
-            user_id = user_ids[nickname]
-            if users[user_id]['password'] == password:
-                session['user_id'] = user_id
-                users[user_id]['verified'] = True # Upewnij się, że jest zweryfikowany
-                return redirect(url_for('index'))
-            else:
-                return render_template('login.html', error="Błędne hasło")
-        else:
-            return render_template('login.html', error="Użytkownik nie istnieje")
-    return render_template('login.html')
+    if not nickname:
+        return jsonify({"error": "Pseudonim jest wymagany"}), 400
 
-@app.route('/register', methods=['GET', 'POST'])
-def register():
-    if request.method == 'POST':
-        nickname = request.form.get('nickname')
-        password = request.form.get('password')
+    if nickname in user_ids:
+        return jsonify({"error": "Nazwa użytkownika już zajęta"}), 409 # Conflict
 
-        if not nickname or not password:
-            return render_template('register.html', error="Wprowadź nazwę użytkownika i hasło.")
-        
-        if nickname in user_ids:
-            return render_template('register.html', error="Nazwa użytkownika już zajęta")
-        
-        user_id = str(uuid.uuid4())
-        users[user_id] = {
-            "nickname": nickname,
-            "password": password,
-            "verified": True  # Weryfikacja e-mail pominięta
-        }
-        user_ids[nickname] = user_id
-        
-        session['user_id'] = user_id
-        return redirect(url_for('index'))
-    return render_template('register.html')
+    user_id = str(uuid.uuid4())
+    users[user_id] = {
+        "nickname": nickname,
+        "messages": # Inicjalizuj pustą listę na wiadomości
+    }
+    user_ids[nickname] = user_id
 
-@app.route('/logout')
-def logout():
-    session.pop('user_id', None)
-    return redirect(url_for('index'))
+    # Zwracamy odpowiedź JSON
+    return jsonify({
+        "success": True, # Dodano dla spójności z frontendem
+        "message": "Użytkownik zarejestrowany pomyślnie",
+        "user_id": user_id,
+        "nickname": nickname
+    }), 201 # Created
 
-@app.route('/check_login_status')
-def check_login_status():
-    if 'user_id' in session and session['user_id'] in users:
-        user_id = session['user_id']
-        if users[user_id].get('verified', False):
-            return jsonify(logged_in=True, nickname=users[user_id]['nickname'])
-    return jsonify(logged_in=False)
+@app.route('/api/user/<string:nickname>', methods=) # POPRAWIONO: methods=
+def api_user_exists(nickname):
+    """
+    Endpoint API do sprawdzania, czy użytkownik o danym pseudonimie istnieje.
+    Używany przez send_message.html do weryfikacji odbiorcy.
+    """
+    if nickname in user_ids:
+        return jsonify({"exists": True, "user_id": user_ids[nickname], "nickname": nickname}), 200
+    return jsonify({"exists": False, "error": "Użytkownik nie istnieje"}), 404
 
-# Ta część jest przeznaczona do uruchamiania deweloperskiego serwera Flask.
-# Na platformach produkcyjnych takich jak Render, zazwyczaj używa się serwera WSGI (np. Gunicorn).
+@app.route('/api/send-message', methods=) # POPRAWIONO: methods=
+def api_send_message():
+    """
+    Endpoint API do odbierania anonimowych wiadomości.
+    Wiadomość jest przypisywana do pseudonimu odbiorcy.
+    """
+    data = request.get_json()
+    target_nickname = data.get('username') # Frontend wysyła 'username'
+    message_content = data.get('message')
+
+    if not target_nickname or not message_content:
+        return jsonify({"success": False, "error": "Pseudonim odbiorcy i wiadomość są wymagane"}), 400
+
+    if target_nickname not in user_ids:
+        return jsonify({"success": False, "error": "Użytkownik nie istnieje"}), 404
+
+    target_user_id = user_ids[target_nickname]
+    users[target_user_id]['messages'].append(message_content) # Dodaj wiadomość do listy odbiorcy
+
+    return jsonify({"success": True, "message": "Wiadomość wysłana pomyślnie"}), 200
+
+@app.route('/api/messages/<string:user_id>', methods=) # POPRAWIONO: methods=
+def api_get_messages(user_id):
+    """
+    Endpoint API do pobierania wszystkich wiadomości dla danego user_id.
+    Używany przez dashboard.html.
+    """
+    if user_id not in users:
+        return jsonify({"error": "Użytkownik nie istnieje"}), 404
+    return jsonify({"messages": users[user_id]['messages'], "nickname": users[user_id]['nickname']}), 200
+
+
 if __name__ == '__main__':
-    # Pobierz port z zmiennej środowiskowej PORT, domyślnie 5000 (standard dla Render)
-    # Host 0.0.0.0 sprawia, że serwer jest dostępny z zewnątrz kontenera.
-    port = int(os.environ.get('PORT', 5000))
-    # Uruchomienie w trybie debug=False jest zalecane dla produkcji,
-    # ale debug=True może pomóc zidentyfikować problemy na Render na początku.
-    # Pamiętaj, aby ustawić debug=False po rozwiązaniu problemów.
-    app.run(host='0.0.0.0', port=port, debug=True)
+    app.run(debug=True)
