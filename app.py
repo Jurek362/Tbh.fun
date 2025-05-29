@@ -1,108 +1,122 @@
 import os
 import uuid
+import smtplib
 import random
+from email.mime.text import MIMEText
 from flask import Flask, render_template, request, redirect, url_for, session, jsonify
-from flask_cors import CORS
 
-# Zmodyfikuj inicjalizację Flask, aby wskazać bieżący katalog jako folder szablonów.
-app = Flask(__name__, template_folder='.')
-
+app = Flask(__name__)
 app.secret_key = os.urandom(24) # Ustaw losowy klucz sesji
 
-# Konfiguracja CORS: Zezwól na żądania z konkretnej domeny dla tras zaczynających się od /api/
-CORS(app, resources={r"/api/*": {"origins": "https://jurek362.github.io"}})
+# Zmienne środowiskowe do konfiguracji serwera e-mail
+# EMAIL_ADDRESS = os.environ.get('EMAIL_USER')
+# EMAIL_PASSWORD = os.environ.get('EMAIL_PASS')
 
 # Prosta "baza danych" w pamięci
-# Zmieniona struktura: {user_id: {"nickname": "...", "messages":}}
-users = {}
+users = {} # {user_id: {"nickname": "...", "password": "...", "verified": True}}
 user_ids = {} # {nickname: user_id}
-
-# Usunięto trasy /login, /register (formularzowe), /logout, /check_login_status
-# Aplikacja działa bez logowania/hasła, użytkownicy są tworzeni przez API
+# verification_codes = {} # {user_id: code}
+sessions = {} # {session_id: user_id}
 
 @app.route('/')
 def index():
-    """
-    Główna strona aplikacji. Po prostu renderuje index.html.
-    Nie ma już logiki sesji/logowania na tej trasie.
-    """
+    if 'user_id' in session and session['user_id'] in users:
+        user_id = session['user_id']
+        if users[user_id].get('verified', False): # Sprawdzamy, czy użytkownik jest zweryfikowany
+            return render_template('home.html', nickname=users[user_id]['nickname'])
+        else:
+            return redirect(url_for('login')) # Przekieruj na stronę logowania, jeśli niezweryfikowany
     return render_template('index.html')
 
-# TRASA API do tworzenia użytkowników z frontendu (np. JavaScript)
-@app.route('/api/create-user', methods=) # POPRAWIONO: methods=
-def api_create_user():
-    """
-    Endpoint API do tworzenia nowego użytkownika.
-    Wymaga tylko pseudonimu. Generuje unikalne user_id.
-    """
-    data = request.get_json()
-    if not data:
-        return jsonify({"error": "Brak danych JSON w żądaniu"}), 400 # Bad Request
+@app.route('/login', methods=['GET', 'POST'])
+def login():
+    if request.method == 'POST':
+        nickname = request.form['nickname']
+        password = request.form['password']
+        if nickname in user_ids:
+            user_id = user_ids[nickname]
+            if users[user_id]['password'] == password:
+                # Jeśli użytkownik istnieje i hasło się zgadza
+                # W usuniętej wersji była tu weryfikacja maila.
+                # Teraz logujemy od razu.
+                session['user_id'] = user_id
+                return redirect(url_for('index'))
+            else:
+                return render_template('login.html', error="Błędne hasło")
+        else:
+            return render_template('login.html', error="Użytkownik nie istnieje")
+    return render_template('login.html')
 
-    nickname = data.get('username') # Frontend wysyła 'username'
+@app.route('/register', methods=['GET', 'POST'])
+def register():
+    if request.method == 'POST':
+        nickname = request.form['nickname']
+        password = request.form['password']
+        # email = request.form['email'] # Adres e-mail nie jest już używany
+        
+        if nickname in user_ids:
+            return render_template('register.html', error="Nazwa użytkownika już zajęta")
+        
+        # Generuj nowy ID dla użytkownika
+        user_id = str(uuid.uuid4())
+        
+        users[user_id] = {
+            "nickname": nickname,
+            "password": password,
+            # "email": email, # Nie przechowujemy już adresu e-mail
+            "verified": True # Ustawiamy na True, ponieważ weryfikacja mailowa jest pominięta
+        }
+        user_ids[nickname] = user_id
 
-    if not nickname:
-        return jsonify({"error": "Pseudonim jest wymagany"}), 400
+        # # Generowanie i wysyłanie kodu weryfikacyjnego - USUNIĘTE
+        # verification_code = str(random.randint(100000, 999999))
+        # verification_codes[user_id] = verification_code
+        
+        # msg = MIMEText(f"Twój kod weryfikacyjny: {verification_code}")
+        # msg['Subject'] = 'Kod weryfikacyjny TBH.fun'
+        # msg['From'] = EMAIL_ADDRESS
+        # msg['To'] = email
 
-    if nickname in user_ids:
-        return jsonify({"error": "Nazwa użytkownika już zajęta"}), 409 # Conflict
+        # try:
+        #     with smtplib.SMTP_SSL('smtp.gmail.com', 465) as smtp:
+        #         smtp.login(EMAIL_ADDRESS, EMAIL_PASSWORD)
+        #         smtp.send_message(msg)
+        #     return redirect(url_for('verify_email', user_id=user_id))
+        # except Exception as e:
+        #     print(f"Błąd wysyłania maila: {e}")
+        #     return render_template('register.html', error="Błąd podczas wysyłania e-maila weryfikacyjnego. Spróbuj ponownie później.")
+        
+        # Po rejestracji i pominięciu weryfikacji, logujemy od razu
+        session['user_id'] = user_id
+        return redirect(url_for('index'))
+    return render_template('register.html')
 
-    user_id = str(uuid.uuid4())
-    users[user_id] = {
-        "nickname": nickname,
-        "messages": # Inicjalizuj pustą listę na wiadomości
-    }
-    user_ids[nickname] = user_id
+# # Usunięta trasa do weryfikacji e-mail
+# @app.route('/verify_email/<user_id>', methods=['GET', 'POST'])
+# def verify_email(user_id):
+#     if request.method == 'POST':
+#         code = request.form['code']
+#         if user_id in verification_codes and verification_codes[user_id] == code:
+#             users[user_id]['verified'] = True
+#             del verification_codes[user_id]
+#             session['user_id'] = user_id
+#             return redirect(url_for('index'))
+#         else:
+#             return render_template('verify_email.html', user_id=user_id, error="Nieprawidłowy kod weryfikacyjny")
+#     return render_template('verify_email.html', user_id=user_id)
 
-    # Zwracamy odpowiedź JSON
-    return jsonify({
-        "success": True, # Dodano dla spójności z frontendem
-        "message": "Użytkownik zarejestrowany pomyślnie",
-        "user_id": user_id,
-        "nickname": nickname
-    }), 201 # Created
+@app.route('/logout')
+def logout():
+    session.pop('user_id', None)
+    return redirect(url_for('index'))
 
-@app.route('/api/user/<string:nickname>', methods=) # POPRAWIONO: methods=
-def api_user_exists(nickname):
-    """
-    Endpoint API do sprawdzania, czy użytkownik o danym pseudonimie istnieje.
-    Używany przez send_message.html do weryfikacji odbiorcy.
-    """
-    if nickname in user_ids:
-        return jsonify({"exists": True, "user_id": user_ids[nickname], "nickname": nickname}), 200
-    return jsonify({"exists": False, "error": "Użytkownik nie istnieje"}), 404
-
-@app.route('/api/send-message', methods=) # POPRAWIONO: methods=
-def api_send_message():
-    """
-    Endpoint API do odbierania anonimowych wiadomości.
-    Wiadomość jest przypisywana do pseudonimu odbiorcy.
-    """
-    data = request.get_json()
-    target_nickname = data.get('username') # Frontend wysyła 'username'
-    message_content = data.get('message')
-
-    if not target_nickname or not message_content:
-        return jsonify({"success": False, "error": "Pseudonim odbiorcy i wiadomość są wymagane"}), 400
-
-    if target_nickname not in user_ids:
-        return jsonify({"success": False, "error": "Użytkownik nie istnieje"}), 404
-
-    target_user_id = user_ids[target_nickname]
-    users[target_user_id]['messages'].append(message_content) # Dodaj wiadomość do listy odbiorcy
-
-    return jsonify({"success": True, "message": "Wiadomość wysłana pomyślnie"}), 200
-
-@app.route('/api/messages/<string:user_id>', methods=) # POPRAWIONO: methods=
-def api_get_messages(user_id):
-    """
-    Endpoint API do pobierania wszystkich wiadomości dla danego user_id.
-    Używany przez dashboard.html.
-    """
-    if user_id not in users:
-        return jsonify({"error": "Użytkownik nie istnieje"}), 404
-    return jsonify({"messages": users[user_id]['messages'], "nickname": users[user_id]['nickname']}), 200
-
+@app.route('/check_login_status')
+def check_login_status():
+    if 'user_id' in session and session['user_id'] in users:
+        return jsonify(logged_in=True, nickname=users[session['user_id']]['nickname'])
+    return jsonify(logged_in=False)
 
 if __name__ == '__main__':
-    app.run(debug=True)
+    # Upewnij się, że masz ustawione zmienne środowiskowe EMAIL_USER i EMAIL_PASS
+    # dla oryginalnej wersji. Dla tej wersji nie są one potrzebne.
+    app.run(debug=True) # debug=True w trybie deweloperskim
