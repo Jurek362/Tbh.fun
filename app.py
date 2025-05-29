@@ -1,380 +1,83 @@
-# app.py - Naprawiony Flask backend z wszystkimi endpointami
-from flask import Flask, request, jsonify
-from flask_cors import CORS
+from flask import Flask, render_template, request, jsonify, redirect, url_for
 import json
 import os
 from datetime import datetime
-import uuid
+import re
 
 app = Flask(__name__)
 
-# Konfiguracja CORS - dodaj swój rzeczywisty URL
-CORS(app, origins=[
-    'https://jurek362.github.io',
-    'http://localhost:3000',
-    'http://127.0.0.1:5500'  # Live Server
-])
+# Plik do przechowywania danych
+DATA_FILE = 'data.json'
 
-# Tymczasowa baza danych w pamięci (w produkcji użyj prawdziwej bazy)
-users_db = {}
-messages_db = {}
+def load_data():
+    """Załaduj dane z pliku JSON"""
+    if os.path.exists(DATA_FILE):
+        try:
+            with open(DATA_FILE, 'r', encoding='utf-8') as f:
+                return json.load(f)
+        except (json.JSONDecodeError, FileNotFoundError):
+            pass
+    return {'users': {}, 'messages': {}}
 
-@app.before_request
-def log_request():
-    """Debug logging"""
-    print(f"{datetime.now().isoformat()} - {request.method} {request.path}")
-    if request.headers.get('Origin'):
-        print(f"Origin: {request.headers.get('Origin')}")
+def save_data(data):
+    """Zapisz dane do pliku JSON"""
+    with open(DATA_FILE, 'w', encoding='utf-8') as f:
+        json.dump(data, f, ensure_ascii=False, indent=2)
+
+def is_valid_username(username):
+    """Sprawdź czy nazwa użytkownika jest prawidłowa"""
+    if not username or len(username) < 2 or len(username) > 30:
+        return False
+    return re.match(r'^[a-zA-Z0-9_-]+$', username) is not None
 
 @app.route('/')
-def home():
-    """Root endpoint"""
-    return jsonify({
-        'message': 'Tbh.fun API is running',
-        'status': 'OK',
-        'cors_enabled': True
-    })
+def index():
+    """Strona główna"""
+    return render_template('index.html')
 
-@app.route('/api/health')
-def health():
-    """Health check"""
-    return jsonify({
-        'status': 'healthy',
-        'timestamp': datetime.now().isoformat()
-    })
-
-@app.route('/api/create-user', methods=['POST'])
-def create_user():
-    """Create new user"""
-    try:
-        data = request.get_json()
-        
-        if not data:
-            return jsonify({
-                'success': False,
-                'error': 'Brak danych JSON'
-            }), 400
-        
-        username = data.get('username', '').strip()
-        
-        if not username:
-            return jsonify({
-                'success': False,
-                'error': 'Username jest wymagany'
-            }), 400
-        
-        if len(username) < 3:
-            return jsonify({
-                'success': False,
-                'error': 'Username musi mieć przynajmniej 3 znaki'
-            }), 400
-        
-        if len(username) > 20:
-            return jsonify({
-                'success': False,
-                'error': 'Username nie może być dłuższy niż 20 znaków'
-            }), 400
-        
-        # Sprawdź czy username zawiera tylko dozwolone znaki
-        import re
-        if not re.match("^[a-zA-Z0-9_-]+$", username):
-            return jsonify({
-                'success': False,
-                'error': 'Username może zawierać tylko litery, cyfry, _ i -'
-            }), 400
-        
-        # Sprawdź czy username już istnieje
-        for user_id, user_data in users_db.items():
-            if user_data['username'].lower() == username.lower():
-                return jsonify({
-                    'success': False,
-                    'error': 'Nazwa użytkownika już istnieje'
-                }), 400
-        
-        # Utwórz użytkownika
-        user_id = str(uuid.uuid4())
-        user_data = {
-            'id': user_id,
-            'username': username,
-            'created_at': datetime.now().isoformat(),
-            'link': f'https://jurek362.github.io/Tbh.fun/send.html?u={username}'
-        }
-        
-        # Zapisz do "bazy danych"
-        users_db[user_id] = user_data
-        messages_db[user_id] = []
-        
-        print(f"Użytkownik utworzony: {username} (ID: {user_id})")
-        
-        return jsonify({
-            'success': True,
-            'message': 'Konto utworzone pomyślnie!',
-            'user_id': user_id,  # Frontend oczekuje tego pola
-            'username': username,
-            'link': user_data['link']
-        }), 201
-        
-    except Exception as e:
-        print(f"Błąd podczas tworzenia użytkownika: {str(e)}")
-        return jsonify({
-            'success': False,
-            'error': 'Błąd serwera',
-            'details': str(e)
-        }), 500
-
-@app.route('/api/user/<username>', methods=['GET'])
-def get_user_by_username(username):
-    """Pobierz użytkownika po username (dla send.html)"""
-    try:
-        for user_id, user_data in users_db.items():
-            if user_data['username'].lower() == username.lower():
-                return jsonify({
-                    'success': True,
-                    'data': {
-                        'id': user_id,
-                        'username': user_data['username'],
-                        'link': user_data['link'],
-                        'created_at': user_data['created_at']
-                    }
-                })
-        
-        return jsonify({
-            'success': False,
-            'error': 'Użytkownik nie istnieje'
-        }), 404
-        
-    except Exception as e:
-        print(f"Błąd podczas pobierania użytkownika: {str(e)}")
-        return jsonify({
-            'success': False,
-            'error': 'Błąd serwera'
-        }), 500
-
-@app.route('/api/send-message', methods=['POST'])
-def send_message():
-    """Wyślij wiadomość do użytkownika"""
-    try:
-        data = request.get_json()
-        
-        if not data:
-            return jsonify({
-                'success': False,
-                'error': 'Brak danych JSON'
-            }), 400
-        
-        username = data.get('username', '').strip()
-        message = data.get('message', '').strip()
-        
-        if not username or not message:
-            return jsonify({
-                'success': False,
-                'error': 'Username i wiadomość są wymagane'
-            }), 400
-        
-        if len(message) > 500:
-            return jsonify({
-                'success': False,
-                'error': 'Wiadomość nie może być dłuższa niż 500 znaków'
-            }), 400
-        
-        # Znajdź użytkownika
-        target_user_id = None
-        for user_id, user_data in users_db.items():
-            if user_data['username'].lower() == username.lower():
-                target_user_id = user_id
-                break
-        
-        if not target_user_id:
-            return jsonify({
-                'success': False,
-                'error': 'Użytkownik nie istnieje'
-            }), 404
-        
-        # Utwórz wiadomość
-        message_data = {
-            'id': str(uuid.uuid4()),
-            'content': message,
-            'timestamp': datetime.now().isoformat(),
-            'read': False
-        }
-        
-        # Dodaj do "bazy danych"
-        if target_user_id not in messages_db:
-            messages_db[target_user_id] = []
-        
-        messages_db[target_user_id].append(message_data)
-        
-        print(f"Wiadomość wysłana do {username}: {message[:50]}...")
-        
-        return jsonify({
-            'success': True,
-            'message': 'Wiadomość została wysłana pomyślnie!'
-        }), 201
-        
-    except Exception as e:
-        print(f"Błąd podczas wysyłania wiadomości: {str(e)}")
-        return jsonify({
-            'success': False,
-            'error': 'Błąd serwera'
-        }), 500
-
-@app.route('/api/messages/<user_id>', methods=['GET'])
-def get_messages(user_id):
-    """Pobierz wiadomości użytkownika"""
-    try:
-        if user_id not in users_db:
-            return jsonify({
-                'success': False,
-                'error': 'Użytkownik nie istnieje'
-            }), 404
-        
-        user_messages = messages_db.get(user_id, [])
-        
-        # Sortuj wiadomości od najnowszych
-        user_messages.sort(key=lambda x: x['timestamp'], reverse=True)
-        
-        return jsonify({
-            'success': True,
-            'messages': user_messages,
-            'count': len(user_messages),
-            'username': users_db[user_id]['username']
-        })
-        
-    except Exception as e:
-        print(f"Błąd podczas pobierania wiadomości: {str(e)}")
-        return jsonify({
-            'success': False,
-            'error': 'Błąd serwera'
-        }), 500
-
-@app.route('/api/mark-read/<user_id>/<message_id>', methods=['POST'])
-def mark_message_as_read(user_id, message_id):
-    """Oznacz wiadomość jako przeczytaną"""
-    try:
-        if user_id not in users_db:
-            return jsonify({
-                'success': False,
-                'error': 'Użytkownik nie istnieje'
-            }), 404
-        
-        user_messages = messages_db.get(user_id, [])
-        
-        for message in user_messages:
-            if message['id'] == message_id:
-                message['read'] = True
-                return jsonify({
-                    'success': True,
-                    'message': 'Wiadomość oznaczona jako przeczytana'
-                })
-        
-        return jsonify({
-            'success': False,
-            'error': 'Wiadomość nie istnieje'
-        }), 404
-        
-    except Exception as e:
-        print(f"Błąd podczas oznaczania wiadomości: {str(e)}")
-        return jsonify({
-            'success': False,
-            'error': 'Błąd serwera'
-        }), 500
-
-@app.route('/api/delete-message/<user_id>/<message_id>', methods=['DELETE'])
-def delete_message(user_id, message_id):
-    """Usuń wiadomość"""
-    try:
-        if user_id not in users_db:
-            return jsonify({
-                'success': False,
-                'error': 'Użytkownik nie istnieje'
-            }), 404
-        
-        user_messages = messages_db.get(user_id, [])
-        
-        for i, message in enumerate(user_messages):
-            if message['id'] == message_id:
-                user_messages.pop(i)
-                return jsonify({
-                    'success': True,
-                    'message': 'Wiadomość została usunięta'
-                })
-        
-        return jsonify({
-            'success': False,
-            'error': 'Wiadomość nie istnieje'
-        }), 404
-        
-    except Exception as e:
-        print(f"Błąd podczas usuwania wiadomości: {str(e)}")
-        return jsonify({
-            'success': False,
-            'error': 'Błąd serwera'
-        }), 500
-
-@app.route('/api/users', methods=['GET'])
-def get_all_users():
-    """Pobierz wszystkich użytkowników (debug)"""
-    try:
-        users_list = []
-        for user_id, user_data in users_db.items():
-            users_list.append({
-                'id': user_id,
-                'username': user_data['username'],
-                'created_at': user_data['created_at'],
-                'messages_count': len(messages_db.get(user_id, []))
-            })
-        
-        return jsonify({
-            'success': True,
-            'users': users_list,
-            'count': len(users_list)
-        })
-        
-    except Exception as e:
-        print(f"Błąd podczas pobierania użytkowników: {str(e)}")
-        return jsonify({
-            'success': False,
-            'error': 'Błąd serwera'
-        }), 500
-
-# Error handlers
-@app.errorhandler(404)
-def not_found(error):
-    return jsonify({
-        'success': False,
-        'error': 'Endpoint nie istnieje',
-        'path': request.path
-    }), 404
-
-@app.errorhandler(405)
-def method_not_allowed(error):
-    return jsonify({
-        'success': False,
-        'error': 'Metoda nie dozwolona',
-        'method': request.method,
-        'path': request.path
-    }), 405
-
-@app.errorhandler(500)
-def internal_error(error):
-    print(f"Błąd serwera: {str(error)}")
-    return jsonify({
-        'success': False,
-        'error': 'Wewnętrzny błąd serwera'
-    }), 500
-
-if __name__ == '__main__':
-    port = int(os.environ.get('PORT', 5000))
-    debug = os.environ.get('FLASK_ENV') == 'development'
+@app.route('/dashboard')
+def dashboard():
+    """Dashboard użytkownika"""
+    user = request.args.get('user')
+    if not user:
+        return redirect(url_for('index'))
     
-    print("🚀 Uruchamianie serwera Flask...")
-    print(f"📡 CORS włączony")
-    print(f"🌍 Port: {port}")
-    print(f"🔧 Debug: {debug}")
-    print(f"📊 Użytkownicy w bazie: {len(users_db)}")
+    data = load_data()
+    if user not in data['users']:
+        return redirect(url_for('index'))
     
-    app.run(
-        host='0.0.0.0',
-        port=port,
-        debug=debug
-)
+    return render_template('dashboard.html')
+
+@app.route('/send')
+def send_message_page():
+    """Strona wysyłania wiadomości"""
+    to_user = request.args.get('to')
+    if not to_user:
+        return redirect(url_for('index'))
+    
+    data = load_data()
+    if to_user not in data['users']:
+        return redirect(url_for('index'))
+    
+    return render_template('send.html')
+
+@app.route('/register', methods=['POST'])
+def register():
+    """Rejestracja nowego użytkownika"""
+    username = request.form.get('username', '').strip().lower()
+    
+    if not is_valid_username(username):
+        return jsonify({
+            'success': False, 
+            'message': 'Nieprawidłowa nazwa użytkownika. Użyj 2-30 znaków (litery, cyfry, - lub _)'
+        })
+    
+    data = load_data()
+    
+    if username in data['users']:
+        return jsonify({
+            'success': False, 
+            'message': 'Ta nazwa użytkownika jest już zajęta'
+        })
+    
+    # Stwórz nowego uż
