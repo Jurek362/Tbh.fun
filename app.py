@@ -6,6 +6,14 @@ import re
 
 app = Flask(__name__)
 
+# Obsługa CORS
+@app.after_request
+def after_request(response):
+    response.headers.add('Access-Control-Allow-Origin', '*')
+    response.headers.add('Access-Control-Allow-Headers', 'Content-Type,Authorization')
+    response.headers.add('Access-Control-Allow-Methods', 'GET,PUT,POST,DELETE,OPTIONS')
+    return response
+
 # Plik do przechowywania danych
 DATA_FILE = 'data.json'
 
@@ -30,53 +38,19 @@ def is_valid_username(username):
         return False
     return re.match(r'^[a-zA-Z0-9_-]+$', username) is not None
 
-@app.route('/')
-def index():
-    """Strona główna"""
-    try:
-        with open('index.html', 'r', encoding='utf-8') as f:
-            return f.read()
-    except FileNotFoundError:
-        return "Brak pliku index.html", 404
+# API endpoints only - HTML obsługiwane przez GitHub Pages
 
-@app.route('/dashboard')
-def dashboard():
-    """Dashboard użytkownika"""
-    user = request.args.get('user')
-    if not user:
-        return redirect(url_for('index'))
-    
-    data = load_data()
-    if user not in data['users']:
-        return redirect(url_for('index'))
-    
-    try:
-        with open('dashboard.html', 'r', encoding='utf-8') as f:
-            return f.read()
-    except FileNotFoundError:
-        return "Brak pliku dashboard.html", 404
-
-@app.route('/send')
-def send_message_page():
-    """Strona wysyłania wiadomości"""
-    to_user = request.args.get('to')
-    if not to_user:
-        return redirect(url_for('index'))
-    
-    data = load_data()
-    if to_user not in data['users']:
-        return redirect(url_for('index'))
-    
-    try:
-        with open('send.html', 'r', encoding='utf-8') as f:
-            return f.read()
-    except FileNotFoundError:
-        return "Brak pliku send.html", 404
-
-@app.route('/register', methods=['POST'])
+@app.route('/register', methods=['GET', 'POST'])
 def register():
     """Rejestracja nowego użytkownika"""
-    username = request.form.get('username', '').strip().lower()
+    if request.method == 'GET':
+        return jsonify({'success': False, 'message': 'Use POST method'})
+    
+    # Obsługa JSON i form data
+    if request.is_json:
+        username = request.json.get('username', '').strip().lower()
+    else:
+        username = request.form.get('username', '').strip().lower()
     
     if not is_valid_username(username):
         return jsonify({
@@ -109,11 +83,19 @@ def register():
         'message': 'Konto zostało utworzone pomyślnie'
     })
 
-@app.route('/send_message', methods=['POST'])
+@app.route('/send_message', methods=['GET', 'POST'])
 def send_message():
     """Wyślij wiadomość do użytkownika"""
-    to_user = request.form.get('to', '').strip().lower()
-    message_content = request.form.get('message', '').strip()
+    if request.method == 'GET':
+        return jsonify({'success': False, 'message': 'Use POST method'})
+    
+    # Obsługa JSON i form data
+    if request.is_json:
+        to_user = request.json.get('to', '').strip().lower()
+        message_content = request.json.get('message', '').strip()
+    else:
+        to_user = request.form.get('to', '').strip().lower()
+        message_content = request.form.get('message', '').strip()
     
     if not to_user or not message_content:
         return jsonify({
