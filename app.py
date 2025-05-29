@@ -1,108 +1,262 @@
-import os
-import uuid
-import random
-from flask import Flask, render_template, request, redirect, url_for, session, jsonify
+# app.py - Naprawiony Flask backend bez duplikatów CORS
+from flask import Flask, request, jsonify
 from flask_cors import CORS
+import json
+import os
+from datetime import datetime
 
-# Zmodyfikuj inicjalizację Flask, aby wskazać bieżący katalog jako folder szablonów.
-app = Flask(__name__, template_folder='.')
+app = Flask(__name__)
 
-app.secret_key = os.urandom(24) # Ustaw losowy klucz sesji
+# ===== KONFIGURACJA CORS - TYLKO TA JEDNA LINIA! =====
+# USUŃ wszystkie inne konfiguracje CORS!
+CORS(app, origins=['https://jurek362.github.io'])
 
-# Konfiguracja CORS: Zezwól na żądania z konkretnej domeny dla tras zaczynających się od /api/
-CORS(app, resources={r"/api/*": {"origins": "https://jurek362.github.io"}})
+# ===== USUŃ WSZYSTKIE @app.after_request które dodają nagłówki CORS! =====
+# NIE DODAWAJ żadnych response.headers['Access-Control-Allow-Origin']!
 
-# Prosta "baza danych" w pamięci
-# Zmieniona struktura: {user_id: {"nickname": "...", "messages":}}
-users = {}
-user_ids = {} # {nickname: user_id}
+@app.before_request
+def log_request():
+    """Debug logging - usuń w produkcji"""
+    print(f"{datetime.now().isoformat()} - {request.method} {request.path}")
+    if request.headers.get('Origin'):
+        print(f"Origin: {request.headers.get('Origin')}")
 
-# Usunięto trasy /login, /register (formularzowe), /logout, /check_login_status
-# Aplikacja działa bez logowania/hasła, użytkownicy są tworzeni przez API
+# ===== ROUTES =====
 
 @app.route('/')
-def index():
-    """
-    Główna strona aplikacji. Po prostu renderuje index.html.
-    Nie ma już logiki sesji/logowania na tej trasie.
-    """
-    return render_template('index.html')
-
-# TRASA API do tworzenia użytkowników z frontendu (np. JavaScript)
-@app.route('/api/create-user', methods=) # POPRAWIONO: methods=
-def api_create_user():
-    """
-    Endpoint API do tworzenia nowego użytkownika.
-    Wymaga tylko pseudonimu. Generuje unikalne user_id.
-    """
-    data = request.get_json()
-    if not data:
-        return jsonify({"error": "Brak danych JSON w żądaniu"}), 400 # Bad Request
-
-    nickname = data.get('username') # Frontend wysyła 'username'
-
-    if not nickname:
-        return jsonify({"error": "Pseudonim jest wymagany"}), 400
-
-    if nickname in user_ids:
-        return jsonify({"error": "Nazwa użytkownika już zajęta"}), 409 # Conflict
-
-    user_id = str(uuid.uuid4())
-    users[user_id] = {
-        "nickname": nickname,
-        "messages": # Inicjalizuj pustą listę na wiadomości
-    }
-    user_ids[nickname] = user_id
-
-    # Zwracamy odpowiedź JSON
+def home():
+    """Root endpoint"""
     return jsonify({
-        "success": True, # Dodano dla spójności z frontendem
-        "message": "Użytkownik zarejestrowany pomyślnie",
-        "user_id": user_id,
-        "nickname": nickname
-    }), 201 # Created
+        'message': 'Tbh.fun API is running',
+        'status': 'OK',
+        'cors_enabled': True
+    })
 
-@app.route('/api/user/<string:nickname>', methods=) # POPRAWIONO: methods=
-def api_user_exists(nickname):
-    """
-    Endpoint API do sprawdzania, czy użytkownik o danym pseudonimie istnieje.
-    Używany przez send_message.html do weryfikacji odbiorcy.
-    """
-    if nickname in user_ids:
-        return jsonify({"exists": True, "user_id": user_ids[nickname], "nickname": nickname}), 200
-    return jsonify({"exists": False, "error": "Użytkownik nie istnieje"}), 404
+@app.route('/api/health')
+def health():
+    """Health check"""
+    return jsonify({
+        'status': 'healthy',
+        'timestamp': datetime.now().isoformat()
+    })
 
-@app.route('/api/send-message', methods=) # POPRAWIONO: methods=
-def api_send_message():
-    """
-    Endpoint API do odbierania anonimowych wiadomości.
-    Wiadomość jest przypisywana do pseudonimu odbiorcy.
-    """
-    data = request.get_json()
-    target_nickname = data.get('username') # Frontend wysyła 'username'
-    message_content = data.get('message')
+@app.route('/api/create-user', methods=['POST'])
+def create_user():
+    """Create new user - główny endpoint który sprawia problemy"""
+    try:
+        # Pobierz dane JSON
+        data = request.get_json()
+        
+        if not data:
+            return jsonify({
+                'success': False,
+                'error': 'Brak danych JSON'
+            }), 400
+        
+        # Loguj otrzymane dane
+        print(f"Otrzymane dane: {data}")
+        
+        # TYLKO USERNAME - jak NGL.link
+        username = data.get('username', '').strip()
+        
+        if not username:
+            return jsonify({
+                'success': False,
+                'error': 'Username jest wymagany'
+            }), 400
+        
+        if len(username) < 3:
+            return jsonify({
+                'success': False,
+                'error': 'Username musi mieć przynajmniej 3 znaki'
+            }), 400
+        
+        if len(username) > 20:
+            return jsonify({
+                'success': False,
+                'error': 'Username nie może być dłuższy niż 20 znaków'
+            }), 400
+        
+        # Sprawdź czy username zawiera tylko dozwolone znaki
+        import re
+        if not re.match("^[a-zA-Z0-9_-]+$", username):
+            return jsonify({
+                'success': False,
+                'error': 'Username może zawierać tylko litery, cyfry, _ i -'
+            }), 400
+        
+        # Utwórz użytkownika - TYLKO USERNAME!
+        user_data = {
+            'id': str(int(datetime.now().timestamp() * 1000)),
+            'username': username,
+            'created_at': datetime.now().isoformat(),
+            'link': f'tbh.fun/{username}'  # Link jak w NGL
+        }
+        
+        # Tutaj dodaj logikę zapisu do bazy danych
+        
+        print(f"Użytkownik utworzony: {user_data['id']}")
+        
+        return jsonify({
+            'success': True,
+            'message': 'Konto utworzone pomyślnie!',
+            'data': {
+                'username': user_data['username'],
+                'link': user_data['link'],
+                'id': user_data['id']
+            }
+        }), 201
+        
+    except Exception as e:
+        print(f"Błąd podczas tworzenia użytkownika: {str(e)}")
+        return jsonify({
+            'success': False,
+            'error': 'Błąd serwera',
+            'details': str(e)
+        }), 500
 
-    if not target_nickname or not message_content:
-        return jsonify({"success": False, "error": "Pseudonim odbiorcy i wiadomość są wymagane"}), 400
+@app.route('/api/users', methods=['GET'])
+def get_users():
+    """Pobierz wszystkich użytkowników"""
+    try:
+        # Tutaj dodaj logikę pobierania z bazy danych
+        users = [
+            {
+                'id': '1',
+                'username': 'test_user',
+                'link': 'tbh.fun/test_user',
+                'created_at': datetime.now().isoformat()
+            }
+        ]
+        
+        return jsonify({
+            'success': True,
+            'data': users,
+            'count': len(users)
+        })
+        
+    except Exception as e:
+        print(f"Błąd podczas pobierania użytkowników: {str(e)}")
+        return jsonify({
+            'success': False,
+            'error': 'Błąd serwera'
+        }), 500
 
-    if target_nickname not in user_ids:
-        return jsonify({"success": False, "error": "Użytkownik nie istnieje"}), 404
+@app.route('/api/user/<user_id>', methods=['GET'])
+def get_user(user_id):
+    """Pobierz użytkownika po ID"""
+    try:
+        # Tutaj dodaj logikę pobierania z bazy danych
+        user = {
+            'id': user_id,
+            'username': 'example_user',
+            'link': f'tbh.fun/{user_id}',
+            'created_at': datetime.now().isoformat()
+        }
+        
+        return jsonify({
+            'success': True,
+            'data': user
+        })
+        
+    except Exception as e:
+        print(f"Błąd podczas pobierania użytkownika: {str(e)}")
+        return jsonify({
+            'success': False,
+            'error': 'Błąd serwera'
+        }), 500
 
-    target_user_id = user_ids[target_nickname]
-    users[target_user_id]['messages'].append(message_content) # Dodaj wiadomość do listy odbiorcy
+@app.route('/api/user/<user_id>', methods=['PUT'])
+def update_user(user_id):
+    """Aktualizuj użytkownika"""
+    try:
+        data = request.get_json()
+        
+        if not data:
+            return jsonify({
+                'success': False,
+                'error': 'Brak danych do aktualizacji'
+            }), 400
+        
+        # Tutaj dodaj logikę aktualizacji w bazie danych
+        updated_user = {
+            'id': user_id,
+            **data,
+            'updated_at': datetime.now().isoformat()
+        }
+        
+        return jsonify({
+            'success': True,
+            'message': 'Użytkownik zaktualizowany',
+            'data': updated_user
+        })
+        
+    except Exception as e:
+        print(f"Błąd podczas aktualizacji użytkownika: {str(e)}")
+        return jsonify({
+            'success': False,
+            'error': 'Błąd serwera'
+        }), 500
 
-    return jsonify({"success": True, "message": "Wiadomość wysłana pomyślnie"}), 200
+@app.route('/api/user/<user_id>', methods=['DELETE'])
+def delete_user(user_id):
+    """Usuń użytkownika"""
+    try:
+        # Tutaj dodaj logikę usuwania z bazy danych
+        
+        print(f"Usunięto użytkownika: {user_id}")
+        
+        return jsonify({
+            'success': True,
+            'message': 'Użytkownik usunięty'
+        })
+        
+    except Exception as e:
+        print(f"Błąd podczas usuwania użytkownika: {str(e)}")
+        return jsonify({
+            'success': False,
+            'error': 'Błąd serwera'
+        }), 500
 
-@app.route('/api/messages/<string:user_id>', methods=) # POPRAWIONO: methods=
-def api_get_messages(user_id):
-    """
-    Endpoint API do pobierania wszystkich wiadomości dla danego user_id.
-    Używany przez dashboard.html.
-    """
-    if user_id not in users:
-        return jsonify({"error": "Użytkownik nie istnieje"}), 404
-    return jsonify({"messages": users[user_id]['messages'], "nickname": users[user_id]['nickname']}), 200
+# ===== ERROR HANDLERS =====
 
+@app.errorhandler(404)
+def not_found(error):
+    return jsonify({
+        'success': False,
+        'error': 'Endpoint nie istnieje',
+        'path': request.path
+    }), 404
 
+@app.errorhandler(405)
+def method_not_allowed(error):
+    return jsonify({
+        'success': False,
+        'error': 'Metoda nie dozwolona',
+        'method': request.method,
+        'path': request.path
+    }), 405
+
+@app.errorhandler(500)
+def internal_error(error):
+    print(f"Błąd serwera: {str(error)}")
+    return jsonify({
+        'success': False,
+        'error': 'Wewnętrzny błąd serwera'
+    }), 500
+
+# ===== MAIN =====
 if __name__ == '__main__':
-    app.run(debug=True)
+    port = int(os.environ.get('PORT', 5000))
+    debug = os.environ.get('FLASK_ENV') == 'development'
+    
+    print("🚀 Uruchamianie serwera Flask...")
+    print(f"📡 CORS włączony dla: https://jurek362.github.io")
+    print(f"🌍 Port: {port}")
+    print(f"🔧 Debug: {debug}")
+    
+    app.run(
+        host='0.0.0.0',
+        port=port,
+        debug=debug
+        )
