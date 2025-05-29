@@ -3,336 +3,335 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>AnonMsg - Strona Główna</title>
+    <title>NGL Clone - Anonimowe Wiadomości</title>
     <style>
-        /* Global reset */
         * {
             margin: 0;
             padding: 0;
             box-sizing: border-box;
         }
 
-        /* Body styling with a gradient background */
         body {
-            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); /* Purple-blue gradient */
-            min-height: 100vh; /* Full viewport height */
-            color: #333; /* Default text color */
-            display: flex; /* Use flexbox for centering content */
-            align-items: center; /* Center content vertically */
-            justify-content: center; /* Center content horizontally */
-            padding: 20px; /* Add some padding for smaller screens */
-        }
-
-        /* Main container for the app content */
-        .container {
-            max-width: 600px;
-            margin: 0 auto;
-            padding: 0; /* Removed padding here as it's in body */
-            width: 100%; /* Ensure container takes full width up to max-width */
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
             display: flex;
-            flex-direction: column;
+            align-items: center;
             justify-content: center;
+            padding: 20px;
         }
 
-        /* Logo section styling */
-        .logo {
-            text-align: center;
-            margin-bottom: 40px;
-        }
-
-        .logo h1 {
-            color: white;
-            font-size: 3rem;
-            font-weight: 700;
-            text-shadow: 0 4px 15px rgba(0,0,0,0.2); /* Subtle shadow for depth */
-            margin-bottom: 10px;
-        }
-
-        .logo p {
-            color: rgba(255,255,255,0.8); /* Slightly transparent white */
-            font-size: 1.1rem;
-        }
-
-        /* Card styling for main sections */
-        .card {
+        .container {
             background: white;
-            padding: 40px;
             border-radius: 20px;
-            box-shadow: 0 20px 60px rgba(0,0,0,0.1); /* Larger shadow for floating effect */
-            margin-bottom: 20px;
-            backdrop-filter: blur(10px); /* Frosted glass effect */
-            -webkit-backdrop-filter: blur(10px); /* For Safari support */
-        }
-
-        /* Profile input section */
-        .profile-section {
+            padding: 40px;
+            box-shadow: 0 20px 40px rgba(0,0,0,0.1);
+            max-width: 500px;
+            width: 100%;
             text-align: center;
-            margin-bottom: 30px;
         }
 
-        .profile-input {
+        h1 {
+            color: #333;
+            margin-bottom: 10px;
+            font-size: 2.5em;
+            font-weight: 700;
+        }
+
+        .subtitle {
+            color: #666;
+            margin-bottom: 40px;
+            font-size: 1.1em;
+        }
+
+        .form-group {
+            margin-bottom: 30px;
+            text-align: left;
+        }
+
+        label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: 600;
+            color: #333;
+        }
+
+        input[type="text"] {
             width: 100%;
             padding: 15px;
-            border: 2px solid #e1e5e9; /* Light grey border */
-            border-radius: 12px;
-            font-size: 1rem;
-            margin-bottom: 15px;
-            transition: all 0.3s ease; /* Smooth transition for focus */
+            border: 2px solid #e1e5e9;
+            border-radius: 10px;
+            font-size: 16px;
+            transition: border-color 0.3s;
         }
 
-        .profile-input:focus {
+        input[type="text"]:focus {
             outline: none;
-            border-color: #667eea; /* Highlight border on focus */
-            box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1); /* Subtle glow on focus */
+            border-color: #667eea;
         }
 
-        /* General button styling */
         .btn {
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); /* Button gradient */
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
             color: white;
             border: none;
             padding: 15px 30px;
-            border-radius: 12px;
-            font-size: 1rem;
+            border-radius: 10px;
+            font-size: 16px;
             font-weight: 600;
             cursor: pointer;
-            transition: all 0.3s ease; /* Smooth transitions for hover/active */
+            transition: transform 0.2s;
             width: 100%;
-            margin-bottom: 10px;
-            text-decoration: none; /* For anchor tags acting as buttons */
-            display: inline-block; /* For anchor tags */
-            text-align: center; /* For anchor tags */
         }
 
         .btn:hover {
-            transform: translateY(-2px); /* Lift effect on hover */
-            box-shadow: 0 10px 25px rgba(102, 126, 234, 0.3); /* Enhanced shadow on hover */
+            transform: translateY(-2px);
         }
 
-        .btn:active {
-            transform: translateY(0); /* Press down effect on click */
+        .btn:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+            transform: none;
         }
 
-        /* Message form specific styles (not directly used on index.html, but included for consistency) */
-        .message-form { }
-        .message-textarea { }
-        .message-counter { }
-        .link-display { }
-        .generated-link { }
-        .messages-section { }
-        .message-item { }
-        .message-time { }
-        .message-text { }
-        .empty-state { }
-
-
-        /* Footer styling */
-        .footer {
-            text-align: center;
-            margin-top: 40px;
-            color: rgba(255,255,255,0.7);
+        .result {
+            margin-top: 30px;
+            padding: 20px;
+            border-radius: 10px;
+            display: none;
         }
 
-        /* Notification pop-up */
-        .notification {
-            position: fixed;
-            top: 20px;
-            right: 20px;
-            background: #4CAF50; /* Green for success */
-            color: white;
-            padding: 15px 20px;
-            border-radius: 12px;
-            box-shadow: 0 10px 25px rgba(0,0,0,0.2);
-            transform: translateX(400px); /* Start off-screen */
-            transition: transform 0.3s ease; /* Slide-in animation */
-            z-index: 1000;
-            min-width: 250px; /* Ensure notification is wide enough */
-            text-align: center;
+        .result.success {
+            background: #d4edda;
+            border: 1px solid #c3e6cb;
+            color: #155724;
         }
 
-        .notification.show {
-            transform: translateX(0); /* Slide into view */
+        .result.error {
+            background: #f8d7da;
+            border: 1px solid #f5c6cb;
+            color: #721c24;
         }
 
-        /* Specific button styles */
-        .back-btn {
-            background: #6c757d; /* Grey background for back button */
-            margin-bottom: 20px;
-        }
-        .back-btn:hover {
-            background: #5a6268;
-        }
-        .btn.success-btn { /* Changed from [onclick="showMessages()"] to a class */
-            background: #28a745; /* Green for check messages button */
-        }
-        .btn.success-btn:hover {
-            background: #218838;
-        }
-        .btn.info-btn { /* Changed from [onclick="shareLink()"] to a class */
-            background: #17a2b8; /* Blue for share button */
-        }
-        .btn.info-btn:hover {
-            background: #138496;
-        }
-
-        /* New UI elements for send.html (included here for completeness of inline CSS, though not directly used by index.html) */
-        .profile-display {
-            text-align: center;
-            margin-bottom: 25px;
+        .link-container {
+            margin-top: 20px;
             padding: 15px;
-            background-color: #f8f9fa; /* Light background for profile info */
-            border-radius: 15px;
-            box-shadow: inset 0 1px 3px rgba(0,0,0,0.1); /* Inner shadow */
+            background: #f8f9fa;
+            border-radius: 10px;
+            border: 1px solid #e9ecef;
         }
 
-        .profile-avatar {
-            width: 90px; /* Slightly larger avatar */
-            height: 90px;
-            border-radius: 50%;
-            object-fit: cover;
-            border: 4px solid #667eea; /* Stronger border */
-            box-shadow: 0 0 0 5px rgba(102, 126, 234, 0.2); /* Outer glow */
+        .generated-link {
+            word-break: break-all;
+            font-family: monospace;
+            font-size: 14px;
+            color: #495057;
             margin-bottom: 10px;
         }
 
-        .profile-username {
-            font-weight: 700; /* Bolder username */
-            color: #667eea; /* Primary color */
-            font-size: 1.3rem;
+        .copy-btn {
+            background: #28a745;
+            font-size: 14px;
+            padding: 8px 16px;
+            margin-top: 10px;
         }
 
-        .textarea-wrapper {
-            position: relative;
-            margin-bottom: 20px; /* Space below the textarea */
+        .dashboard-link {
+            margin-top: 15px;
         }
 
-        .textarea-wrapper .message-textarea {
-            margin-bottom: 0; /* Remove default margin */
-            padding-right: 50px; /* Make space for the dice button */
+        .dashboard-link a {
+            color: #667eea;
+            text-decoration: none;
+            font-weight: 600;
         }
 
-        .textarea-wrapper .dice-button {
-            position: absolute;
-            right: 15px;
-            bottom: 15px;
-            background: none;
-            border: none;
-            font-size: 1.8rem; /* Larger dice icon */
-            cursor: pointer;
-            transition: transform 0.2s ease;
-            padding: 5px; /* Make clickable area larger */
+        .dashboard-link a:hover {
+            text-decoration: underline;
         }
 
-        .textarea-wrapper .dice-button:hover {
-            transform: scale(1.1);
-        }
-        .textarea-wrapper .dice-button:active {
-            transform: scale(0.9);
+        .loading {
+            display: none;
+            margin-top: 20px;
         }
 
-        /* Responsive adjustments */
-        @media (max-width: 480px) {
-            body {
-                padding: 10px; /* Reduce overall padding on very small screens */
-            }
-            .container {
-                padding: 0;
-            }
-            .card {
-                padding: 25px;
-            }
-            .logo h1 {
-                font-size: 2.2rem;
-            }
-            .logo p {
-                font-size: 1rem;
-            }
-            .btn {
-                padding: 12px 20px;
-                font-size: 0.95rem;
-            }
-            .profile-avatar {
-                width: 70px;
-                height: 70px;
-            }
-            .profile-username {
-                font-size: 1.1rem;
-            }
-            .message-textarea {
-                min-height: 120px;
-                padding: 15px;
-            }
-            .textarea-wrapper .dice-button {
-                font-size: 1.5rem;
-                right: 10px;
-                bottom: 10px;
-            }
-            .notification {
-                top: 10px;
-                right: 10px;
-                min-width: unset;
-                width: calc(100% - 20px);
-            }
+        .spinner {
+            border: 3px solid #f3f3f3;
+            border-top: 3px solid #667eea;
+            border-radius: 50%;
+            width: 30px;
+            height: 30px;
+            animation: spin 1s linear infinite;
+            margin: 0 auto;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        .features {
+            margin-top: 40px;
+            text-align: left;
+        }
+
+        .features h3 {
+            color: #333;
+            margin-bottom: 15px;
+        }
+
+        .features ul {
+            list-style: none;
+            padding: 0;
+        }
+
+        .features li {
+            padding: 8px 0;
+            color: #666;
+        }
+
+        .features li::before {
+            content: "✓";
+            color: #28a745;
+            font-weight: bold;
+            margin-right: 10px;
         }
     </style>
 </head>
 <body>
     <div class="container">
-        <div class="logo">
-            <h1>AnonMsg</h1>
-            <p>Otrzymuj anonimowe wiadomości od znajomych</p>
+        <h1>🔒 NGL Clone</h1>
+        <p class="subtitle">Otrzymuj anonimowe wiadomości od znajomych</p>
+
+        <form id="createUserForm">
+            <div class="form-group">
+                <label for="username">Wybierz swoją nazwę użytkownika:</label>
+                <input type="text" id="username" name="username" placeholder="np. jankowalski" required>
+            </div>
+            <button type="submit" class="btn" id="submitBtn">Stwórz mój link</button>
+        </form>
+
+        <div class="loading" id="loading">
+            <div class="spinner"></div>
+            <p>Tworzenie linku...</p>
         </div>
 
-        <div class="card" id="authSection">
-            <h3 style="text-align: center; margin-bottom: 20px; color: #333;">Zarejestruj się lub Zaloguj</h3>
-            
-            {% with messages = get_flashed_messages(with_categories=true) %}
-                {% if messages %}
-                    <div class="flash-messages" style="margin-bottom: 20px;">
-                        {% for category, message in messages %}
-                            <div class="notification {{ category }} show" style="position: relative; top: auto; right: auto; transform: none; margin-bottom: 10px; background: {% if category == 'error' %}#f44336{% elif category == 'success' %}#4CAF50{% else %}#17a2b8{% endif %};">
-                                {{ message }}
-                            </div>
-                        {% endfor %}
-                    </div>
-                {% endif %}
-            {% endwith %}
-
-            <form method="POST" action="/register" style="margin-bottom: 30px;">
-                <h4 style="margin-bottom: 15px; color: #555;">Rejestracja</h4>
-                <input type="text" name="username" class="profile-input" placeholder="Nazwa użytkownika" maxlength="20" required>
-                <input type="password" name="password" class="profile-input" placeholder="Hasło (min. 6 znaków)" required>
-                <button type="submit" class="btn">Zarejestruj się</button>
-            </form>
-
-            <form method="POST" action="/login">
-                <h4 style="margin-bottom: 15px; color: #555;">Logowanie</h4>
-                <input type="text" name="username" class="profile-input" placeholder="Nazwa użytkownika" required>
-                <input type="password" name="password" class="profile-input" placeholder="Hasło" required>
-                <button type="submit" class="btn success-btn">Zaloguj się</button>
-            </form>
-
-            {% if current_user.is_authenticated %}
-                <div style="text-align: center; margin-top: 30px;">
-                    <p style="color: #555; margin-bottom: 10px;">Jesteś zalogowany jako <strong>@{{ current_user.username }}</strong></p>
-                    <button class="btn info-btn" onclick="window.location.href='/dashboard'">Przejdź do Dashboardu</button>
-                    <button class="btn back-btn" onclick="window.location.href='/logout'">Wyloguj się</button>
+        <div class="result" id="result">
+            <div id="resultMessage"></div>
+            <div class="link-container" id="linkContainer" style="display: none;">
+                <strong>Twój link do udostępnienia:</strong>
+                <div class="generated-link" id="generatedLink"></div>
+                <button class="btn copy-btn" onclick="copyLink()">📋 Skopiuj link</button>
+                <div class="dashboard-link">
+                    <a href="#" id="dashboardLink">📊 Przejdź do panelu wiadomości</a>
                 </div>
-            {% endif %}
-
-            <div style="text-align: center; margin-top: 30px;">
-                <p style="color: #666; font-size: 0.9rem;">
-                    Chcesz wysłać wiadomość do kogoś? Wpisz jego nazwę użytkownika w adresie URL, np. <br>
-                    <code style="background: #f0f0f0; padding: 5px 10px; border-radius: 5px;">/lsjulia_t</code>
-                </p>
             </div>
         </div>
 
-        <div class="footer">
-            <p>Wszystkie wiadomości są całkowicie anonimowe</p>
+        <div class="features">
+            <h3>Funkcje:</h3>
+            <ul>
+                <li>Całkowicie anonimowe wiadomości</li>
+                <li>Prywatny panel do czytania wiadomości</li>
+                <li>Bezpieczne i szyfrowane połączenie</li>
+                <li>Łatwe udostępnianie przez link</li>
+            </ul>
         </div>
     </div>
+
+    <script>
+        const API_BASE = 'https://tbh-fun.onrender.com'; // Zmień na swój URL Render
+        let currentUserId = null;
+
+        document.getElementById('createUserForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            
+            const username = document.getElementById('username').value.trim();
+            const submitBtn = document.getElementById('submitBtn');
+            const loading = document.getElementById('loading');
+            const result = document.getElementById('result');
+            
+            if (!username) {
+                showResult('Wprowadź nazwę użytkownika', 'error');
+                return;
+            }
+
+            // Walidacja username
+            if (username.length < 3) {
+                showResult('Nazwa użytkownika musi mieć co najmniej 3 znaki', 'error');
+                return;
+            }
+
+            submitBtn.disabled = true;
+            loading.style.display = 'block';
+            result.style.display = 'none';
+
+            try {
+                const response = await fetch(`${API_BASE}/api/create-user`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({ username })
+                });
+
+                const data = await response.json();
+                console.log('Server response:', data); // Debug log
+
+                if (data.success) {
+                    // WAŻNE: Pobierz user_id z odpowiedzi serwera
+                    currentUserId = data.data.user_id; // Poprawione z data.user_id na data.data.user_id
+                    showResult('Link został utworzony pomyślnie!', 'success');
+                    showGeneratedLink(data.data.link, data.data.username, currentUserId);
+                } else {
+                    showResult(data.error || 'Wystąpił błąd', 'error');
+                }
+            } catch (error) {
+                console.error('Error:', error);
+                showResult('Błąd połączenia z serwerem', 'error');
+            } finally {
+                submitBtn.disabled = false;
+                loading.style.display = 'none';
+            }
+        });
+
+        function showResult(message, type) {
+            const result = document.getElementById('result');
+            const resultMessage = document.getElementById('resultMessage');
+            
+            result.className = `result ${type}`;
+            result.style.display = 'block';
+            resultMessage.textContent = message;
+        }
+
+        function showGeneratedLink(link, username, userId) {
+            console.log('Setting up link with user ID:', userId); // Debug log
+            
+            const linkContainer = document.getElementById('linkContainer');
+            const generatedLink = document.getElementById('generatedLink');
+            const dashboardLink = document.getElementById('dashboardLink');
+            
+            generatedLink.textContent = link;
+            // WAŻNE: Ustaw prawidłowy link do dashboardu z user_id
+            dashboardLink.href = `dashboard.html?user=${userId}`;
+            linkContainer.style.display = 'block';
+        }
+
+        function copyLink() {
+            const linkText = document.getElementById('generatedLink').textContent;
+            navigator.clipboard.writeText(linkText).then(() => {
+                const copyBtn = document.querySelector('.copy-btn');
+                const originalText = copyBtn.textContent;
+                copyBtn.textContent = '✅ Skopiowano!';
+                copyBtn.style.background = '#28a745';
+                
+                setTimeout(() => {
+                    copyBtn.textContent = originalText;
+                    copyBtn.style.background = '#28a745';
+                }, 2000);
+            }).catch(() => {
+                alert('Nie udało się skopiować linku');
+            });
+        }
+    </script>
 </body>
 </html>
-
