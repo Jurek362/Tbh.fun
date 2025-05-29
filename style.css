@@ -1,429 +1,246 @@
-/* normalize.css v8.0.1 | MIT License | github.com/necolas/normalize.css */
-html { line-height: 1.15; -webkit-text-size-adjust: 100%; }
-body { margin: 0; }
-main { display: block; }
-h1 { font-size: 2em; margin: 0.67em 0; }
-hr { box-sizing: content-box; height: 0; overflow: visible; }
-pre { font-family: monospace, monospace; font-size: 1em; }
-a { background-color: transparent; }
-abbr[title] { border-bottom: none; text-decoration: underline; text-decoration: underline dotted; }
-b, strong { font-weight: bolder; }
-code, kbd, samp { font-family: monospace, monospace; font-size: 1em; }
-small { font-size: 80%; }
-sub, sup { font-size: 75%; line-height: 0; position: relative; vertical-align: baseline; }
-sub { bottom: -0.25em; }
-sup { top: -0.5em; }
-img { border-style: none; }
-button, input, optgroup, select, textarea { font-family: inherit; font-size: 100%; line-height: 1.15; margin: 0; }
-button, input { overflow: visible; }
-button, select { text-transform: none; }
-[type="button"], [type="reset"], [type="submit"] { -webkit-appearance: button; }
-[type="button"]::-moz-focus-inner, [type="reset"]::-moz-focus-inner, [type="submit"]::-moz-focus-inner { border-style: none; padding: 0; }
-[type="button"]:-moz-focusring, [type="reset"]:-moz-focusring, [type="submit"]:-moz-focusring { outline: 1px dotted ButtonText; }
-fieldset { padding: 0.35em 0.75em 0.625em; }
-legend { box-sizing: border-box; color: inherit; display: table; max-width: 100%; padding: 0; white-space: normal; }
-progress { vertical-align: baseline; }
-textarea { overflow: auto; }
-[type="checkbox"], [type="radio"] { box-sizing: border-box; padding: 0; }
-[type="number"]::-webkit-inner-spin-button, [type="number"]::-webkit-outer-spin-button { height: auto; }
-[type="search"] { -webkit-appearance: textfield; outline-offset: -2px; }
-[type="search"]::-webkit-search-decoration { -webkit-appearance: none; }
-::-webkit-file-upload-button { -webkit-appearance: button; font: inherit; }
-details { display: block; }
-summary { display: list-item; }
-template { display: none; }
-[hidden] { display: none; }
-
-/* Main styles for the NGL Clone */
-html {
-    background: #EC1187 linear-gradient(to bottom right, #EC1187 0%, #FF8D10 100%);
-    background-repeat: no-repeat;
-    width: 100vw;
-    height: 100vh;
-    height: -webkit-fill-available; /* For mobile browser full height */
-}
-
-body {
-    font: 14px "Avenir Next", Helvetica, Arial, sans-serif;
-}
-
-.container {
-    width: 85%;
-    max-width: 640px;
-    margin: 0 auto;
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-}
-
-.form {
-    width: 100%
-}
-
-a {
-    cursor: pointer;
-}
-
-.bubble {
-    display: block;
-    margin-top:44px;
-    border-radius: 24px;
-    background-color: white;
-    box-shadow: 0 4px 15px rgba(0,0,0,0.1); /* Added shadow for better visual */
-}
-
-.header {
-    padding:16px 16px 12px;
-    font-size:16px;
-    background-color: white;
-    border-radius: 32px 32px 0 0;
-    display: flex;
-    align-items: top; /* Changed from 'center' to 'top' for better alignment with text */
-    justify-content: left;
-}
-
-.navbar {
-    display: flex;
-    align-items: center;
-    width: 100%;
-    height: 56px;
-    margin-top: 16px;
-}
-
-.pfp-container {
-    border-radius:300px; /* Makes it a perfect circle */
-    width:40px;
-    height:40px;
-    overflow:hidden;
-    margin-right:8px;
-    border: 2px solid #EC1187; /* Highlight border */
-    flex-shrink: 0; /* Prevent shrinking on small screens */
-}
-
-.pfp {
-    width:100%;
-    height:100%;
-    object-fit: cover; /* Ensures image covers the area without distortion */
-}
-
-.user-container {
-    font-weight: 600;
-    color: #EC1187;
-    display: flex;
-    flex-direction: column; /* Stack username and prompt */
-    justify-content: center;
-}
-
-.username {
-    font-size: 16px;
-    line-height: 1.2; /* Adjust line height for better spacing */
-}
-
-.prompt {
-    color: #53565B;
-    font-size: 14px;
-    font-weight: 400;
-    line-height: 1.2;
-}
-
-.textarea-container {
-    position: relative;
-    padding: 16px;
-    background-color: white;
-    border-radius: 0 0 32px 32px;
-}
-
-textarea {
-    width: 100%;
-    height: 100px;
-    border: none;
-    resize: none; /* Prevent manual resizing by user */
-    font-size: 16px;
-    padding: 0;
+/* Global reset */
+* {
     margin: 0;
-    outline: none; /* Remove focus outline */
-    box-sizing: border-box;
-    background-color: transparent;
-    color: #333; /* Ensure text color is visible */
-    font-family: inherit; /* Inherit font from body */
-}
-
-.textarea-placeholder {
-    position: absolute;
-    top: 16px;
-    left: 16px;
-    color: #999;
-    pointer-events: none; /* Allows clicks to pass through to textarea */
-    font-size: 16px;
-    transition: opacity 0.2s ease-in-out; /* Smooth fade for placeholder */
-}
-
-.dice-button {
-    position: absolute;
-    right: 16px;
-    bottom: 16px;
-    font-size: 24px;
-    cursor: pointer;
-    background: none;
-    border: none;
     padding: 0;
-    line-height: 1;
-    z-index: 1; /* Ensure it's above the textarea */
-    transition: transform 0.2s ease-in-out;
-}
-
-.dice-button:active {
-    transform: scale(0.9);
-}
-
-.anonymous-tooltip {
-    background-color: rgba(0,0,0,0.6);
-    color: white;
-    padding: 8px 16px;
-    border-radius: 20px;
-    font-size: 12px;
-    margin-top: 16px;
-    align-self: flex-start; /* Aligns to the left */
-}
-
-.submit {
-    background-color: #EC1187;
-    color: white;
-    padding: 16px 32px;
-    border-radius: 50px;
-    border: none;
-    font-size: 18px;
-    font-weight: bold;
-    margin-top: 24px;
-    width: 100%;
-    cursor: pointer;
-    transition: background-color 0.3s ease, transform 0.1s ease;
-}
-
-.submit:hover {
-    background-color: #FF8D10;
-}
-
-.submit:active {
-    transform: scale(0.98);
-}
-
-.bottom-container-user-wrapper {
-    width: 100%;
-    display: flex;
-    justify-content: center;
-    margin-top: 40px;
-}
-
-.bottom-container {
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    width: 100%;
-    max-width: 640px;
-}
-
-.download-prompt {
-    color: white;
-    font-size: 1.2em;
-    text-align: center;
-    margin-bottom: 16px;
-}
-
-.button {
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    background-color: white;
-    border-radius: 50px;
-    padding: 12px 20px;
-    text-decoration: none;
-    width: 100%;
-    max-width: 300px;
-    box-shadow: 0 4px 10px rgba(0,0,0,0.2);
-    transition: transform 0.2s ease-in-out;
-}
-
-.button:active {
-    transform: scale(0.98);
-}
-
-.button-content {
-    display: flex;
-    align-items: center;
-}
-
-.image-icon {
-    width: 30px;
-    height: 30px;
-    margin-right: 10px;
-    flex-shrink: 0;
-}
-
-.button-image-icon {
-    width: 100%;
-    height: 100%;
-    object-fit: contain;
-}
-
-.text-content {
-    display: flex;
-    flex-direction: column;
-    align-items: flex-start;
-}
-
-.top-text {
-    font-size: 0.8em;
-    color: #53565B;
-}
-
-.bottom-text {
-    font-size: 1.1em;
-    font-weight: bold;
-    color: #EC1187;
-}
-
-/* Spacing utilities - simplified */
-.space1 { height: 8px; width: 8px; }
-.space2 { height: 16px; width: 16px; }
-.space3 { height: 24px; width: 24px; }
-
-/* Pulse animation for download button */
-.pulse {
-    animation: pulse 2s infinite;
-}
-
-@keyframes pulse {
-    0% {
-        transform: scale(1);
-        box-shadow: 0 0 0 0 rgba(255, 255, 255, 0.7);
-    }
-    70% {
-        transform: scale(1.05);
-        box-shadow: 0 0 0 10px rgba(255, 255, 255, 0);
-    }
-    100% {
-        transform: scale(1);
-        box-shadow: 0 0 0 0 rgba(255, 255, 255, 0);
-    }
-}
-
-/* Specific styles for landing page */
-.landing-container {
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    justify-content: center;
-    min-height: 100vh;
-    padding: 20px;
     box-sizing: border-box;
+}
+
+/* Body styling with a gradient background */
+body {
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); /* Purple-blue gradient */
+    min-height: 100vh; /* Full viewport height */
+    color: #333; /* Default text color */
+    display: flex; /* Use flexbox for centering content */
+    align-items: center; /* Center content vertically */
+    justify-content: center; /* Center content horizontally */
+}
+
+/* Main container for the app content */
+.container {
+    max-width: 600px;
+    margin: 0 auto;
+    padding: 20px;
+    width: 100%; /* Ensure container takes full width up to max-width */
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+}
+
+/* Logo section styling */
+.logo {
     text-align: center;
+    margin-bottom: 40px;
 }
-.landing-content {
-    background-color: rgba(255, 255, 255, 0.95);
-    border-radius: 24px;
+
+.logo h1 {
+    color: white;
+    font-size: 3rem;
+    font-weight: 700;
+    text-shadow: 0 4px 15px rgba(0,0,0,0.2); /* Subtle shadow for depth */
+    margin-bottom: 10px;
+}
+
+.logo p {
+    color: rgba(255,255,255,0.8); /* Slightly transparent white */
+    font-size: 1.1rem;
+}
+
+/* Card styling for main sections */
+.card {
+    background: white;
     padding: 40px;
-    max-width: 500px;
-    width: 90%;
-    box-shadow: 0 4px 15px rgba(0,0,0,0.2);
-    color: #333;
+    border-radius: 20px;
+    box-shadow: 0 20px 60px rgba(0,0,0,0.1); /* Larger shadow for floating effect */
+    margin-bottom: 20px;
+    backdrop-filter: blur(10px); /* Frosted glass effect */
 }
-.landing-content h1 {
-    color: #EC1187;
-    font-size: 2.5em;
+
+/* Profile input section */
+.profile-section {
+    text-align: center;
+    margin-bottom: 30px;
+}
+
+.profile-input {
+    width: 100%;
+    padding: 15px;
+    border: 2px solid #e1e5e9; /* Light grey border */
+    border-radius: 12px;
+    font-size: 1rem;
+    margin-bottom: 15px;
+    transition: all 0.3s ease; /* Smooth transition for focus */
+}
+
+.profile-input:focus {
+    outline: none;
+    border-color: #667eea; /* Highlight border on focus */
+    box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1); /* Subtle glow on focus */
+}
+
+/* General button styling */
+.btn {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); /* Button gradient */
+    color: white;
+    border: none;
+    padding: 15px 30px;
+    border-radius: 12px;
+    font-size: 1rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.3s ease; /* Smooth transitions for hover/active */
+    width: 100%;
+    margin-bottom: 10px;
+}
+
+.btn:hover {
+    transform: translateY(-2px); /* Lift effect on hover */
+    box-shadow: 0 10px 25px rgba(102, 126, 234, 0.3); /* Enhanced shadow on hover */
+}
+
+.btn:active {
+    transform: translateY(0); /* Press down effect on click */
+}
+
+/* Message form specific styles */
+.message-form {
+    /* display: none; Handled by JS for initial state */
+}
+
+.message-textarea {
+    width: 100%;
+    padding: 20px;
+    border: 2px solid #e1e5e9;
+    border-radius: 12px;
+    font-size: 1rem;
+    min-height: 150px;
+    resize: vertical; /* Allow vertical resizing */
+    margin-bottom: 20px;
+    font-family: inherit; /* Inherit font from body */
+    transition: all 0.3s ease;
+}
+
+.message-textarea:focus {
+    outline: none;
+    border-color: #667eea;
+    box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+}
+
+.message-counter {
+    text-align: right;
+    margin-bottom: 15px;
+    color: #666;
+    font-size: 0.9rem;
+}
+
+/* Link display section */
+.link-display {
+    /* display: none; Handled by JS for initial state */
+    text-align: center;
+    margin-top: 20px;
+}
+
+.generated-link {
+    background: #f8f9fa; /* Light background for the link */
+    padding: 15px;
+    border-radius: 12px;
+    border: 2px dashed #667eea; /* Dashed border to highlight */
+    margin: 15px 0;
+    word-break: break-all; /* Break long words to fit */
+    font-family: monospace; /* Monospace font for code-like appearance */
+    font-size: 0.9rem;
+}
+
+/* Messages display section */
+.messages-section {
+    /* display: none; Handled by JS for initial state */
+    margin-top: 30px;
+}
+
+.message-item {
+    background: #f8f9fa;
+    padding: 20px;
+    border-radius: 12px;
+    margin-bottom: 15px;
+    border-left: 4px solid #667eea; /* Accent border on the left */
+}
+
+.message-time {
+    color: #666;
+    font-size: 0.8rem;
+    margin-bottom: 8px;
+}
+
+.message-text {
+    line-height: 1.6;
+}
+
+.empty-state {
+    text-align: center;
+    color: #666;
+    font-style: italic;
+    padding: 40px 20px;
+}
+
+/* Footer styling */
+.footer {
+    text-align: center;
+    margin-top: 40px;
+    color: rgba(255,255,255,0.7);
+}
+
+/* Notification pop-up */
+.notification {
+    position: fixed;
+    top: 20px;
+    right: 20px;
+    background: #4CAF50; /* Green for success */
+    color: white;
+    padding: 15px 20px;
+    border-radius: 12px;
+    box-shadow: 0 10px 25px rgba(0,0,0,0.2);
+    transform: translateX(400px); /* Start off-screen */
+    transition: transform 0.3s ease; /* Slide-in animation */
+    z-index: 1000;
+}
+
+.notification.show {
+    transform: translateX(0); /* Slide into view */
+}
+
+/* Specific button styles */
+.back-btn {
+    background: #6c757d; /* Grey background for back button */
     margin-bottom: 20px;
 }
-.landing-content p {
-    font-size: 1.2em;
-    line-height: 1.6;
-    margin-bottom: 30px;
+.back-btn:hover {
+    background: #5a6268;
 }
-.button-link {
-    display: inline-block;
-    background-color: #EC1187;
-    color: white;
-    padding: 15px 30px;
-    border-radius: 50px;
-    text-decoration: none;
-    font-size: 1.2em;
-    font-weight: bold;
-    transition: background-color 0.3s ease;
+.btn.success-btn { /* Changed from [onclick="showMessages()"] to a class */
+    background: #28a745; /* Green for check messages button */
 }
-.button-link:hover {
-    background-color: #FF8D10;
+.btn.success-btn:hover {
+    background: #218838;
+}
+.btn.info-btn { /* Changed from [onclick="shareLink()"] to a class */
+    background: #17a2b8; /* Blue for share button */
+}
+.btn.info-btn:hover {
+    background: #138496;
 }
 
-/* Specific styles for dashboard */
-.dashboard-container {
-    padding: 20px;
-    margin-top: 40px;
-    max-width: 640px;
-    width: 85%;
-    margin-left: auto;
-    margin-right: auto;
-    background-color: rgba(255, 255, 255, 0.95);
-    border-radius: 24px;
-    box-shadow: 0 4px 15px rgba(0,0,0,0.2);
-    color: #333;
-}
-.dashboard-container h1 {
-    color: #EC1187;
-    text-align: center;
-    margin-bottom: 30px;
-}
-.message-card {
-    background-color: #f0f2f5;
-    border-radius: 16px;
-    padding: 15px;
-    margin-bottom: 15px;
-    border: 1px solid #e0e0e0;
-    position: relative;
-}
-.message-card p {
-    margin: 0;
-    font-size: 1.1em;
-    line-height: 1.5;
-    padding-right: 40px;
-}
-.message-card small {
-    color: #888;
-    font-size: 0.85em;
-    display: block;
-    margin-top: 10px;
-    text-align: right;
-}
-.no-messages {
-    text-align: center;
-    color: #888;
-    padding: 20px;
-    font-size: 1.1em;
-}
-.action-button {
-    position: absolute;
-    top: 15px;
-    right: 15px;
-    background: #EC1187;
-    color: white;
-    border: none;
-    border-radius: 8px;
-    padding: 5px 10px;
-    cursor: pointer;
-    font-size: 0.8em;
-}
-.action-button:hover {
-    background: #FF8D10;
-}
-.nav-buttons {
-    display: flex;
-    justify-content: space-around;
-    margin-top: 30px;
-    flex-wrap: wrap; /* Allow wrapping on small screens */
-    gap: 10px; /* Space between buttons */
-}
-.nav-buttons .button-link {
-    padding: 10px 20px;
-    font-size: 1em;
-    flex: 1 1 45%; /* Allow flexible sizing */
-    text-align: center;
-    min-width: 120px; /* Minimum width for buttons */
+
+/* Responsive adjustments */
+@media (max-width: 480px) {
+    .container {
+        padding: 15px;
+    }
+    
+    .card {
+        padding: 25px;
+    }
+    
+    .logo h1 {
+        font-size: 2.5rem;
+    }
 }
