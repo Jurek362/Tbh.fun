@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Panel Wiadomości - Tbh.fun</title>
+    <title>Panel wiadomości - Tbh.fun</title>
     <style>
         * {
             margin: 0;
@@ -21,85 +21,45 @@
         .container {
             max-width: 800px;
             margin: 0 auto;
-            background: white;
-            border-radius: 20px;
-            padding: 40px;
-            box-shadow: 0 20px 40px rgba(0,0,0,0.1);
         }
 
         .header {
+            background: white;
+            border-radius: 20px;
+            padding: 30px;
+            margin-bottom: 30px;
+            box-shadow: 0 20px 40px rgba(0,0,0,0.1);
             text-align: center;
-            margin-bottom: 40px;
-            padding-bottom: 20px;
-            border-bottom: 2px solid #f0f0f0;
         }
 
-        h1 {
+        .header h1 {
             color: #333;
             margin-bottom: 10px;
             font-size: 2.2em;
         }
 
-        .user-info {
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            color: white;
-            padding: 20px;
-            border-radius: 15px;
-            margin-bottom: 30px;
-            text-align: center;
-        }
-
         .username {
+            color: #667eea;
             font-size: 1.5em;
             font-weight: 600;
-            margin-bottom: 10px;
-        }
-
-        .user-link {
-            background: rgba(255,255,255,0.2);
-            padding: 10px;
-            border-radius: 8px;
-            font-family: monospace;
-            word-break: break-all;
-            margin-bottom: 10px;
-        }
-
-        .copy-btn {
-            background: rgba(255,255,255,0.3);
-            border: none;
-            color: white;
-            padding: 8px 16px;
-            border-radius: 5px;
-            cursor: pointer;
-            font-weight: 600;
-            transition: background 0.3s;
-        }
-
-        .copy-btn:hover {
-            background: rgba(255,255,255,0.4);
+            margin-bottom: 15px;
         }
 
         .stats {
             display: flex;
-            justify-content: space-around;
-            margin-bottom: 30px;
-            text-align: center;
+            justify-content: center;
+            gap: 30px;
+            margin-top: 20px;
         }
 
-        .stat-item {
-            background: #f8f9fa;
-            padding: 20px;
-            border-radius: 10px;
-            border: 1px solid #e9ecef;
-            flex: 1;
-            margin: 0 10px;
+        .stat {
+            text-align: center;
         }
 
         .stat-number {
             font-size: 2em;
-            font-weight: 700;
+            font-weight: bold;
             color: #667eea;
-            margin-bottom: 5px;
         }
 
         .stat-label {
@@ -107,68 +67,105 @@
             font-size: 0.9em;
         }
 
-        .messages-section {
-            margin-top: 30px;
+        .share-section {
+            background: #e9f4ff;
+            border: 1px solid #b8daff;
+            border-radius: 15px;
+            padding: 20px;
+            margin-bottom: 30px;
+            text-align: center;
         }
 
-        .section-title {
-            font-size: 1.5em;
-            color: #333;
-            margin-bottom: 20px;
-            display: flex;
-            align-items: center;
-            gap: 10px;
+        .share-link {
+            background: #f8f9fa;
+            border: 1px solid #e9ecef;
+            border-radius: 10px;
+            padding: 15px;
+            margin: 15px 0;
+            word-break: break-all;
+            font-family: monospace;
+            font-size: 14px;
         }
 
-        .refresh-btn {
+        .copy-btn {
             background: #28a745;
             color: white;
             border: none;
-            padding: 8px 12px;
-            border-radius: 5px;
+            padding: 10px 20px;
+            border-radius: 8px;
             cursor: pointer;
-            font-size: 12px;
-            margin-left: auto;
+            font-weight: 600;
+            transition: all 0.3s;
+        }
+
+        .copy-btn:hover {
+            background: #218838;
+            transform: translateY(-2px);
+        }
+
+        .messages-section {
+            background: white;
+            border-radius: 20px;
+            padding: 30px;
+            box-shadow: 0 20px 40px rgba(0,0,0,0.1);
+        }
+
+        .messages-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 30px;
+            padding-bottom: 20px;
+            border-bottom: 2px solid #f1f3f4;
+        }
+
+        .messages-title {
+            font-size: 1.5em;
+            color: #333;
+            font-weight: 600;
+        }
+
+        .refresh-btn {
+            background: #667eea;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 8px;
+            cursor: pointer;
+            font-weight: 600;
+            transition: all 0.3s;
         }
 
         .refresh-btn:hover {
-            background: #218838;
+            background: #5a6fd8;
+            transform: translateY(-2px);
         }
 
-        .message-card {
-            background: #fff;
-            border: 1px solid #e9ecef;
+        .message {
+            background: #f8f9fa;
+            border-left: 4px solid #667eea;
             border-radius: 10px;
             padding: 20px;
-            margin-bottom: 15px;
-            box-shadow: 0 2px 10px rgba(0,0,0,0.05);
-            transition: transform 0.2s;
+            margin-bottom: 20px;
+            transition: all 0.3s;
         }
 
-        .message-card:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 4px 20px rgba(0,0,0,0.1);
+        .message:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 10px 25px rgba(0,0,0,0.1);
         }
 
         .message-content {
-            font-size: 1.1em;
+            font-size: 16px;
             line-height: 1.6;
             color: #333;
             margin-bottom: 15px;
         }
 
-        .message-meta {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            font-size: 0.9em;
+        .message-time {
+            font-size: 14px;
             color: #666;
-        }
-
-        .message-date {
-            background: #f0f0f0;
-            padding: 5px 10px;
-            border-radius: 15px;
+            text-align: right;
         }
 
         .no-messages {
@@ -185,7 +182,6 @@
         .loading {
             text-align: center;
             padding: 40px;
-            display: none;
         }
 
         .spinner {
@@ -209,8 +205,8 @@
             color: #721c24;
             padding: 20px;
             border-radius: 10px;
-            margin-bottom: 20px;
             text-align: center;
+            margin-bottom: 20px;
         }
 
         .back-link {
@@ -219,26 +215,30 @@
         }
 
         .back-link a {
-            color: #667eea;
+            color: white;
             text-decoration: none;
             font-weight: 600;
+            background: rgba(255,255,255,0.2);
+            padding: 10px 20px;
+            border-radius: 25px;
+            transition: all 0.3s;
         }
 
         .back-link a:hover {
-            text-decoration: underline;
+            background: rgba(255,255,255,0.3);
+            transform: translateY(-2px);
         }
 
         @media (max-width: 768px) {
             .stats {
                 flex-direction: column;
+                gap: 15px;
             }
             
-            .stat-item {
-                margin: 5px 0;
-            }
-            
-            .container {
-                padding: 20px;
+            .messages-header {
+                flex-direction: column;
+                gap: 15px;
+                text-align: center;
             }
         }
     </style>
@@ -246,42 +246,39 @@
 <body>
     <div class="container">
         <div class="header">
-            <h1>📊 Panel Wiadomości</h1>
+            <h1>📊 Panel wiadomości</h1>
+            <div class="username" id="usernameDisplay">@loading...</div>
+            <div class="stats">
+                <div class="stat">
+                    <div class="stat-number" id="totalMessages">0</div>
+                    <div class="stat-label">Wszystkich wiadomości</div>
+                </div>
+                <div class="stat">
+                    <div class="stat-number" id="newMessages">0</div>
+                    <div class="stat-label">Nowych wiadomości</div>
+                </div>
+            </div>
         </div>
 
-        <div id="errorMessage" class="error" style="display: none;"></div>
-
-        <div id="userInfo" class="user-info" style="display: none;">
-            <div class="username" id="displayUsername">@username</div>
-            <div class="user-link" id="displayLink">Ładowanie...</div>
-            <button class="copy-btn" onclick="copyUserLink()">📋 Skopiuj link</button>
-        </div>
-
-        <div class="stats">
-            <div class="stat-item">
-                <div class="stat-number" id="totalMessages">0</div>
-                <div class="stat-label">Wszystkich wiadomości</div>
-            </div>
-            <div class="stat-item">
-                <div class="stat-number" id="todayMessages">0</div>
-                <div class="stat-label">Dzisiaj</div>
-            </div>
-            <div class="stat-item">
-                <div class="stat-number" id="thisWeekMessages">0</div>
-                <div class="stat-label">Ten tydzień</div>
-            </div>
+        <div class="share-section">
+            <h3>🔗 Udostępnij swój link</h3>
+            <p>Wyślij ten link znajomym, aby otrzymywać anonimowe wiadomości:</p>
+            <div class="share-link" id="shareLink">Loading...</div>
+            <button class="copy-btn" onclick="copyShareLink()">📋 Skopiuj link</button>
         </div>
 
         <div class="messages-section">
-            <div class="section-title">
-                💬 Twoje wiadomości
+            <div class="messages-header">
+                <h2 class="messages-title">💬 Twoje wiadomości</h2>
                 <button class="refresh-btn" onclick="loadMessages()">🔄 Odśwież</button>
             </div>
 
-            <div class="loading" id="loading">
+            <div id="loading" class="loading">
                 <div class="spinner"></div>
                 <p>Ładowanie wiadomości...</p>
             </div>
+
+            <div id="error" class="error" style="display: none;"></div>
 
             <div id="messagesContainer">
                 <!-- Wiadomości będą tutaj -->
@@ -289,66 +286,61 @@
         </div>
 
         <div class="back-link">
-            <a href="index.html">← Powrót do strony głównej</a>
+            <a href="index.html">← Stwórz nowy link</a>
         </div>
     </div>
 
     <script>
         const API_BASE = 'https://tbh-fun.onrender.com';
         let currentUserId = null;
-        let currentUser = null;
+        let userInfo = null;
 
         // Pobierz user ID z URL
         const urlParams = new URLSearchParams(window.location.search);
         currentUserId = urlParams.get('user');
 
         if (!currentUserId) {
-            showError('Nieprawidłowy link. Brak ID użytkownika.');
+            showError('Nieprawidłowy link. Brak identyfikatora użytkownika.');
         } else {
-            loadUserData();
+            loadUserInfo();
+            loadMessages();
         }
 
-        async function loadUserData() {
+        async function loadUserInfo() {
             try {
-                showLoading(true);
-                
-                // Pobierz dane użytkownika po ID
-                const response = await fetch(`${API_BASE}/api/user-by-id/${currentUserId}`);
+                const response = await fetch(`${API_BASE}/api/user/${currentUserId}/info`);
                 const data = await response.json();
 
                 if (data.success) {
-                    currentUser = data.data;
-                    displayUserInfo(currentUser);
-                    await loadMessages();
+                    userInfo = data.user;
+                    document.getElementById('usernameDisplay').textContent = `@${userInfo.username}`;
+                    document.getElementById('shareLink').textContent = userInfo.link;
+                    updateStats(userInfo.message_count, userInfo.unread_count);
                 } else {
-                    showError(data.error || 'Nie można załadować danych użytkownika');
+                    showError(data.error || 'Nie można załadować informacji o użytkowniku');
                 }
             } catch (error) {
-                console.error('Error loading user data:', error);
-                showError('Błąd połączenia z serwerem');
-            } finally {
-                showLoading(false);
+                console.error('Error loading user info:', error);
+                showError('Błąd podczas ładowania informacji o użytkowniku');
             }
         }
 
-        function displayUserInfo(user) {
-            document.getElementById('displayUsername').textContent = `@${user.username}`;
-            document.getElementById('displayLink').textContent = user.link;
-            document.getElementById('userInfo').style.display = 'block';
-        }
-
         async function loadMessages() {
-            if (!currentUserId) return;
+            const loadingEl = document.getElementById('loading');
+            const errorEl = document.getElementById('error');
+            const messagesContainer = document.getElementById('messagesContainer');
+
+            loadingEl.style.display = 'block';
+            errorEl.style.display = 'none';
+            messagesContainer.innerHTML = '';
 
             try {
-                showLoading(true);
-                
-                const response = await fetch(`${API_BASE}/api/messages/${currentUserId}`);
+                const response = await fetch(`${API_BASE}/api/user/${currentUserId}/messages`);
                 const data = await response.json();
 
                 if (data.success) {
-                    displayMessages(data.data);
-                    updateStats(data.data);
+                    displayMessages(data.messages);
+                    updateStats(data.count, 0); // Po załadowaniu wszystkie są przeczytane
                 } else {
                     showError(data.error || 'Nie można załadować wiadomości');
                 }
@@ -356,81 +348,64 @@
                 console.error('Error loading messages:', error);
                 showError('Błąd podczas ładowania wiadomości');
             } finally {
-                showLoading(false);
+                loadingEl.style.display = 'none';
             }
         }
 
         function displayMessages(messages) {
-            const container = document.getElementById('messagesContainer');
-            
-            if (!messages || messages.length === 0) {
-                container.innerHTML = `
+            const messagesContainer = document.getElementById('messagesContainer');
+
+            if (messages.length === 0) {
+                messagesContainer.innerHTML = `
                     <div class="no-messages">
                         <div class="no-messages-icon">📭</div>
                         <h3>Brak wiadomości</h3>
-                        <p>Gdy ktoś wyśle Ci anonimową wiadomość, pojawi się tutaj.</p>
-                        <p style="margin-top: 15px; color: #999;">
-                            Udostępnij swój link znajomym!
-                        </p>
+                        <p>Udostępnij swój link, aby otrzymać pierwszą anonimową wiadomość!</p>
                     </div>
                 `;
                 return;
             }
 
-            container.innerHTML = messages.map(message => `
-                <div class="message-card">
+            // Sortuj wiadomości od najnowszych
+            messages.sort((a, b) => new Date(b.timestamp) - new Date(a.timestamp));
+
+            messagesContainer.innerHTML = messages.map(message => `
+                <div class="message">
                     <div class="message-content">${escapeHtml(message.message)}</div>
-                    <div class="message-meta">
-                        <span>📨 Anonimowa wiadomość</span>
-                        <span class="message-date">${formatDate(message.created_at)}</span>
-                    </div>
+                    <div class="message-time">${formatTime(message.timestamp)}</div>
                 </div>
             `).join('');
         }
 
-        function updateStats(messages) {
-            const total = messages.length;
-            const today = getTodayMessages(messages);
-            const thisWeek = getThisWeekMessages(messages);
-
-            document.getElementById('totalMessages').textContent = total;
-            document.getElementById('todayMessages').textContent = today;
-            document.getElementById('thisWeekMessages').textContent = thisWeek;
+        function updateStats(totalCount, unreadCount) {
+            document.getElementById('totalMessages').textContent = totalCount;
+            document.getElementById('newMessages').textContent = unreadCount;
         }
 
-        function getTodayMessages(messages) {
-            const today = new Date().toDateString();
-            return messages.filter(msg => 
-                new Date(msg.created_at).toDateString() === today
-            ).length;
+        function copyShareLink() {
+            const shareLink = document.getElementById('shareLink').textContent;
+            navigator.clipboard.writeText(shareLink).then(() => {
+                const copyBtn = document.querySelector('.copy-btn');
+                const originalText = copyBtn.textContent;
+                copyBtn.textContent = '✅ Skopiowano!';
+                copyBtn.style.background = '#28a745';
+                
+                setTimeout(() => {
+                    copyBtn.textContent = originalText;
+                    copyBtn.style.background = '#28a745';
+                }, 2000);
+            }).catch(() => {
+                alert('Nie udało się skopiować linku');
+            });
         }
 
-        function getThisWeekMessages(messages) {
-            const oneWeekAgo = new Date();
-            oneWeekAgo.setDate(oneWeekAgo.getDate() - 7);
+        function showError(message) {
+            const errorEl = document.getElementById('error');
+            const loadingEl = document.getElementById('loading');
             
-            return messages.filter(msg => 
-                new Date(msg.created_at) >= oneWeekAgo
-            ).length;
-        }
-
-        function formatDate(dateString) {
-            const date = new Date(dateString);
-            const now = new Date();
-            const diffMs = now - date;
-            const diffMins = Math.floor(diffMs / 60000);
-            const diffHours = Math.floor(diffMins / 60);
-            const diffDays = Math.floor(diffHours / 24);
-
-            if (diffMins < 60) {
-                return `${diffMins} min temu`;
-            } else if (diffHours < 24) {
-                return `${diffHours} godz. temu`;
-            } else if (diffDays < 7) {
-                return `${diffDays} dni temu`;
-            } else {
-                return date.toLocaleDateString('pl-PL');
-            }
+            errorEl.textContent = message;
+            errorEl.style.display = 'block';
+            loadingEl.style.display = 'none';
         }
 
         function escapeHtml(text) {
@@ -439,32 +414,21 @@
             return div.innerHTML;
         }
 
-        function copyUserLink() {
-            if (!currentUser) return;
-            
-            navigator.clipboard.writeText(currentUser.link).then(() => {
-                const btn = document.querySelector('.copy-btn');
-                const originalText = btn.textContent;
-                btn.textContent = '✅ Skopiowano!';
-                btn.style.background = 'rgba(40, 167, 69, 0.8)';
-                
-                setTimeout(() => {
-                    btn.textContent = originalText;
-                    btn.style.background = 'rgba(255,255,255,0.3)';
-                }, 2000);
-            }).catch(() => {
-                alert('Nie udało się skopiować linku');
-            });
-        }
+        function formatTime(timestamp) {
+            const date = new Date(timestamp);
+            const now = new Date();
+            const diffInHours = (now - date) / (1000 * 60 * 60);
 
-        function showLoading(show) {
-            document.getElementById('loading').style.display = show ? 'block' : 'none';
-        }
-
-        function showError(message) {
-            const errorDiv = document.getElementById('errorMessage');
-            errorDiv.textContent = message;
-            errorDiv.style.display = 'block';
+            if (diffInHours < 1) {
+                const diffInMinutes = Math.floor((now - date) / (1000 * 60));
+                return `${diffInMinutes} min temu`;
+            } else if (diffInHours < 24) {
+                const hours = Math.floor(diffInHours);
+                return `${hours} godz. temu`;
+            } else {
+                const diffInDays = Math.floor(diffInHours / 24);
+                return `${diffInDays} dni temu`;
+            }
         }
 
         // Auto-refresh co 30 sekund
