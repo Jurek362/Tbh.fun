@@ -195,6 +195,16 @@
             font-weight: bold;
             margin-right: 10px;
         }
+
+        .debug-info {
+            margin-top: 20px;
+            padding: 15px;
+            background: #f0f0f0;
+            border-radius: 10px;
+            font-size: 12px;
+            color: #666;
+            text-align: left;
+        }
     </style>
 </head>
 <body>
@@ -236,11 +246,55 @@
                 <li>Łatwe udostępnianie przez link</li>
             </ul>
         </div>
+
+        <!-- Debug info -->
+        <div class="debug-info" id="debugInfo" style="display: none;">
+            <strong>Debug Info:</strong><br>
+            Status: <span id="debugStatus">Sprawdzanie...</span><br>
+            Endpoint: <span id="debugEndpoint">-</span><br>
+            Odpowiedź: <span id="debugResponse">-</span>
+        </div>
     </div>
 
     <script>
-        const API_BASE = 'https://tbh-fun.onrender.com'; // Zmień na swój URL Render
+        const API_BASE = 'https://tbh-fun.onrender.com';
         let currentUserId = null;
+
+        // Test połączenia z serwerem przy ładowaniu strony
+        async function testConnection() {
+            const debugInfo = document.getElementById('debugInfo');
+            const debugStatus = document.getElementById('debugStatus');
+            const debugEndpoint = document.getElementById('debugEndpoint');
+            const debugResponse = document.getElementById('debugResponse');
+            
+            debugInfo.style.display = 'block';
+            debugEndpoint.textContent = `${API_BASE}/api/health`;
+            
+            try {
+                debugStatus.textContent = 'Łączenie...';
+                const response = await fetch(`${API_BASE}/api/health`);
+                const data = await response.json();
+                
+                if (response.ok && data.status === 'healthy') {
+                    debugStatus.textContent = '✅ Połączono';
+                    debugResponse.textContent = JSON.stringify(data);
+                    // Ukryj debug info po 3 sekundach jeśli połączenie OK
+                    setTimeout(() => {
+                        debugInfo.style.display = 'none';
+                    }, 3000);
+                } else {
+                    debugStatus.textContent = '❌ Błąd odpowiedzi';
+                    debugResponse.textContent = JSON.stringify(data);
+                }
+            } catch (error) {
+                debugStatus.textContent = '❌ Błąd połączenia';
+                debugResponse.textContent = error.message;
+                console.error('Connection test failed:', error);
+            }
+        }
+
+        // Test połączenia przy ładowaniu strony
+        window.addEventListener('load', testConnection);
 
         document.getElementById('createUserForm').addEventListener('submit', async (e) => {
             e.preventDefault();
@@ -261,33 +315,48 @@
                 return;
             }
 
+            if (!/^[a-zA-Z0-9_-]+$/.test(username)) {
+                showResult('Nazwa użytkownika może zawierać tylko litery, cyfry, _ i -', 'error');
+                return;
+            }
+
             submitBtn.disabled = true;
             loading.style.display = 'block';
             result.style.display = 'none';
 
             try {
+                console.log('Wysyłanie requesta do:', `${API_BASE}/api/create-user`);
+                console.log('Dane:', { username });
+
                 const response = await fetch(`${API_BASE}/api/create-user`, {
                     method: 'POST',
                     headers: {
                         'Content-Type': 'application/json',
+                        'Accept': 'application/json'
                     },
                     body: JSON.stringify({ username })
                 });
 
+                console.log('Status odpowiedzi:', response.status);
+                console.log('Headers:', [...response.headers.entries()]);
+
+                if (!response.ok) {
+                    throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+                }
+
                 const data = await response.json();
-                console.log('Server response:', data); // Debug log
+                console.log('Odpowiedź:', data);
 
                 if (data.success) {
-                    // WAŻNE: Pobierz user_id z odpowiedzi serwera
-                    currentUserId = data.data.user_id; // Poprawione z data.user_id na data.data.user_id
+                    currentUserId = data.user_id;
                     showResult('Link został utworzony pomyślnie!', 'success');
-                    showGeneratedLink(data.data.link, data.data.username, currentUserId);
+                    showGeneratedLink(data.link, data.username, data.user_id);
                 } else {
                     showResult(data.error || 'Wystąpił błąd', 'error');
                 }
             } catch (error) {
                 console.error('Error:', error);
-                showResult('Błąd połączenia z serwerem', 'error');
+                showResult(`Błąd połączenia z serwerem: ${error.message}`, 'error');
             } finally {
                 submitBtn.disabled = false;
                 loading.style.display = 'none';
@@ -304,15 +373,12 @@
         }
 
         function showGeneratedLink(link, username, userId) {
-            console.log('Setting up link with user ID:', userId); // Debug log
-            
             const linkContainer = document.getElementById('linkContainer');
             const generatedLink = document.getElementById('generatedLink');
             const dashboardLink = document.getElementById('dashboardLink');
             
             generatedLink.textContent = link;
-            // WAŻNE: Ustaw prawidłowy link do dashboardu z user_id
-            dashboardLink.href = `dashboard.html?user=${userId}`;
+            dashboardLink.href = `dashboard.html?username=${username}`;
             linkContainer.style.display = 'block';
         }
 
@@ -329,7 +395,18 @@
                     copyBtn.style.background = '#28a745';
                 }, 2000);
             }).catch(() => {
-                alert('Nie udało się skopiować linku');
+                // Fallback dla starszych przeglądarek
+                const textArea = document.createElement('textarea');
+                textArea.value = linkText;
+                document.body.appendChild(textArea);
+                textArea.select();
+                try {
+                    document.execCommand('copy');
+                    alert('Link skopiowany do schowka!');
+                } catch (err) {
+                    alert('Nie udało się skopiować linku');
+                }
+                document.body.removeChild(textArea);
             });
         }
     </script>
