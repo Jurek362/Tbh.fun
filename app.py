@@ -1,19 +1,35 @@
-# app.py - Naprawiony Flask backend
-from flask import Flask, request, jsonify
+# app.py - Naprawiony Flask backend z przekierowaniem
+from flask import Flask, request, jsonify, redirect
 from flask_cors import CORS
 import json
 import os
 from datetime import datetime
 import uuid
+import re
 
 app = Flask(__name__)
 
-# CORS configuration
-CORS(app, origins=['https://jurek362.github.io'])
+# CORS configuration - zezwól na wszystkie żądania z GitHub Pages
+CORS(app, origins=[
+    'https://jurek362.github.io',
+    'https://tbh-fun.onrender.com'
+])
 
 # Tymczasowe przechowywanie danych (w produkcji użyj prawdziwej bazy danych)
 users_db = {}
 messages_db = {}
+
+@app.before_request
+def handle_redirection():
+    """Przekieruj wszystkie żądania nie-API na GitHub Pages"""
+    # Jeśli to nie jest żądanie API i host to tbh-fun.onrender.com
+    if request.host == 'tbh-fun.onrender.com' and not request.path.startswith('/api'):
+        # Zachowaj oryginalną ścieżkę
+        path = request.path
+        if request.query_string:
+            path += '?' + request.query_string.decode('utf-8')
+        # Przekieruj na GitHub Pages z zachowaniem ścieżki
+        return redirect(f'https://jurek362.github.io/Tbh.fun{path}', code=302)
 
 @app.before_request
 def log_request():
@@ -25,20 +41,17 @@ def log_request():
 # ===== ROUTES =====
 
 @app.route('/')
-def home():
-    """Root endpoint"""
-    return jsonify({
-        'message': 'Tbh.fun API is running',
-        'status': 'OK',
-        'cors_enabled': True
-    })
+def home_redirect():
+    """Przekierowanie głównej strony na GitHub Pages"""
+    return redirect('https://jurek362.github.io/Tbh.fun/', code=302)
 
 @app.route('/api/health')
 def health():
     """Health check"""
     return jsonify({
         'status': 'healthy',
-        'timestamp': datetime.now().isoformat()
+        'timestamp': datetime.now().isoformat(),
+        'redirect_enabled': True
     })
 
 @app.route('/api/create-user', methods=['POST'])
@@ -76,7 +89,6 @@ def create_user():
             }), 400
         
         # Sprawdź czy username zawiera tylko dozwolone znaki
-        import re
         if not re.match("^[a-zA-Z0-9_-]+$", username):
             return jsonify({
                 'success': False,
@@ -97,7 +109,8 @@ def create_user():
             'id': user_id,
             'username': username,
             'created_at': datetime.now().isoformat(),
-            'link': f'https://jurek362.github.io/Tbh.fun/send.html?u={username}'
+            'link': f'https://jurek362.github.io/Tbh.fun/send.html?u={username}',
+            'dashboard_link': f'https://jurek362.github.io/Tbh.fun/dashboard/{username}'
         }
         
         # Zapisz do "bazy danych"
@@ -106,18 +119,12 @@ def create_user():
         
         print(f"Użytkownik utworzony: {user_id}")
         
-        # ZWRÓĆ DANE W POPRAWNYM FORMACIE
         return jsonify({
             'success': True,
             'message': 'Konto utworzone pomyślnie!',
-            'user_id': user_id,  # Dla kompatybilności z frontendem
-            'link': user_data['link'],  # Bezpośrednio link
-            'username': username,  # Bezpośrednio username
-            'data': {
-                'username': user_data['username'],
-                'link': user_data['link'],
-                'id': user_data['id']
-            }
+            'user_id': user_id,
+            'username': username,
+            'data': user_data
         }), 201
         
     except Exception as e:
@@ -210,7 +217,8 @@ def send_message():
         
         return jsonify({
             'success': True,
-            'message': 'Wiadomość została wysłana pomyślnie!'
+            'message': 'Wiadomość została wysłana pomyślnie!',
+            'dashboard_link': f'https://jurek362.github.io/Tbh.fun/dashboard/{username}'
         }), 201
         
     except Exception as e:
@@ -220,11 +228,18 @@ def send_message():
             'error': 'Błąd serwera'
         }), 500
 
-@app.route('/api/messages/<user_id>', methods=['GET'])
-def get_messages(user_id):
-    """Pobierz wiadomości użytkownika"""
+@app.route('/api/messages/<username>', methods=['GET'])
+def get_messages(username):
+    """Pobierz wiadomości użytkownika po nazwie użytkownika"""
     try:
-        if user_id not in users_db:
+        # Znajdź ID użytkownika po nazwie
+        user_id = None
+        for uid, user_data in users_db.items():
+            if user_data['username'] == username:
+                user_id = uid
+                break
+        
+        if not user_id:
             return jsonify({
                 'success': False,
                 'error': 'Użytkownik nie istnieje'
@@ -238,7 +253,8 @@ def get_messages(user_id):
         return jsonify({
             'success': True,
             'messages': user_messages,
-            'count': len(user_messages)
+            'count': len(user_messages),
+            'username': username
         })
         
     except Exception as e:
@@ -248,11 +264,18 @@ def get_messages(user_id):
             'error': 'Błąd serwera'
         }), 500
 
-@app.route('/api/mark-read/<user_id>/<message_id>', methods=['POST'])
-def mark_message_as_read(user_id, message_id):
+@app.route('/api/mark-read/<username>/<message_id>', methods=['POST'])
+def mark_message_as_read(username, message_id):
     """Oznacz wiadomość jako przeczytaną"""
     try:
-        if user_id not in users_db:
+        # Znajdź ID użytkownika po nazwie
+        user_id = None
+        for uid, user_data in users_db.items():
+            if user_data['username'] == username:
+                user_id = uid
+                break
+        
+        if not user_id:
             return jsonify({
                 'success': False,
                 'error': 'Użytkownik nie istnieje'
@@ -281,11 +304,18 @@ def mark_message_as_read(user_id, message_id):
             'error': 'Błąd serwera'
         }), 500
 
-@app.route('/api/delete-message/<user_id>/<message_id>', methods=['DELETE'])
-def delete_message(user_id, message_id):
+@app.route('/api/delete-message/<username>/<message_id>', methods=['DELETE'])
+def delete_message(username, message_id):
     """Usuń wiadomość"""
     try:
-        if user_id not in users_db:
+        # Znajdź ID użytkownika po nazwie
+        user_id = None
+        for uid, user_data in users_db.items():
+            if user_data['username'] == username:
+                user_id = uid
+                break
+        
+        if not user_id:
             return jsonify({
                 'success': False,
                 'error': 'Użytkownik nie istnieje'
@@ -364,7 +394,8 @@ if __name__ == '__main__':
     debug = os.environ.get('FLASK_ENV') == 'development'
     
     print("🚀 Uruchamianie serwera Flask...")
-    print(f"📡 CORS włączony dla: https://jurek362.github.io")
+    print(f"📡 CORS włączony dla: https://jurek362.github.io i https://tbh-fun.onrender.com")
+    print(f"🔁 Przekierowanie włączone dla hosta: tbh-fun.onrender.com")
     print(f"🌍 Port: {port}")
     print(f"🔧 Debug: {debug}")
     print(f"📊 Użytkownicy w bazie: {len(users_db)}")
