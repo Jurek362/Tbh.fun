@@ -4,14 +4,14 @@ from flask_cors import CORS
 import json
 import os
 from datetime import datetime
-import re
+import uuid
 
 app = Flask(__name__)
 
-# ===== KONFIGURACJA CORS =====
-CORS(app, origins=['https://jurek362.github.io', 'http://localhost:3000', 'http://127.0.0.1:5500'])
+# KONFIGURACJA CORS
+CORS(app, origins=['https://jurek362.github.io', 'https://tbh-fun.onrender.com'])
 
-# Tymczasowa baza danych w pamięci (w produkcji użyj prawdziwej bazy danych)
+# SYMULACJA BAZY DANYCH (w produkcji użyj prawdziwej bazy)
 users_db = {}
 messages_db = {}
 
@@ -30,8 +30,7 @@ def home():
     return jsonify({
         'message': 'Tbh.fun API is running',
         'status': 'OK',
-        'cors_enabled': True,
-        'timestamp': datetime.now().isoformat()
+        'cors_enabled': True
     })
 
 @app.route('/api/health')
@@ -46,7 +45,6 @@ def health():
 def create_user():
     """Create new user"""
     try:
-        # Pobierz dane JSON
         data = request.get_json()
         
         if not data:
@@ -55,7 +53,7 @@ def create_user():
                 'error': 'Brak danych JSON'
             }), 400
         
-        username = data.get('username', '').strip().lower()
+        username = data.get('username', '').strip()
         
         if not username:
             return jsonify({
@@ -76,6 +74,7 @@ def create_user():
             }), 400
         
         # Sprawdź czy username zawiera tylko dozwolone znaki
+        import re
         if not re.match("^[a-zA-Z0-9_-]+$", username):
             return jsonify({
                 'success': False,
@@ -83,61 +82,60 @@ def create_user():
             }), 400
         
         # Sprawdź czy username już istnieje
-        if username in users_db:
-            return jsonify({
-                'success': False,
-                'error': 'Ta nazwa użytkownika jest już zajęta'
-            }), 400
+        for user_id, user_data in users_db.items():
+            if user_data['username'].lower() == username.lower():
+                return jsonify({
+                    'success': False,
+                    'error': 'Ta nazwa użytkownika jest już zajęta'
+                }), 409
         
         # Utwórz użytkownika
-        user_id = str(int(datetime.now().timestamp() * 1000))
+        user_id = str(uuid.uuid4())
         user_data = {
             'id': user_id,
             'username': username,
             'created_at': datetime.now().isoformat(),
-            'message_count': 0
+            'link': f'https://jurek362.github.io/Tbh.fun/send.html?u={username}'
         }
         
-        # Zapisz do "bazy danych"
-        users_db[username] = user_data
-        messages_db[username] = []
+        users_db[user_id] = user_data
+        messages_db[user_id] = []
         
-        print(f"Użytkownik utworzony: {username} (ID: {user_id})")
+        print(f"Użytkownik utworzony: {user_id} - {username}")
         
         return jsonify({
             'success': True,
             'message': 'Konto utworzone pomyślnie!',
-            'username': username,
             'user_id': user_id,
-            'link': f'https://jurek362.github.io/Tbh.fun/send.html?u={username}'
+            'username': username,
+            'link': user_data['link']
         }), 201
         
     except Exception as e:
         print(f"Błąd podczas tworzenia użytkownika: {str(e)}")
         return jsonify({
             'success': False,
-            'error': 'Błąd serwera',
-            'details': str(e)
+            'error': 'Błąd serwera'
         }), 500
 
 @app.route('/api/user/<username>', methods=['GET'])
-def get_user(username):
-    """Sprawdź czy użytkownik istnieje"""
+def check_user_exists(username):
+    """Sprawdź czy użytkownik istnieje (po username)"""
     try:
-        username = username.lower().strip()
+        for user_id, user_data in users_db.items():
+            if user_data['username'].lower() == username.lower():
+                return jsonify({
+                    'success': True,
+                    'exists': True,
+                    'user_id': user_id,
+                    'username': user_data['username']
+                })
         
-        if username in users_db:
-            return jsonify({
-                'success': True,
-                'exists': True,
-                'username': username
-            })
-        else:
-            return jsonify({
-                'success': False,
-                'exists': False,
-                'error': 'Użytkownik nie istnieje'
-            }), 404
+        return jsonify({
+            'success': False,
+            'exists': False,
+            'error': 'Użytkownik nie istnieje'
+        }), 404
         
     except Exception as e:
         print(f"Błąd podczas sprawdzania użytkownika: {str(e)}")
@@ -158,7 +156,7 @@ def send_message():
                 'error': 'Brak danych JSON'
             }), 400
         
-        username = data.get('username', '').strip().lower()
+        username = data.get('username', '').strip()
         message = data.get('message', '').strip()
         
         if not username or not message:
@@ -170,11 +168,17 @@ def send_message():
         if len(message) > 500:
             return jsonify({
                 'success': False,
-                'error': 'Wiadomość jest za długa (max 500 znaków)'
+                'error': 'Wiadomość nie może być dłuższa niż 500 znaków'
             }), 400
         
-        # Sprawdź czy użytkownik istnieje
-        if username not in users_db:
+        # Znajdź użytkownika
+        user_id = None
+        for uid, user_data in users_db.items():
+            if user_data['username'].lower() == username.lower():
+                user_id = uid
+                break
+        
+        if not user_id:
             return jsonify({
                 'success': False,
                 'error': 'Użytkownik nie istnieje'
@@ -182,16 +186,15 @@ def send_message():
         
         # Dodaj wiadomość
         message_data = {
-            'id': str(int(datetime.now().timestamp() * 1000)),
+            'id': str(uuid.uuid4()),
             'message': message,
             'timestamp': datetime.now().isoformat(),
             'read': False
         }
         
-        messages_db[username].append(message_data)
-        users_db[username]['message_count'] += 1
+        messages_db[user_id].append(message_data)
         
-        print(f"Wysłano wiadomość do {username}")
+        print(f"Wiadomość wysłana do {username}: {message[:50]}...")
         
         return jsonify({
             'success': True,
@@ -205,24 +208,27 @@ def send_message():
             'error': 'Błąd serwera'
         }), 500
 
-@app.route('/api/messages/<username>', methods=['GET'])
-def get_messages(username):
+@app.route('/api/user/<user_id>/messages', methods=['GET'])
+def get_user_messages(user_id):
     """Pobierz wiadomości użytkownika"""
     try:
-        username = username.lower().strip()
-        
-        if username not in users_db:
+        if user_id not in users_db:
             return jsonify({
                 'success': False,
                 'error': 'Użytkownik nie istnieje'
             }), 404
         
-        user_messages = messages_db.get(username, [])
+        user_messages = messages_db.get(user_id, [])
+        
+        # Oznacz wiadomości jako przeczytane
+        for msg in user_messages:
+            msg['read'] = True
         
         return jsonify({
             'success': True,
             'messages': user_messages,
-            'count': len(user_messages)
+            'count': len(user_messages),
+            'username': users_db[user_id]['username']
         })
         
     except Exception as e:
@@ -232,20 +238,34 @@ def get_messages(username):
             'error': 'Błąd serwera'
         }), 500
 
-@app.route('/api/users', methods=['GET'])
-def get_users():
-    """Pobierz wszystkich użytkowników (do testów)"""
+@app.route('/api/user/<user_id>/info', methods=['GET'])
+def get_user_info(user_id):
+    """Pobierz informacje o użytkowniku"""
     try:
-        users_list = list(users_db.values())
+        if user_id not in users_db:
+            return jsonify({
+                'success': False,
+                'error': 'Użytkownik nie istnieje'
+            }), 404
+        
+        user_data = users_db[user_id]
+        message_count = len(messages_db.get(user_id, []))
+        unread_count = len([msg for msg in messages_db.get(user_id, []) if not msg.get('read', False)])
         
         return jsonify({
             'success': True,
-            'users': users_list,
-            'count': len(users_list)
+            'user': {
+                'id': user_data['id'],
+                'username': user_data['username'],
+                'created_at': user_data['created_at'],
+                'link': user_data['link'],
+                'message_count': message_count,
+                'unread_count': unread_count
+            }
         })
         
     except Exception as e:
-        print(f"Błąd podczas pobierania użytkowników: {str(e)}")
+        print(f"Błąd podczas pobierania informacji o użytkowniku: {str(e)}")
         return jsonify({
             'success': False,
             'error': 'Błąd serwera'
@@ -284,7 +304,7 @@ if __name__ == '__main__':
     debug = os.environ.get('FLASK_ENV') == 'development'
     
     print("🚀 Uruchamianie serwera Flask...")
-    print(f"📡 CORS włączony")
+    print(f"📡 CORS włączony dla: https://jurek362.github.io")
     print(f"🌍 Port: {port}")
     print(f"🔧 Debug: {debug}")
     
@@ -292,4 +312,4 @@ if __name__ == '__main__':
         host='0.0.0.0',
         port=port,
         debug=debug
-                          )
+        )
