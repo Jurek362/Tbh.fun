@@ -17,8 +17,8 @@
             <div class="profile-section">
                 <h3 style="text-align: center; margin-bottom: 20px; color: #333;">Stwórz swój profil lub sprawdź wiadomości</h3>
                 <input type="text" id="usernameInput" class="profile-input" placeholder="Wpisz swoją nazwę użytkownika" maxlength="20">
-                <button class="btn" onclick="window.location.href = '/' + document.getElementById('usernameInput').value.trim()">Stwórz / Przejdź do Profilu</button>
-                <button class="btn success-btn" onclick="window.location.href = '/dashboard/' + document.getElementById('usernameInput').value.trim()">Sprawdź Wiadomości</button>
+                <button class="btn" onclick="redirectToUserProfile()">Stwórz / Przejdź do Profilu</button>
+                <button class="btn success-btn" onclick="redirectToDashboard()">Sprawdź Wiadomości</button>
             </div>
         </div>
 
@@ -26,5 +26,59 @@
             <p>Wszystkie wiadomości są całkowicie anonimowe</p>
         </div>
     </div>
+
+    <div class="notification" id="notification"></div>
+
+    <script>
+        // Funkcja do wyświetlania tymczasowych powiadomień
+        function showNotification(text, type = 'success') {
+            const notification = document.getElementById('notification');
+            if (!notification) return;
+
+            notification.textContent = text;
+            notification.style.background = type === 'success' ? '#4CAF50' : '#f44336';
+            notification.classList.add('show');
+            
+            setTimeout(() => {
+                notification.classList.remove('show');
+            }, 3000);
+        }
+
+        // Funkcja przekierowująca do profilu użytkownika
+        function redirectToUserProfile() {
+            const username = document.getElementById('usernameInput').value.trim();
+            if (!username) {
+                showNotification('Wpisz nazwę użytkownika!', 'error');
+                return;
+            }
+            if (username.length < 3) {
+                showNotification('Nazwa użytkownika musi mieć minimum 3 znaki!', 'error');
+                return;
+            }
+            if (!/^[a-zA-Z0-9_]+$/.test(username)) {
+                showNotification('Nazwa użytkownika może zawierać tylko litery, cyfry i podkreślenia!', 'error');
+                return;
+            }
+            window.location.href = '/' + username;
+        }
+
+        // Funkcja przekierowująca do dashboardu
+        function redirectToDashboard() {
+            const username = document.getElementById('usernameInput').value.trim();
+            if (!username) {
+                showNotification('Wpisz nazwę użytkownika!', 'error');
+                return;
+            }
+            if (username.length < 3) {
+                showNotification('Nazwa użytkownika musi mieć minimum 3 znaki!', 'error');
+                return;
+            }
+            if (!/^[a-zA-Z0-9_]+$/.test(username)) {
+                showNotification('Nazwa użytkownika może zawierać tylko litery, cyfry i podkreślenia!', 'error');
+                return;
+            }
+            window.location.href = '/dashboard/' + username;
+        }
+    </script>
 </body>
 </html>
