@@ -1,9 +1,10 @@
+
 <!DOCTYPE html>
 <html lang="pl">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Panel Wiadomości - {{ username }} | TBH.fun</title>
+    <title>Panel WiadomoĹci - NGL Clone</title>
     <style>
         * {
             margin: 0;
@@ -36,53 +37,6 @@
             color: #333;
             margin-bottom: 10px;
             font-size: 2.5em;
-        }
-
-        .user-header {
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            gap: 15px;
-            margin-bottom: 20px;
-            flex-wrap: wrap;
-        }
-
-        .user-avatar {
-            width: 80px;
-            height: 80px;
-            border-radius: 50%;
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-size: 2em;
-            color: white;
-            font-weight: bold;
-        }
-
-        .user-info {
-            text-align: center;
-        }
-
-        .username {
-            font-size: 1.8em;
-            font-weight: bold;
-            color: #333;
-            margin-bottom: 5px;
-        }
-
-        .user-stats {
-            display: flex;
-            gap: 10px;
-            justify-content: center;
-            margin-top: 10px;
-        }
-
-        .user-stat {
-            background: #f0f2f5;
-            padding: 8px 15px;
-            border-radius: 20px;
-            font-size: 0.9em;
         }
 
         .stats {
@@ -124,14 +78,13 @@
             font-size: 14px;
             font-weight: 600;
             cursor: pointer;
-            transition: transform 0.2s, box-shadow 0.2s;
+            transition: transform 0.2s;
             text-decoration: none;
             display: inline-block;
         }
 
         .btn:hover {
             transform: translateY(-2px);
-            box-shadow: 0 4px 8px rgba(0,0,0,0.2);
         }
 
         .btn.secondary {
@@ -140,10 +93,6 @@
 
         .btn.danger {
             background: #dc3545;
-        }
-
-        .btn.copy-btn {
-            background: #17a2b8;
         }
 
         .messages-container {
@@ -200,7 +149,6 @@
 
         .message-item:hover {
             box-shadow: 0 5px 15px rgba(0,0,0,0.1);
-            transform: translateY(-3px);
         }
 
         .message-item.unread {
@@ -276,58 +224,13 @@
             margin-bottom: 25px;
         }
 
-        .share-section {
-            margin: 25px 0;
-            padding: 20px;
+        .share-link {
+            word-break: break-all;
             background: #f8f9fa;
-            border-radius: 15px;
-            border: 1px dashed #ced4da;
-        }
-
-        .share-title {
-            text-align: center;
-            margin-bottom: 15px;
-            color: #495057;
-            font-size: 1.2em;
-        }
-
-        .copy-box {
-            display: flex;
-            margin: 10px 0;
+            padding: 10px;
             border-radius: 8px;
-            overflow: hidden;
-            box-shadow: 0 2px 5px rgba(0,0,0,0.1);
-        }
-
-        .copy-box input {
-            flex-grow: 1;
-            padding: 12px 15px;
-            border: none;
-            background: white;
-            font-size: 16px;
-            color: #333;
-        }
-
-        .copy-box button {
-            padding: 0 20px;
-            background: #17a2b8;
-            color: white;
-            border: none;
-            cursor: pointer;
-            font-weight: 600;
-            transition: background 0.3s;
-        }
-
-        .copy-box button:hover {
-            background: #138496;
-        }
-
-        #copyStatus {
-            text-align: center;
-            color: #28a745;
-            font-weight: 500;
-            margin-top: 10px;
-            height: 20px;
+            font-family: monospace;
+            margin: 15px 0;
         }
 
         .loading {
@@ -390,51 +293,6 @@
             color: #495057;
         }
 
-        .social-share {
-            display: flex;
-            justify-content: center;
-            gap: 15px;
-            margin-top: 20px;
-        }
-
-        .social-btn {
-            width: 40px;
-            height: 40px;
-            border-radius: 50%;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            color: white;
-            font-size: 18px;
-            cursor: pointer;
-            transition: transform 0.3s;
-        }
-
-        .social-btn:hover {
-            transform: scale(1.1);
-        }
-
-        .whatsapp { background: #25D366; }
-        .telegram { background: #0088cc; }
-        .facebook { background: #3b5998; }
-        .twitter { background: #1DA1F2; }
-
-        .notification-badge {
-            position: absolute;
-            top: -8px;
-            right: -8px;
-            background: #dc3545;
-            color: white;
-            border-radius: 50%;
-            width: 24px;
-            height: 24px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-size: 12px;
-            font-weight: bold;
-        }
-
         @media (max-width: 768px) {
             .stats {
                 flex-direction: column;
@@ -461,239 +319,151 @@
                 align-items: flex-start;
                 gap: 10px;
             }
-            
-            .user-header {
-                flex-direction: column;
-            }
         }
     </style>
 </head>
 <body>
     <div class="container">
         <div id="errorPage" class="error-page" style="display: none;">
-            <h1>❌ Błąd</h1>
+            <h1>â BĹÄd</h1>
             <p id="errorMessage"></p>
             <div class="debug-info" id="debugInfo" style="display: none;">
                 <strong>Debug Info:</strong><br>
                 <span id="debugDetails"></span>
             </div>
             <div class="back-link">
-                <a href="index.html">← Powrót do strony głównej</a>
+                <a href="index.html">â PowrĂłt do strony gĹĂłwnej</a>
             </div>
         </div>
 
         <div id="mainContent" style="display: none;">
             <div class="header">
-                <div class="user-header">
-                    <div class="user-avatar" id="userAvatar">
-                        {{ username|first|upper }}
-                    </div>
-                    <div class="user-info">
-                        <div class="username" id="usernameDisplay">{{ username }}</div>
-                        <div class="user-stats">
-                            <div class="user-stat">Odbiorca</div>
-                            <div class="user-stat" id="userSince">Użytkownik od: Dzisiaj</div>
-                        </div>
-                    </div>
-                </div>
-                
+                <h1>đ Panel WiadomoĹci</h1>
                 <div class="stats">
                     <div class="stat-item">
                         <div class="stat-number" id="totalMessages">0</div>
-                        <div class="stat-label">Wszystkie wiadomości</div>
+                        <div class="stat-label">Wszystkie wiadomoĹci</div>
                     </div>
                     <div class="stat-item">
                         <div class="stat-number" id="unreadMessages">0</div>
                         <div class="stat-label">Nieprzeczytane</div>
                     </div>
-                    <div class="stat-item">
-                        <div class="stat-number" id="todayMessages">0</div>
-                        <div class="stat-label">Dzisiaj</div>
-                    </div>
                 </div>
-                
-                <div class="share-section">
-                    <div class="share-title">Twój osobisty link:</div>
-                    <div class="copy-box">
-                        <input type="text" id="profileLink" readonly>
-                        <button onclick="copyProfileLink()">Kopiuj</button>
-                    </div>
-                    <div id="copyStatus"></div>
-                    
-                    <div class="social-share">
-                        <div class="social-btn whatsapp" onclick="shareOnWhatsApp()">
-                            <i class="fab fa-whatsapp"></i>
-                        </div>
-                        <div class="social-btn telegram" onclick="shareOnTelegram()">
-                            <i class="fab fa-telegram"></i>
-                        </div>
-                        <div class="social-btn facebook" onclick="shareOnFacebook()">
-                            <i class="fab fa-facebook-f"></i>
-                        </div>
-                        <div class="social-btn twitter" onclick="shareOnTwitter()">
-                            <i class="fab fa-twitter"></i>
-                        </div>
-                    </div>
-                </div>
-                
                 <div class="actions">
-                    <button class="btn copy-btn" onclick="copyProfileLink()">
-                        <i class="fas fa-copy"></i> Skopiuj link
-                    </button>
-                    <button class="btn secondary" onclick="markAllAsRead()">
-                        <i class="fas fa-check-circle"></i> Oznacz wszystkie jako przeczytane
-                    </button>
-                    <a href="/" class="btn">
-                        <i class="fas fa-home"></i> Strona główna
-                    </a>
+                    <button class="btn" onclick="copyShareLink()">đ Skopiuj link</button>
+                    <button class="btn secondary" onclick="markAllAsRead()">â Oznacz wszystkie jako przeczytane</button>
+                    <a href="index.html" class="btn">â PowrĂłt</a>
                 </div>
+                <div class="share-link" id="shareLink"></div>
             </div>
 
             <div class="messages-container">
                 <div class="messages-header">
-                    <h2 class="messages-title">
-                        <i class="fas fa-envelope"></i> Twoje wiadomości
-                        <span class="notification-badge" id="unreadBadge" style="display: none;">0</span>
-                    </h2>
+                    <h2 class="messages-title">Twoje wiadomoĹci</h2>
                     <div class="filter-buttons">
                         <button class="filter-btn active" onclick="filterMessages('all')">Wszystkie</button>
                         <button class="filter-btn" onclick="filterMessages('unread')">Nieprzeczytane</button>
                         <button class="filter-btn" onclick="filterMessages('read')">Przeczytane</button>
-                        <button class="filter-btn" onclick="filterMessages('today')">Dzisiaj</button>
                     </div>
                 </div>
 
                 <div id="messagesLoading" class="loading">
                     <div class="spinner"></div>
-                    <p>Ładowanie wiadomości...</p>
+                    <p>Ĺadowanie wiadomoĹci...</p>
                 </div>
 
                 <div id="messagesList"></div>
 
                 <div id="emptyState" class="empty-state" style="display: none;">
-                    <h3><i class="fas fa-inbox"></i> Brak wiadomości</h3>
-                    <p>Nie masz jeszcze żadnych wiadomości. Udostępnij swój link znajomym!</p>
-                    <button class="btn" onclick="copyProfileLink()">
-                        <i class="fas fa-share-alt"></i> Udostępnij swój link
-                    </button>
+                    <h3>đ­ Brak wiadomoĹci</h3>
+                    <p>Nie masz jeszcze Ĺźadnych wiadomoĹci. UdostÄpnij swĂłj link znajomym!</p>
+                    <button class="btn" onclick="copyShareLink()">đ Skopiuj link do udostÄpnienia</button>
                 </div>
             </div>
         </div>
     </div>
 
-    <!-- Font Awesome for icons -->
-    <script src="https://kit.fontawesome.com/a076d05399.js" crossorigin="anonymous"></script>
-    
     <script>
         const API_BASE = 'https://tbh-fun.onrender.com';
+        
+        let currentUserId = null;
         let currentUsername = null;
         let allMessages = [];
         let currentFilter = 'all';
-        let userCreatedAt = new Date();
 
-        // Initialize dashboard
+        // Inicjalizacja - pobierz parametry z URL
         function initializeDashboard() {
-            // Extract username from URL path
-            const pathSegments = window.location.pathname.split('/');
-            currentUsername = pathSegments[pathSegments.length - 1];
-            
-            if (!currentUsername) {
-                showError('Nieprawidłowy link. Brak nazwy użytkownika w adresie URL.');
+            const urlParams = new URLSearchParams(window.location.search);
+            currentUserId = urlParams.get('user') || urlParams.get('id');
+            currentUsername = urlParams.get('username');
+
+            console.log('URL params:', {
+                user: urlParams.get('user'),
+                id: urlParams.get('id'),
+                username: urlParams.get('username'),
+                currentUserId: currentUserId
+            });
+
+            // Debug info
+            const debugDetails = document.getElementById('debugDetails');
+            debugDetails.innerHTML = `
+                URL: ${window.location.href}<br>
+                User ID: ${currentUserId}<br>
+                Username: ${currentUsername}<br>
+                All URL params: ${window.location.search}
+            `;
+
+            if (!currentUserId) {
+                showError('NieprawidĹowy link. Brak ID uĹźytkownika.');
                 document.getElementById('debugInfo').style.display = 'block';
                 return;
             }
-            
-            // Update username display
-            document.getElementById('usernameDisplay').textContent = currentUsername;
-            document.getElementById('userAvatar').textContent = currentUsername.charAt(0).toUpperCase();
-            
-            // Generate profile link
-            const profileLink = window.location.origin + '/dashboard/' + currentUsername;
-            document.getElementById('profileLink').value = profileLink;
-            
-            // Load user data and messages
-            loadUserData();
+
             loadMessages();
         }
 
-        // Load user data
-        async function loadUserData() {
-            try {
-                const response = await fetch(`${API_BASE}/api/user/${currentUsername}`);
-                
-                if (!response.ok) {
-                    throw new Error(`HTTP ${response.status}: ${await response.text()}`);
-                }
-
-                const userData = await response.json();
-                
-                // Update user info
-                if (userData.created_at) {
-                    userCreatedAt = new Date(userData.created_at);
-                    const options = { year: 'numeric', month: 'long', day: 'numeric' };
-                    const joinDate = userCreatedAt.toLocaleDateString('pl-PL', options);
-                    document.getElementById('userSince').textContent = `Dołączył: ${joinDate}`;
-                }
-                
-            } catch (error) {
-                console.error('Error loading user data:', error);
-                // Continue even if user data fails
-            }
-        }
-
-        // Load messages
         async function loadMessages() {
             try {
-                const response = await fetch(`${API_BASE}/api/messages/${currentUsername}`);
+                console.log(`Ĺadowanie wiadomoĹci dla uĹźytkownika: ${currentUserId}`);
                 
+                const response = await fetch(`${API_BASE}/api/messages/${currentUserId}`);
+                
+                console.log('Response status:', response.status);
+                console.log('Response headers:', response.headers);
+
                 if (!response.ok) {
-                    throw new Error(`HTTP ${response.status}: ${await response.text()}`);
+                    const errorText = await response.text();
+                    console.error('API Error:', errorText);
+                    throw new Error(`HTTP ${response.status}: ${errorText}`);
                 }
 
                 const data = await response.json();
+                console.log('Received data:', data);
+                
                 allMessages = data.messages || [];
                 
                 updateStats();
                 displayMessages();
+                setupShareLink();
                 
                 document.getElementById('mainContent').style.display = 'block';
                 document.getElementById('messagesLoading').style.display = 'none';
                 
             } catch (error) {
                 console.error('Error loading messages:', error);
-                showError(`Nie można załadować wiadomości: ${error.message}`);
+                showError(`Nie moĹźna zaĹadowaÄ wiadomoĹci: ${error.message}`);
                 document.getElementById('debugInfo').style.display = 'block';
             }
         }
 
-        // Update statistics
         function updateStats() {
             const total = allMessages.length;
             const unread = allMessages.filter(msg => !msg.read).length;
             
-            // Calculate today's messages
-            const today = new Date();
-            today.setHours(0, 0, 0, 0);
-            const todayMessages = allMessages.filter(msg => {
-                const msgDate = new Date(msg.timestamp);
-                return msgDate >= today;
-            }).length;
-            
             document.getElementById('totalMessages').textContent = total;
             document.getElementById('unreadMessages').textContent = unread;
-            document.getElementById('todayMessages').textContent = todayMessages;
-            
-            // Update notification badge
-            const unreadBadge = document.getElementById('unreadBadge');
-            if (unread > 0) {
-                unreadBadge.textContent = unread;
-                unreadBadge.style.display = 'flex';
-            } else {
-                unreadBadge.style.display = 'none';
-            }
         }
 
-        // Display messages based on current filter
         function displayMessages() {
             const messagesList = document.getElementById('messagesList');
             const emptyState = document.getElementById('emptyState');
@@ -704,13 +474,6 @@
                 filteredMessages = allMessages.filter(msg => !msg.read);
             } else if (currentFilter === 'read') {
                 filteredMessages = allMessages.filter(msg => msg.read);
-            } else if (currentFilter === 'today') {
-                const today = new Date();
-                today.setHours(0, 0, 0, 0);
-                filteredMessages = allMessages.filter(msg => {
-                    const msgDate = new Date(msg.timestamp);
-                    return msgDate >= today;
-                });
             }
 
             if (filteredMessages.length === 0) {
@@ -721,38 +484,23 @@
 
             emptyState.style.display = 'none';
             
-            // Sort by date (newest first)
-            filteredMessages.sort((a, b) => 
-                new Date(b.timestamp) - new Date(a.timestamp)
-            );
-            
             messagesList.innerHTML = filteredMessages.map(message => `
                 <div class="message-item ${message.read ? '' : 'unread'}" data-id="${message.id}">
                     <div class="message-content">${escapeHtml(message.content)}</div>
                     <div class="message-footer">
                         <div class="message-date">
-                            <i class="far fa-clock"></i>
                             <span>${formatDate(message.timestamp)}</span>
-                            ${message.read 
-                                ? '<span style="color: #28a745;"><i class="fas fa-check-circle"></i> Przeczytane</span>' 
-                                : '<span style="color: #667eea; font-weight: 600;"><i class="fas fa-envelope"></i> Nowa</span>'}
+                            ${message.read ? '<span style="color: #28a745;">â Przeczytane</span>' : '<span style="color: #667eea; font-weight: 600;">â Nowe</span>'}
                         </div>
                         <div class="message-actions">
-                            ${!message.read 
-                                ? `<button class="mark-read-btn" onclick="markAsRead('${message.id}')">
-                                    <i class="fas fa-check"></i> Przeczytane
-                                   </button>` 
-                                : ''}
-                            <button class="delete-btn" onclick="deleteMessage('${message.id}')">
-                                <i class="fas fa-trash"></i> Usuń
-                            </button>
+                            ${!message.read ? `<button class="mark-read-btn" onclick="markAsRead('${message.id}')">Oznacz jako przeczytane</button>` : ''}
+                            <button class="delete-btn" onclick="deleteMessage('${message.id}')">UsuĹ</button>
                         </div>
                     </div>
                 </div>
             `).join('');
         }
 
-        // Filter messages
         function filterMessages(filter) {
             currentFilter = filter;
             
@@ -765,10 +513,9 @@
             displayMessages();
         }
 
-        // Mark message as read
         async function markAsRead(messageId) {
             try {
-                const response = await fetch(`${API_BASE}/api/mark-read/${currentUsername}/${messageId}`, {
+                const response = await fetch(`${API_BASE}/api/mark-read/${currentUserId}/${messageId}`, {
                     method: 'POST',
                 });
 
@@ -783,18 +530,17 @@
                 }
             } catch (error) {
                 console.error('Error marking message as read:', error);
-                alert('Nie udało się oznaczyć wiadomości jako przeczytanej');
+                alert('Nie udaĹo siÄ oznaczyÄ wiadomoĹci jako przeczytanej');
             }
         }
 
-        // Delete message
         async function deleteMessage(messageId) {
-            if (!confirm('Czy na pewno chcesz usunąć tę wiadomość? Tej operacji nie można cofnąć.')) {
+            if (!confirm('Czy na pewno chcesz usunÄÄ tÄ wiadomoĹÄ?')) {
                 return;
             }
 
             try {
-                const response = await fetch(`${API_BASE}/api/delete-message/${currentUsername}/${messageId}`, {
+                const response = await fetch(`${API_BASE}/api/delete-message/${currentUserId}/${messageId}`, {
                     method: 'DELETE',
                 });
 
@@ -806,26 +552,25 @@
                 }
             } catch (error) {
                 console.error('Error deleting message:', error);
-                alert('Nie udało się usunąć wiadomości');
+                alert('Nie udaĹo siÄ usunÄÄ wiadomoĹci');
             }
         }
 
-        // Mark all messages as read
         async function markAllAsRead() {
             const unreadMessages = allMessages.filter(msg => !msg.read);
             
             if (unreadMessages.length === 0) {
-                alert('Wszystkie wiadomości są już przeczytane');
+                alert('Wszystkie wiadomoĹci sÄ juĹź przeczytane');
                 return;
             }
 
-            if (!confirm(`Czy chcesz oznaczyć ${unreadMessages.length} wiadomości jako przeczytane?`)) {
+            if (!confirm(`Czy chcesz oznaczyÄ ${unreadMessages.length} wiadomoĹci jako przeczytane?`)) {
                 return;
             }
 
             try {
                 const promises = unreadMessages.map(msg => 
-                    fetch(`${API_BASE}/api/mark-read/${currentUsername}/${msg.id}`, {
+                    fetch(`${API_BASE}/api/mark-read/${currentUserId}/${msg.id}`, {
                         method: 'POST',
                     })
                 );
@@ -838,71 +583,28 @@
                 
                 updateStats();
                 displayMessages();
-                alert(`Pomyślnie oznaczono ${unreadMessages.length} wiadomości jako przeczytane!`);
             } catch (error) {
                 console.error('Error marking all as read:', error);
-                alert('Nie udało się oznaczyć wszystkich wiadomości jako przeczytanych');
+                alert('Nie udaĹo siÄ oznaczyÄ wszystkich wiadomoĹci jako przeczytanych');
             }
         }
 
-        // Copy profile link to clipboard
-        function copyProfileLink() {
-            const linkInput = document.getElementById('profileLink');
-            linkInput.select();
-            
-            try {
-                const successful = document.execCommand('copy');
-                const status = document.getElementById('copyStatus');
-                
-                if (successful) {
-                    status.textContent = 'Skopiowano link do schowka!';
-                    status.style.color = '#28a745';
-                    
-                    // Flash effect
-                    linkInput.style.backgroundColor = '#e8f5e9';
-                    setTimeout(() => {
-                        linkInput.style.backgroundColor = '';
-                    }, 500);
-                    
-                    setTimeout(() => {
-                        status.textContent = '';
-                    }, 3000);
-                } else {
-                    throw new Error('Copy command failed');
-                }
-            } catch (err) {
-                const status = document.getElementById('copyStatus');
-                status.textContent = 'Błąd kopiowania. Spróbuj ręcznie.';
-                status.style.color = '#dc3545';
-            }
+        function setupShareLink() {
+            const shareLink = currentUsername 
+                ? `${window.location.origin}/send.html?u=${currentUsername}`
+                : `${window.location.origin}/send.html?u=${currentUserId}`;
+            document.getElementById('shareLink').textContent = shareLink;
         }
 
-        // Share functions
-        function shareOnWhatsApp() {
-            const message = `Wyślij mi anonimową wiadomość na TBH.fun! ${getProfileLink()}`;
-            window.open(`https://api.whatsapp.com/send?text=${encodeURIComponent(message)}`, '_blank');
+        function copyShareLink() {
+            const shareLink = document.getElementById('shareLink').textContent;
+            navigator.clipboard.writeText(shareLink).then(() => {
+                alert('Link zostaĹ skopiowany do schowka!');
+            }).catch(() => {
+                alert('Nie udaĹo siÄ skopiowaÄ linku');
+            });
         }
 
-        function shareOnTelegram() {
-            const message = `Wyślij mi anonimową wiadomość na TBH.fun! ${getProfileLink()}`;
-            window.open(`https://t.me/share/url?url=${encodeURIComponent(getProfileLink())}&text=${encodeURIComponent(message)}`, '_blank');
-        }
-
-        function shareOnFacebook() {
-            window.open(`https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent(getProfileLink())}`, '_blank');
-        }
-
-        function shareOnTwitter() {
-            const message = `Wyślij mi anonimową wiadomość na TBH.fun! ${getProfileLink()}`;
-            window.open(`https://twitter.com/intent/tweet?text=${encodeURIComponent(message)}`, '_blank');
-        }
-
-        // Get profile link
-        function getProfileLink() {
-            return document.getElementById('profileLink').value;
-        }
-
-        // Format date
         function formatDate(dateString) {
             const date = new Date(dateString);
             const now = new Date();
@@ -911,7 +613,7 @@
             const diffHours = Math.floor(diffMs / 3600000);
             const diffDays = Math.floor(diffMs / 86400000);
 
-            if (diffMins < 1) return 'Właśnie teraz';
+            if (diffMins < 1) return 'WĹaĹnie teraz';
             if (diffMins < 60) return `${diffMins} min temu`;
             if (diffHours < 24) return `${diffHours} godz. temu`;
             if (diffDays < 7) return `${diffDays} dni temu`;
@@ -925,14 +627,12 @@
             });
         }
 
-        // Escape HTML for security
         function escapeHtml(text) {
             const div = document.createElement('div');
             div.textContent = text;
             return div.innerHTML;
         }
 
-        // Show error message
         function showError(message) {
             document.getElementById('mainContent').style.display = 'none';
             document.getElementById('messagesLoading').style.display = 'none';
