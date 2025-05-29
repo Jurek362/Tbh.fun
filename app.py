@@ -213,7 +213,7 @@ def update_user(user_id):
             'data': updated_user
         })
         
-    except Exception e:
+            except Exception as e:
         print(f"Błąd podczas aktualizacji użytkownika: {str(e)}")
         return jsonify({
             'success': False,
@@ -281,4 +281,4 @@ if __name__ == '__main__':
         host='0.0.0.0',
         port=port,
         debug=debug
-        )
+)
