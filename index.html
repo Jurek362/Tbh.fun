@@ -3,16 +3,16 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>NGL Clone - Anonimowe Wiadomości</title>
+    <title>AnonLink - Otrzymuj anonimowe wiadomości</title>
     <style>
         * {
             margin: 0;
             padding: 0;
             box-sizing: border-box;
         }
-
+        
         body {
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
             background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
             min-height: 100vh;
             display: flex;
@@ -20,42 +20,43 @@
             justify-content: center;
             padding: 20px;
         }
-
+        
         .container {
             background: white;
             border-radius: 20px;
             padding: 40px;
             box-shadow: 0 20px 40px rgba(0,0,0,0.1);
+            text-align: center;
             max-width: 500px;
             width: 100%;
-            text-align: center;
         }
-
-        h1 {
-            color: #333;
-            margin-bottom: 10px;
+        
+        .logo {
             font-size: 2.5em;
-            font-weight: 700;
+            font-weight: bold;
+            color: #667eea;
+            margin-bottom: 20px;
         }
-
+        
         .subtitle {
             color: #666;
-            margin-bottom: 40px;
-            font-size: 1.1em;
-        }
-
-        .form-group {
             margin-bottom: 30px;
+            font-size: 1.1em;
+            line-height: 1.5;
+        }
+        
+        .form-group {
+            margin-bottom: 20px;
             text-align: left;
         }
-
+        
         label {
             display: block;
             margin-bottom: 8px;
             font-weight: 600;
             color: #333;
         }
-
+        
         input[type="text"] {
             width: 100%;
             padding: 15px;
@@ -64,403 +65,123 @@
             font-size: 16px;
             transition: border-color 0.3s;
         }
-
+        
         input[type="text"]:focus {
             outline: none;
             border-color: #667eea;
         }
-
+        
         .btn {
             background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
             color: white;
-            border: none;
             padding: 15px 30px;
+            border: none;
             border-radius: 10px;
             font-size: 16px;
             font-weight: 600;
             cursor: pointer;
-            transition: transform 0.2s;
             width: 100%;
+            transition: transform 0.2s;
         }
-
+        
         .btn:hover {
             transform: translateY(-2px);
         }
-
-        .btn:disabled {
-            opacity: 0.6;
-            cursor: not-allowed;
-            transform: none;
-        }
-
-        .btn.secondary {
-            background: #28a745;
-            margin-top: 10px;
-        }
-
-        .result {
-            margin-top: 30px;
-            padding: 20px;
-            border-radius: 10px;
-            display: none;
-        }
-
-        .result.success {
-            background: #d4edda;
-            border: 1px solid #c3e6cb;
-            color: #155724;
-        }
-
-        .result.error {
-            background: #f8d7da;
-            border: 1px solid #f5c6cb;
-            color: #721c24;
-        }
-
-        .link-container {
-            margin-top: 20px;
-            padding: 15px;
-            background: #f8f9fa;
-            border-radius: 10px;
-            border: 1px solid #e9ecef;
-        }
-
-        .generated-link {
-            word-break: break-all;
-            font-family: monospace;
-            font-size: 14px;
-            color: #495057;
-            margin-bottom: 10px;
-        }
-
-        .copy-btn {
-            background: #28a745;
-            font-size: 14px;
-            padding: 8px 16px;
-            margin-top: 10px;
-        }
-
-        .dashboard-link {
-            margin-top: 15px;
-        }
-
-        .dashboard-link a {
-            color: #667eea;
-            text-decoration: none;
-            font-weight: 600;
-        }
-
-        .dashboard-link a:hover {
-            text-decoration: underline;
-        }
-
-        .loading {
-            display: none;
-            margin-top: 20px;
-        }
-
-        .spinner {
-            border: 3px solid #f3f3f3;
-            border-top: 3px solid #667eea;
-            border-radius: 50%;
-            width: 30px;
-            height: 30px;
-            animation: spin 1s linear infinite;
-            margin: 0 auto;
-        }
-
-        @keyframes spin {
-            0% { transform: rotate(0deg); }
-            100% { transform: rotate(360deg); }
-        }
-
+        
         .features {
-            margin-top: 40px;
+            margin-top: 30px;
             text-align: left;
         }
-
-        .features h3 {
-            color: #333;
+        
+        .feature {
+            display: flex;
+            align-items: center;
             margin-bottom: 15px;
-        }
-
-        .features ul {
-            list-style: none;
-            padding: 0;
-        }
-
-        .features li {
-            padding: 8px 0;
             color: #666;
         }
-
-        .features li::before {
+        
+        .feature::before {
             content: "✓";
-            color: #28a745;
+            color: #4CAF50;
             font-weight: bold;
             margin-right: 10px;
         }
-
-        .existing-account {
-            background: #e9f7ef;
-            border: 1px solid #c3e6cb;
-            border-radius: 10px;
-            padding: 20px;
-            margin-bottom: 30px;
-            text-align: center;
+        
+        .error {
+            color: #e74c3c;
+            margin-top: 10px;
+            font-size: 14px;
         }
-
-        .existing-account h3 {
-            color: #155724;
-            margin-bottom: 15px;
-        }
-
-        .existing-account p {
-            color: #155724;
-            margin-bottom: 15px;
-        }
-
-        .username-display {
-            font-family: monospace;
-            font-weight: bold;
-            color: #667eea;
-            font-size: 1.2em;
+        
+        .success {
+            color: #27ae60;
+            margin-top: 10px;
+            font-size: 14px;
         }
     </style>
 </head>
 <body>
     <div class="container">
-        <h1>🔒 NGL Clone</h1>
-        <p class="subtitle">Otrzymuj anonimowe wiadomości od znajomych</p>
-
-        <!-- Sekcja dla istniejącego konta -->
-        <div id="existingAccount" class="existing-account" style="display: none;">
-            <h3>👋 Witaj ponownie!</h3>
-            <p>Masz już konto: <span class="username-display" id="existingUsername"></span></p>
-            <button class="btn" onclick="goToDashboard()">📊 Przejdź do panelu</button>
-            <button class="btn secondary" onclick="copyExistingLink()">📋 Skopiuj link</button>
-            <p style="margin-top: 15px; font-size: 14px; color: #666;">
-                <a href="#" onclick="createNewAccount()" style="color: #dc3545;">Stwórz nowe konto</a>
-            </p>
-        </div>
-
-        <!-- Formularz tworzenia nowego konta -->
-        <div id="newAccountForm">
-            <form id="createUserForm">
-                <div class="form-group">
-                    <label for="username">Wybierz swoją nazwę użytkownika:</label>
-                    <input type="text" id="username" name="username" placeholder="np. jankowalski" required>
-                </div>
-                <button type="submit" class="btn" id="submitBtn">Stwórz mój link</button>
-            </form>
-        </div>
-
-        <div class="loading" id="loading">
-            <div class="spinner"></div>
-            <p>Tworzenie linku...</p>
-        </div>
-
-        <div class="result" id="result">
-            <div id="resultMessage"></div>
-            <div class="link-container" id="linkContainer" style="display: none;">
-                <strong>Twój link do udostępnienia:</strong>
-                <div class="generated-link" id="generatedLink"></div>
-                <button class="btn copy-btn" onclick="copyLink()">📋 Skopiuj link</button>
-                <div class="dashboard-link">
-                    <a href="#" id="dashboardLink">📊 Przejdź do panelu wiadomości</a>
-                </div>
+        <div class="logo">AnonLink</div>
+        <p class="subtitle">Otrzymuj szczere, anonimowe wiadomości od znajomych</p>
+        
+        <form id="registerForm" method="POST" action="/register">
+            <div class="form-group">
+                <label for="username">Wybierz swoją nazwę użytkownika:</label>
+                <input type="text" id="username" name="username" placeholder="twoja-nazwa" required>
             </div>
-        </div>
-
+            
+            <button type="submit" class="btn">Stwórz mój link</button>
+        </form>
+        
+        <div id="message"></div>
+        
         <div class="features">
-            <h3>Funkcje:</h3>
-            <ul>
-                <li>Całkowicie anonimowe wiadomości</li>
-                <li>Prywatny panel do czytania wiadomości</li>
-                <li>Bezpieczne i szyfrowane połączenie</li>
-                <li>Łatwe udostępnianie przez link</li>
-            </ul>
+            <div class="feature">Całkowicie anonimowe wiadomości</div>
+            <div class="feature">Prosty link do udostępnienia</div>
+            <div class="feature">Bezpieczne i prywatne</div>
         </div>
     </div>
-
+    
     <script>
-        const API_BASE = 'https://tbh-fun.onrender.com'; // Zmień na swój URL Render
-        let currentUserData = null;
-
-        // Funkcje do obsługi cookies
-        function setCookie(name, value, days) {
-            const expires = new Date();
-            expires.setTime(expires.getTime() + (days * 24 * 60 * 60 * 1000));
-            document.cookie = `${name}=${value};expires=${expires.toUTCString()};path=/`;
-        }
-
-        function getCookie(name) {
-            const nameEQ = name + "=";
-            const ca = document.cookie.split(';');
-            for(let i = 0; i < ca.length; i++) {
-                let c = ca[i];
-                while (c.charAt(0) === ' ') c = c.substring(1, c.length);
-                if (c.indexOf(nameEQ) === 0) return c.substring(nameEQ.length, c.length);
-            }
-            return null;
-        }
-
-        function deleteCookie(name) {
-            document.cookie = `${name}=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;`;
-        }
-
-        // Sprawdź czy użytkownik ma już zapisane konto
-        function checkExistingAccount() {
-            const savedUserData = getCookie('tbh_user_data');
-            if (savedUserData) {
-                try {
-                    currentUserData = JSON.parse(decodeURIComponent(savedUserData));
-                    showExistingAccount();
-                } catch (e) {
-                    console.error('Błąd przy wczytywaniu danych z cookies:', e);
-                    deleteCookie('tbh_user_data');
-                }
-            }
-        }
-
-        function showExistingAccount() {
-            document.getElementById('existingAccount').style.display = 'block';
-            document.getElementById('newAccountForm').style.display = 'none';
-            document.getElementById('existingUsername').textContent = `@${currentUserData.username}`;
-        }
-
-        function createNewAccount() {
-            deleteCookie('tbh_user_data');
-            document.getElementById('existingAccount').style.display = 'none';
-            document.getElementById('newAccountForm').style.display = 'block';
-            currentUserData = null;
-        }
-
-        function goToDashboard() {
-            if (currentUserData) {
-                window.location.href = `dashboard.html?user=${currentUserData.user_id}`;
-            }
-        }
-
-        function copyExistingLink() {
-            if (currentUserData) {
-                navigator.clipboard.writeText(currentUserData.link).then(() => {
-                    alert('Link został skopiowany do schowka!');
-                }).catch(() => {
-                    alert('Nie udało się skopiować linku');
-                });
-            }
-        }
-
-        // Obsługa formularza
-        document.getElementById('createUserForm').addEventListener('submit', async (e) => {
+        document.getElementById('registerForm').addEventListener('submit', function(e) {
             e.preventDefault();
             
             const username = document.getElementById('username').value.trim();
-            const submitBtn = document.getElementById('submitBtn');
-            const loading = document.getElementById('loading');
-            const result = document.getElementById('result');
+            const messageDiv = document.getElementById('message');
             
             if (!username) {
-                showResult('Wprowadź nazwę użytkownika', 'error');
+                messageDiv.innerHTML = '<div class="error">Wprowadź nazwę użytkownika</div>';
                 return;
             }
-
-            // Walidacja username
-            if (username.length < 3) {
-                showResult('Nazwa użytkownika musi mieć co najmniej 3 znaki', 'error');
-                return;
-            }
-
-            if (username.length > 20) {
-                showResult('Nazwa użytkownika nie może być dłuższa niż 20 znaków', 'error');
-                return;
-            }
-
+            
+            // Sprawdź czy nazwa użytkownika zawiera tylko dozwolone znaki
             if (!/^[a-zA-Z0-9_-]+$/.test(username)) {
-                showResult('Nazwa użytkownika może zawierać tylko litery, cyfry, _ i -', 'error');
+                messageDiv.innerHTML = '<div class="error">Nazwa może zawierać tylko litery, cyfry, - i _</div>';
                 return;
             }
-
-            submitBtn.disabled = true;
-            loading.style.display = 'block';
-            result.style.display = 'none';
-
-            try {
-                const response = await fetch(`${API_BASE}/api/create-user`, {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json',
-                    },
-                    body: JSON.stringify({ username })
-                });
-
-                const data = await response.json();
-
+            
+            fetch('/register', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/x-www-form-urlencoded',
+                },
+                body: 'username=' + encodeURIComponent(username)
+            })
+            .then(response => response.json())
+            .then(data => {
                 if (data.success) {
-                    const userData = {
-                        user_id: data.user_id,
-                        username: data.username,
-                        link: data.link
-                    };
-                    
-                    // Zapisz dane w cookies na 30 dni
-                    setCookie('tbh_user_data', encodeURIComponent(JSON.stringify(userData)), 30);
-                    
-                    currentUserData = userData;
-                    showResult('Link został utworzony pomyślnie!', 'success');
-                    showGeneratedLink(data.link, data.username, data.user_id);
+                    messageDiv.innerHTML = '<div class="success">Konto utworzone! Przekierowuję...</div>';
+                    setTimeout(() => {
+                        window.location.href = '/dashboard?user=' + username;
+                    }, 1500);
                 } else {
-                    showResult(data.error || 'Wystąpił błąd', 'error');
+                    messageDiv.innerHTML = '<div class="error">' + data.message + '</div>';
                 }
-            } catch (error) {
-                console.error('Error:', error);
-                showResult('Błąd połączenia z serwerem', 'error');
-            } finally {
-                submitBtn.disabled = false;
-                loading.style.display = 'none';
-            }
-        });
-
-        function showResult(message, type) {
-            const result = document.getElementById('result');
-            const resultMessage = document.getElementById('resultMessage');
-            
-            result.className = `result ${type}`;
-            result.style.display = 'block';
-            resultMessage.textContent = message;
-        }
-
-        function showGeneratedLink(link, username, userId) {
-            const linkContainer = document.getElementById('linkContainer');
-            const generatedLink = document.getElementById('generatedLink');
-            const dashboardLink = document.getElementById('dashboardLink');
-            
-            generatedLink.textContent = link;
-            dashboardLink.href = `dashboard.html?user=${userId}`;
-            linkContainer.style.display = 'block';
-        }
-
-        function copyLink() {
-            const linkText = document.getElementById('generatedLink').textContent;
-            navigator.clipboard.writeText(linkText).then(() => {
-                const copyBtn = document.querySelector('.copy-btn');
-                const originalText = copyBtn.textContent;
-                copyBtn.textContent = '✅ Skopiowano!';
-                copyBtn.style.background = '#28a745';
-                
-                setTimeout(() => {
-                    copyBtn.textContent = originalText;
-                    copyBtn.style.background = '#28a745';
-                }, 2000);
-            }).catch(() => {
-                alert('Nie udało się skopiować linku');
+            })
+            .catch(error => {
+                messageDiv.innerHTML = '<div class="error">Wystąpił błąd. Spróbuj ponownie.</div>';
             });
-        }
-
-        // Inicjalizacja przy załadowaniu strony
-        document.addEventListener('DOMContentLoaded', function() {
-            checkExistingAccount();
         });
     </script>
 </body>
