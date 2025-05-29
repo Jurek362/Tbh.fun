@@ -3,402 +3,544 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>AnonMsg - Wyślij do @{{ user_profile.username }}</title>
+    <title>Wyślij Anonimową Wiadomość - NGL Clone</title>
     <style>
-        /* Global reset */
         * {
             margin: 0;
             padding: 0;
             box-sizing: border-box;
         }
 
-        /* Body styling with a gradient background */
         body {
-            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); /* Purple-blue gradient */
-            min-height: 100vh; /* Full viewport height */
-            color: #333; /* Default text color */
-            display: flex; /* Use flexbox for centering content */
-            align-items: center; /* Center content vertically */
-            justify-content: center; /* Center content horizontally */
-            padding: 20px; /* Add some padding for smaller screens */
-        }
-
-        /* Main container for the app content */
-        .container {
-            max-width: 600px;
-            margin: 0 auto;
-            padding: 0; /* Removed padding here as it's in body */
-            width: 100%; /* Ensure container takes full width up to max-width */
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
             display: flex;
-            flex-direction: column;
+            align-items: center;
             justify-content: center;
+            padding: 20px;
         }
 
-        /* Logo section styling */
-        .logo {
-            text-align: center;
-            margin-bottom: 40px;
-        }
-
-        .logo h1 {
-            color: white;
-            font-size: 3rem;
-            font-weight: 700;
-            text-shadow: 0 4px 15px rgba(0,0,0,0.2); /* Subtle shadow for depth */
-            margin-bottom: 10px;
-        }
-
-        .logo p {
-            color: rgba(255,255,255,0.8); /* Slightly transparent white */
-            font-size: 1.1rem;
-        }
-
-        /* Card styling for main sections */
-        .card {
+        .container {
             background: white;
-            padding: 40px;
             border-radius: 20px;
-            box-shadow: 0 20px 60px rgba(0,0,0,0.1); /* Larger shadow for floating effect */
-            margin-bottom: 20px;
-            backdrop-filter: blur(10px); /* Frosted glass effect */
-            -webkit-backdrop-filter: blur(10px); /* For Safari support */
+            padding: 40px;
+            box-shadow: 0 20px 40px rgba(0,0,0,0.1);
+            max-width: 500px;
+            width: 100%;
+            text-align: center;
         }
 
-        /* Profile input section (not directly used on send.html, but included for consistency) */
-        .profile-section { }
-        .profile-input { }
+        .profile-section {
+            margin-bottom: 30px;
+            padding: 20px;
+            background: linear-gradient(135deg, #f8f9ff 0%, #e3e8ff 100%);
+            border-radius: 15px;
+            border: 1px solid #e1e5e9;
+        }
 
-        /* General button styling */
+        .profile-avatar {
+            width: 80px;
+            height: 80px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin: 0 auto 15px;
+            font-size: 2em;
+            color: white;
+        }
+
+        .profile-username {
+            font-size: 1.5em;
+            font-weight: 700;
+            color: #333;
+            margin-bottom: 5px;
+        }
+
+        .profile-subtitle {
+            color: #666;
+            font-size: 0.9em;
+        }
+
+        h1 {
+            color: #333;
+            margin-bottom: 10px;
+            font-size: 2em;
+            font-weight: 700;
+        }
+
+        .subtitle {
+            color: #666;
+            margin-bottom: 30px;
+            font-size: 1.1em;
+            line-height: 1.5;
+        }
+
+        .form-group {
+            margin-bottom: 20px;
+            text-align: left;
+        }
+
+        label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: 600;
+            color: #333;
+        }
+
+        textarea {
+            width: 100%;
+            padding: 15px;
+            border: 2px solid #e1e5e9;
+            border-radius: 15px;
+            font-size: 16px;
+            font-family: inherit;
+            transition: border-color 0.3s;
+            resize: vertical;
+            min-height: 120px;
+        }
+
+        textarea:focus {
+            outline: none;
+            border-color: #667eea;
+        }
+
+        .char-counter {
+            text-align: right;
+            margin-top: 5px;
+            font-size: 14px;
+            color: #666;
+        }
+
+        .char-counter.warning {
+            color: #ff6b35;
+        }
+
+        .char-counter.error {
+            color: #dc3545;
+        }
+
         .btn {
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); /* Button gradient */
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
             color: white;
             border: none;
             padding: 15px 30px;
             border-radius: 12px;
-            font-size: 1rem;
+            font-size: 16px;
             font-weight: 600;
             cursor: pointer;
-            transition: all 0.3s ease; /* Smooth transitions for hover/active */
+            transition: transform 0.2s;
             width: 100%;
-            margin-bottom: 10px;
-            text-decoration: none; /* For anchor tags acting as buttons */
-            display: inline-block; /* For anchor tags */
-            text-align: center; /* For anchor tags */
+            margin-bottom: 15px;
         }
 
         .btn:hover {
-            transform: translateY(-2px); /* Lift effect on hover */
-            box-shadow: 0 10px 25px rgba(102, 126, 234, 0.3); /* Enhanced shadow on hover */
+            transform: translateY(-2px);
         }
 
-        .btn:active {
-            transform: translateY(0); /* Press down effect on click */
-        }
-
-        /* Message form specific styles */
-        .message-form {
-            /* display: none; Handled by JS for initial state */
-        }
-
-        .message-textarea {
-            width: 100%;
-            padding: 20px;
-            border: 2px solid #e1e5e9;
-            border-radius: 12px;
-            font-size: 1rem;
-            min-height: 150px;
-            resize: vertical; /* Allow vertical resizing */
-            margin-bottom: 20px;
-            font-family: inherit; /* Inherit font from body */
-            transition: all 0.3s ease;
-        }
-
-        .message-textarea:focus {
-            outline: none;
-            border-color: #667eea;
-            box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
-        }
-
-        .message-counter {
-            text-align: right;
-            margin-bottom: 15px;
-            color: #666;
-            font-size: 0.9rem;
-        }
-
-        /* Link display section (not directly used on send.html) */
-        .link-display { }
-        .generated-link { }
-
-        /* Messages display section (not directly used on send.html) */
-        .messages-section { }
-        .message-item { }
-        .message-time { }
-        .message-text { }
-        .empty-state { }
-
-        /* Footer styling */
-        .footer {
-            text-align: center;
-            margin-top: 40px;
-            color: rgba(255,255,255,0.7);
-        }
-
-        /* Notification pop-up (not directly used on send.html, but included for consistency) */
-        .notification {
-            position: fixed;
-            top: 20px;
-            right: 20px;
-            background: #4CAF50; /* Green for success */
-            color: white;
-            padding: 15px 20px;
-            border-radius: 12px;
-            box-shadow: 0 10px 25px rgba(0,0,0,0.2);
-            transform: translateX(400px); /* Start off-screen */
-            transition: transform 0.3s ease; /* Slide-in animation */
-            z-index: 1000;
-            min-width: 250px; /* Ensure notification is wide enough */
-            text-align: center;
-        }
-
-        .notification.show {
-            transform: translateX(0); /* Slide into view */
-        }
-
-        /* Flash messages specific styling (not directly used on send.html, but included for consistency) */
-        .flash-messages .notification {
-            position: relative;
-            top: auto;
-            right: auto;
+        .btn:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
             transform: none;
-            margin-bottom: 10px;
-            box-shadow: none;
-        }
-        .flash-messages .notification.error {
-            background: #f44336;
-        }
-        .flash-messages .notification.success {
-            background: #4CAF50;
-        }
-        .flash-messages .notification.info {
-            background: #17a2b8;
         }
 
+        .btn.secondary {
+            background: #28a745;
+        }
 
-        /* Specific button styles */
-        .back-btn {
-            background: #6c757d; /* Grey background for back button */
+        .result {
+            margin-top: 20px;
+            padding: 15px;
+            border-radius: 12px;
+            display: none;
+            font-weight: 500;
+        }
+
+        .result.success {
+            background: #d4edda;
+            border: 1px solid #c3e6cb;
+            color: #155724;
+        }
+
+        .result.error {
+            background: #f8d7da;
+            border: 1px solid #f5c6cb;
+            color: #721c24;
+        }
+
+        .loading {
+            display: none;
+            margin-top: 20px;
+        }
+
+        .spinner {
+            border: 3px solid #f3f3f3;
+            border-top: 3px solid #667eea;
+            border-radius: 50%;
+            width: 30px;
+            height: 30px;
+            animation: spin 1s linear infinite;
+            margin: 0 auto 15px;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        .info-box {
+            background: #e3f2fd;
+            border: 1px solid #bbdefb;
+            border-radius: 12px;
+            padding: 15px;
+            margin-bottom: 25px;
+            color: #0d47a1;
+            font-size: 14px;
+        }
+
+        .info-box h4 {
+            margin-bottom: 8px;
+            color: #1565c0;
+        }
+
+        .info-box ul {
+            margin: 0;
+            padding-left: 20px;
+        }
+
+        .info-box li {
+            margin-bottom: 5px;
+        }
+
+        .back-link {
+            margin-top: 20px;
+            text-align: center;
+        }
+
+        .back-link a {
+            color: #667eea;
+            text-decoration: none;
+            font-weight: 600;
+            font-size: 14px;
+        }
+
+        .back-link a:hover {
+            text-decoration: underline;
+        }
+
+        .error-page {
+            background: #fff3cd;
+            border: 1px solid #ffeaa7;
+            border-radius: 15px;
+            padding: 30px;
+            text-align: center;
+            color: #856404;
+        }
+
+        .error-page h2 {
+            color: #856404;
+            margin-bottom: 15px;
+        }
+
+        .anonymous-badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            background: #28a745;
+            color: white;
+            padding: 6px 12px;
+            border-radius: 20px;
+            font-size: 12px;
+            font-weight: 600;
             margin-bottom: 20px;
         }
-        .back-btn:hover {
-            background: #5a6268;
-        }
-        .btn.success-btn { /* Changed from [onclick="showMessages()"] to a class */
-            background: #28a745; /* Green for check messages button */
-        }
-        .btn.success-btn:hover {
-            background: #218838;
-        }
-        .btn.info-btn { /* Changed from [onclick="shareLink()"] to a class */
-            background: #17a2b8; /* Blue for share button */
-        }
-        .btn.info-btn:hover {
-            background: #138496;
-        }
 
-        /* New UI elements for send.html */
-        .profile-display {
-            text-align: center;
-            margin-bottom: 25px;
-            padding: 15px;
-            background-color: #f8f9fa; /* Light background for profile info */
-            border-radius: 15px;
-            box-shadow: inset 0 1px 3px rgba(0,0,0,0.1); /* Inner shadow */
-        }
-
-        .profile-avatar {
-            width: 90px; /* Slightly larger avatar */
-            height: 90px;
-            border-radius: 50%;
-            object-fit: cover;
-            border: 4px solid #667eea; /* Stronger border */
-            box-shadow: 0 0 0 5px rgba(102, 126, 234, 0.2); /* Outer glow */
-            margin-bottom: 10px;
-        }
-
-        .profile-username {
-            font-weight: 700; /* Bolder username */
-            color: #667eea; /* Primary color */
-            font-size: 1.3rem;
-        }
-
-        .textarea-wrapper {
-            position: relative;
-            margin-bottom: 20px; /* Space below the textarea */
-        }
-
-        .textarea-wrapper .message-textarea {
-            margin-bottom: 0; /* Remove default margin */
-            padding-right: 50px; /* Make space for the dice button */
-        }
-
-        .textarea-wrapper .dice-button {
-            position: absolute;
-            right: 15px;
-            bottom: 15px;
-            background: none;
-            border: none;
-            font-size: 1.8rem; /* Larger dice icon */
-            cursor: pointer;
-            transition: transform 0.2s ease;
-            padding: 5px; /* Make clickable area larger */
-        }
-
-        .textarea-wrapper .dice-button:hover {
-            transform: scale(1.1);
-        }
-        .textarea-wrapper .dice-button:active {
-            transform: scale(0.9);
-        }
-
-        /* Responsive adjustments */
-        @media (max-width: 480px) {
-            body {
-                padding: 10px; /* Reduce overall padding on very small screens */
-            }
+        @media (max-width: 768px) {
             .container {
-                padding: 0;
-            }
-            .card {
                 padding: 25px;
+                margin: 10px;
             }
-            .logo h1 {
-                font-size: 2.2rem;
+
+            h1 {
+                font-size: 1.8em;
             }
-            .logo p {
-                font-size: 1rem;
-            }
-            .btn {
-                padding: 12px 20px;
-                font-size: 0.95rem;
-            }
+
             .profile-avatar {
-                width: 70px;
-                height: 70px;
+                width: 60px;
+                height: 60px;
+                font-size: 1.5em;
             }
+
             .profile-username {
-                font-size: 1.1rem;
-            }
-            .message-textarea {
-                min-height: 120px;
-                padding: 15px;
-            }
-            .textarea-wrapper .dice-button {
-                font-size: 1.5rem;
-                right: 10px;
-                bottom: 10px;
-            }
-            .notification {
-                top: 10px;
-                right: 10px;
-                min-width: unset;
-                width: calc(100% - 20px);
+                font-size: 1.3em;
             }
         }
     </style>
-    <meta name="robots" content="noindex">
-    <meta property="og:title" content="Wyślij anonimową wiadomość do @{{ user_profile.username }}!" />
-    <meta property="og:description" content="Kliknij link, aby wysłać mi anonimową wiadomość!" />
-    <meta property="og:image" content="https://placehold.co/600x315/667eea/ffffff?text=AnonMsg" /> <meta name="twitter:card" content="summary_large_image" />
-    <meta name="twitter:site" content="@AnonMsgApp" />
-    <meta name="twitter:creator" content="@AnonMsgApp" />
 </head>
 <body>
     <div class="container">
-        <div class="logo">
-            <h1>AnonMsg</h1>
-            <p>Wyślij anonimową wiadomość</p>
+        <div id="errorPage" class="error-page" style="display: none;">
+            <h2>❌ Błąd dostępu</h2>
+            <p id="errorMessage"></p>
+            <div class="back-link">
+                <a href="index.html">← Stwórz własny link</a>
+            </div>
         </div>
 
-        <div class="card" id="messageSection">
-            <button class="btn back-btn" onclick="window.location.href = '/'">← Powrót</button>
-            <h3 style="text-align: center; margin-bottom: 20px; color: #333;">Wyślij anonimową wiadomość do <span id="targetUser">@{{ user_profile.username }}</span></h3>
-            
-            <div class="profile-display">
-                <img src="{{ user_profile.avatar }}" alt="Zdjęcie profilowe użytkownika" class="profile-avatar">
-                <p class="profile-username">@{{ user_profile.username }}</p>
+        <div id="mainContent" style="display: none;">
+            <div class="profile-section">
+                <div class="profile-avatar" id="profileAvatar">👤</div>
+                <div class="profile-username" id="profileUsername">Ładowanie...</div>
+                <div class="profile-subtitle">Wyślij mi anonimową wiadomość</div>
             </div>
 
-            <form method="post" action="/send_message/{{ user_profile.uid }}">
-                <div class="textarea-wrapper">
-                    <textarea name="messageText" id="messageText" class="message-textarea" placeholder="Napisz swoją anonimową wiadomość tutaj..." maxlength="500"></textarea>
-                    <button type="button" class="dice-button" aria-label="Generuj losowe pytanie">🎲</button>
-                </div>
-                <div class="message-counter">
-                    <span id="charCount">0</span>/500 znaków
-                </div>
-                <input type="hidden" name="deviceId" id="deviceId" value="placeholder_device_id"> <button class="btn" type="submit">Wyślij Anonimowo</button>
-            </form>
-        </div>
+            <div class="anonymous-badge">
+                🔒 Całkowicie anonimowe
+            </div>
 
-        <div class="footer">
-            <p>Wszystkie wiadomości są całkowicie anonimowe</p>
+            <h1>💌 Wyślij wiadomość</h1>
+            <p class="subtitle">Twoja wiadomość zostanie wysłana anonimowo. Nadawca nie będzie znany.</p>
+
+            <div class="info-box">
+                <h4>🛡️ Zasady bezpieczeństwa:</h4>
+                <ul>
+                    <li>Twoja tożsamość pozostanie w pełni anonimowa</li>
+                    <li>Nie wysyłaj treści obraźliwych lub szkodliwych</li>
+                    <li>Bądź miły i szanuj innych użytkowników</li>
+                    <li>Wiadomość może mieć maksymalnie 500 znaków</li>
+                </ul>
+            </div>
+
+            <form id="sendMessageForm">
+                <div class="form-group">
+                    <label for="message">Twoja anonimowa wiadomość:</label>
+                    <textarea 
+                        id="message" 
+                        name="message" 
+                        placeholder="Napisz swoją wiadomość tutaj... (maksymalnie 500 znaków)"
+                        maxlength="500"
+                        required
+                    ></textarea>
+                    <div class="char-counter" id="charCounter">0/500</div>
+                </div>
+                
+                <button type="submit" class="btn" id="submitBtn">📤 Wyślij anonimowo</button>
+                <button type="button" class="btn secondary" onclick="clearMessage()">🗑️ Wyczyść</button>
+            </form>
+
+            <div class="loading" id="loading">
+                <div class="spinner"></div>
+                <p>Wysyłanie wiadomości...</p>
+            </div>
+
+            <div class="result" id="result">
+                <div id="resultMessage"></div>
+            </div>
+
+            <div class="back-link">
+                <a href="index.html">← Stwórz własny link do otrzymywania wiadomości</a>
+            </div>
         </div>
     </div>
 
     <script>
-        document.addEventListener('DOMContentLoaded', function() {
-            // Ustaw unikalne ID urządzenia, jeśli nie jest jeszcze obecne w localStorage
-            if (!localStorage.getItem('deviceId')) {
-                localStorage.setItem('deviceId', 'anonmsg-' + Date.now() + '-' + Math.random().toString(36).substring(2, 9));
+        const API_BASE = 'https://tbh-fun.onrender.com'; // Zmień na swój URL Render
+        
+        let targetUsername = null;
+        let targetUserId = null;
+
+        // Pobierz username z URL
+        const urlParams = new URLSearchParams(window.location.search);
+        targetUsername = urlParams.get('u');
+
+        if (!targetUsername) {
+            showError('Nieprawidłowy link. Brak nazwy użytkownika w URL.');
+        } else {
+            loadUserProfile();
+        }
+
+        async function loadUserProfile() {
+            try {
+                // Pobierz informacje o użytkowniku
+                const response = await fetch(`${API_BASE}/api/user-by-username/${targetUsername}`);
+                
+                if (!response.ok) {
+                    throw new Error('Użytkownik nie został znaleziony');
+                }
+
+                const data = await response.json();
+                
+                if (data.success) {
+                    targetUserId = data.data.id;
+                    setupProfile(data.data);
+                    document.getElementById('mainContent').style.display = 'block';
+                } else {
+                    throw new Error(data.error || 'Nie można załadować profilu użytkownika');
+                }
+            } catch (error) {
+                console.error('Error loading user profile:', error);
+                showError('Nie można znaleźć tego użytkownika. Sprawdź czy link jest poprawny.');
             }
-            document.getElementById('deviceId').value = localStorage.getItem('deviceId');
+        }
 
-            // Licznik znaków dla pola tekstowego wiadomości
-            const messageTextarea = document.getElementById('messageText');
-            const charCountSpan = document.getElementById('charCount');
+        function setupProfile(userData) {
+            document.getElementById('profileUsername').textContent = '@' + userData.username;
+            
+            // Utwórz awatar z pierwszą literą username
+            const firstLetter = userData.username.charAt(0).toUpperCase();
+            document.getElementById('profileAvatar').textContent = firstLetter;
+            
+            // Aktualizuj tytuł strony
+            document.title = `Wyślij wiadomość dla @${userData.username} - NGL Clone`;
+        }
 
-            if (messageTextarea && charCountSpan) {
-                messageTextarea.addEventListener('input', function() {
-                    const count = this.value.length;
-                    charCountSpan.textContent = count;
-                    if (count > 500) {
-                        this.style.borderColor = '#f44336'; // Czerwona ramka dla przekroczenia limitu
-                        charCountSpan.style.color = '#f44336'; // Czerwony tekst dla przekroczenia limitu
-                    } else {
-                        this.style.borderColor = '#e1e5e9'; // Domyślna ramka
-                        charCountSpan.style.color = '#666'; // Domyślny kolor tekstu
-                    }
+        // Licznik znaków
+        const messageTextarea = document.getElementById('message');
+        const charCounter = document.getElementById('charCounter');
+
+        messageTextarea.addEventListener('input', function() {
+            const currentLength = this.value.length;
+            const maxLength = 500;
+            
+            charCounter.textContent = `${currentLength}/${maxLength}`;
+            
+            // Zmień kolor w zależności od ilości znaków
+            charCounter.classList.remove('warning', 'error');
+            if (currentLength > maxLength * 0.8) {
+                charCounter.classList.add('warning');
+            }
+            if (currentLength >= maxLength) {
+                charCounter.classList.add('error');
+            }
+        });
+
+        // Obsługa formularza
+        document.getElementById('sendMessageForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            
+            const message = document.getElementById('message').value.trim();
+            const submitBtn = document.getElementById('submitBtn');
+            const loading = document.getElementById('loading');
+            const result = document.getElementById('result');
+            
+            if (!message) {
+                showResult('Wpisz wiadomość przed wysłaniem', 'error');
+                return;
+            }
+
+            if (message.length > 500) {
+                showResult('Wiadomość jest za długa (maksymalnie 500 znaków)', 'error');
+                return;
+            }
+
+            // Podstawowa walidacja treści
+            if (containsInappropriateContent(message)) {
+                showResult('Wiadomość zawiera nieodpowiednią treść. Bądź miły i szanuj innych.', 'error');
+                return;
+            }
+
+            submitBtn.disabled = true;
+            loading.style.display = 'block';
+            result.style.display = 'none';
+
+            try {
+                const response = await fetch(`${API_BASE}/api/send-message`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({
+                        recipient_id: targetUserId,
+                        recipient_username: targetUsername,
+                        message: message
+                    })
                 });
-                // Zainicjuj licznik przy ładowaniu
-                charCountSpan.textContent = messageTextarea.value.length;
-            }
 
-            // Funkcjonalność przycisku "kostki": wypełnij pole tekstowe losowym pytaniem
-            const diceButton = document.querySelector('.dice-button');
-            const sampleQuestions = [
-                "Jaka jest Twoja ulubiona piosenka?",
-                "Co najbardziej lubisz robić w wolnym czasie?",
-                "Jaka jest Twoja największa pasja?",
-                "Co Cię ostatnio zaskoczyło?",
-                "Gdybyś mógł/mogła podróżować w czasie, gdzie byś się udał/udała?",
-                "Jaka jest Twoja ulubiona książka/film?",
-                "Co sprawia, że się uśmiechasz?"
+                const data = await response.json();
+
+                if (data.success) {
+                    showResult('✅ Wiadomość została wysłana anonimowo!', 'success');
+                    document.getElementById('message').value = '';
+                    charCounter.textContent = '0/500';
+                    charCounter.classList.remove('warning', 'error');
+                    
+                    // Ukryj formularz na 3 sekundy, żeby pokazać sukces
+                    setTimeout(() => {
+                        document.getElementById('sendMessageForm').style.display = 'block';
+                    }, 3000);
+                } else {
+                    showResult(data.error || 'Wystąpił błąd podczas wysyłania wiadomości', 'error');
+                }
+            } catch (error) {
+                console.error('Error:', error);
+                showResult('Błąd połączenia z serwerem. Spróbuj ponownie.', 'error');
+            } finally {
+                submitBtn.disabled = false;
+                loading.style.display = 'none';
+            }
+        });
+
+        function showResult(message, type) {
+            const result = document.getElementById('result');
+            const resultMessage = document.getElementById('resultMessage');
+            
+            result.className = `result ${type}`;
+            result.style.display = 'block';
+            resultMessage.textContent = message;
+            
+            // Przewiń do wyniku
+            result.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+        }
+
+        function showError(message) {
+            document.getElementById('mainContent').style.display = 'none';
+            document.getElementById('errorPage').style.display = 'block';
+            document.getElementById('errorMessage').textContent = message;
+        }
+
+        function clearMessage() {
+            document.getElementById('message').value = '';
+            charCounter.textContent = '0/500';
+            charCounter.classList.remove('warning', 'error');
+            document.getElementById('result').style.display = 'none';
+        }
+
+        // Podstawowa funkcja filtrowania nieodpowiednich treści
+        function containsInappropriateContent(text) {
+            const inappropriateWords = [
+                // Dodaj tutaj słowa, które chcesz filtrować
+                // Przykład: 'spam', 'reklama', itp.
             ];
+            
+            const lowerText = text.toLowerCase();
+            return inappropriateWords.some(word => lowerText.includes(word.toLowerCase()));
+        }
 
-            if (diceButton && messageTextarea) {
-                diceButton.addEventListener('click', function(e) {
-                    e.preventDefault(); // Zapobiegaj wysłaniu formularza
-                    const randomIndex = Math.floor(Math.random() * sampleQuestions.length);
-                    messageTextarea.value = sampleQuestions[randomIndex];
-                    messageTextarea.focus();
-                    // Ręcznie wywołaj zdarzenie 'input', aby zaktualizować licznik znaków
-                    messageTextarea.dispatchEvent(new Event('input')); 
-                });
+        // Zapobieganie spamowi - ograniczenie częstotliwości wysyłania
+        let lastSentTime = 0;
+        const SEND_COOLDOWN = 10000; // 10 sekund
+
+        function checkCooldown() {
+            const now = Date.now();
+            if (now - lastSentTime < SEND_COOLDOWN) {
+                const remainingTime = Math.ceil((SEND_COOLDOWN - (now - lastSentTime)) / 1000);
+                showResult(`Poczekaj ${remainingTime} sekund przed wysłaniem kolejnej wiadomości`, 'error');
+                return false;
+            }
+            lastSentTime = now;
+            return true;
+        }
+
+        // Dodaj sprawdzenie cooldown do formularza
+        const originalSubmitHandler = document.getElementById('sendMessageForm').onsubmit;
+        document.getElementById('sendMessageForm').addEventListener('submit', (e) => {
+            if (!checkCooldown()) {
+                e.preventDefault();
+                return false;
             }
         });
     </script>
 </body>
 </html>
-
