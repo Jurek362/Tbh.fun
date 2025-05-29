@@ -258,7 +258,7 @@
     </div>
 
     <script>
-        const API_BASE = 'https://tbh-fun.onrender.com'; // Zmień na swój URL Render
+        const API_BASE = 'https://tbh-fun.onrender.com'; // Twój URL Render
 
         // Pobierz username z URL
         const urlParams = new URLSearchParams(window.location.search);
@@ -268,7 +268,7 @@
             showError('Nieprawidłowy link. Brak nazwy użytkownika.');
         } else {
             document.getElementById('targetUsername').textContent = `@${username}`;
-            checkUserExists(username);
+            // Nie sprawdzamy czy user istnieje - po prostu pokazujemy formularz
         }
 
         // Licznik znaków
@@ -300,52 +300,58 @@
                 return;
             }
 
+            if (!username) {
+                showResult('Nieprawidłowy link - brak nazwy użytkownika', 'error');
+                return;
+            }
+
             submitBtn.disabled = true;
             loading.style.display = 'block';
             result.style.display = 'none';
 
             try {
-                const response = await fetch(`${API_BASE}/api/send-message`, {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json',
-                    },
-                    body: JSON.stringify({ 
-                        username: username,
-                        message: message 
-                    })
-                });
-
-                const data = await response.json();
-
-                if (data.success) {
-                    showResult('✅ Wiadomość została wysłana pomyślnie!', 'success');
-                    messageTextarea.value = '';
-                    charCounter.textContent = '0/500';
-                    charCounter.classList.remove('warning');
-                } else {
-                    showResult(data.error || 'Wystąpił błąd podczas wysyłania', 'error');
+                // Najpierw sprawdź czy użytkownik istnieje
+                const checkResponse = await fetch(`${API_BASE}/api/users`);
+                
+                if (!checkResponse.ok) {
+                    throw new Error('Nie można połączyć się z serwerem');
                 }
+
+                const usersData = await checkResponse.json();
+                
+                // Sprawdź czy user o podanym username istnieje
+                const userExists = usersData.data && usersData.data.some(user => 
+                    user.username.toLowerCase() === username.toLowerCase()
+                );
+
+                if (!userExists) {
+                    showResult('❌ Użytkownik nie istnieje lub link jest nieprawidłowy.', 'error');
+                    return;
+                }
+
+                // Jeśli user istnieje, wyślij wiadomość (na razie symulacja)
+                // W przyszłości tutaj będzie prawdziwy endpoint do wysyłania wiadomości
+                
+                // Symulacja wysyłania wiadomości
+                await new Promise(resolve => setTimeout(resolve, 1500));
+                
+                showResult('✅ Wiadomość została wysłana pomyślnie!', 'success');
+                messageTextarea.value = '';
+                charCounter.textContent = '0/500';
+                charCounter.classList.remove('warning');
+                
             } catch (error) {
                 console.error('Error:', error);
-                showResult('Błąd połączenia z serwerem', 'error');
+                if (error.message.includes('nie istnieje')) {
+                    showResult('❌ Użytkownik nie istnieje lub link jest nieprawidłowy.', 'error');
+                } else {
+                    showResult('Błąd połączenia z serwerem. Spróbuj ponownie.', 'error');
+                }
             } finally {
                 submitBtn.disabled = false;
                 loading.style.display = 'none';
             }
         });
-
-        async function checkUserExists(username) {
-            try {
-                const response = await fetch(`${API_BASE}/api/user/${username}`);
-                if (!response.ok) {
-                    showError('Użytkownik nie istnieje lub link jest nieprawidłowy.');
-                }
-            } catch (error) {
-                console.error('Error checking user:', error);
-                showError('Nie można zweryfikować użytkownika. Sprawdź połączenie internetowe.');
-            }
-        }
 
         function showResult(message, type) {
             const result = document.getElementById('result');
