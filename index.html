@@ -44,6 +44,44 @@
             font-size: 1.1em;
         }
 
+        .returning-user {
+            background: #e7f3ff;
+            border: 2px solid #b3d9ff;
+            border-radius: 15px;
+            padding: 25px;
+            margin-bottom: 30px;
+            display: none;
+        }
+
+        .returning-user h3 {
+            color: #0056b3;
+            margin-bottom: 15px;
+            font-size: 1.3em;
+        }
+
+        .returning-user p {
+            color: #004085;
+            margin-bottom: 20px;
+        }
+
+        .user-info {
+            background: #f8f9fa;
+            padding: 15px;
+            border-radius: 10px;
+            margin: 15px 0;
+        }
+
+        .user-info strong {
+            color: #495057;
+        }
+
+        .btn-group {
+            display: flex;
+            gap: 10px;
+            flex-wrap: wrap;
+            justify-content: center;
+        }
+
         .form-group {
             margin-bottom: 30px;
             text-align: left;
@@ -80,7 +118,8 @@
             font-weight: 600;
             cursor: pointer;
             transition: transform 0.2s;
-            width: 100%;
+            text-decoration: none;
+            display: inline-block;
         }
 
         .btn:hover {
@@ -91,6 +130,30 @@
             opacity: 0.6;
             cursor: not-allowed;
             transform: none;
+        }
+
+        .btn.full-width {
+            width: 100%;
+        }
+
+        .btn.secondary {
+            background: #28a745;
+        }
+
+        .btn.outline {
+            background: transparent;
+            color: #667eea;
+            border: 2px solid #667eea;
+        }
+
+        .btn.outline:hover {
+            background: #667eea;
+            color: white;
+        }
+
+        .btn.small {
+            padding: 10px 20px;
+            font-size: 14px;
         }
 
         .result {
@@ -195,6 +258,29 @@
             font-weight: bold;
             margin-right: 10px;
         }
+
+        .divider {
+            text-align: center;
+            margin: 30px 0;
+            position: relative;
+        }
+
+        .divider::before {
+            content: '';
+            position: absolute;
+            top: 50%;
+            left: 0;
+            right: 0;
+            height: 1px;
+            background: #e1e5e9;
+        }
+
+        .divider span {
+            background: white;
+            padding: 0 20px;
+            color: #666;
+            font-weight: 600;
+        }
     </style>
 </head>
 <body>
@@ -202,13 +288,34 @@
         <h1>🔒 NGL Clone</h1>
         <p class="subtitle">Otrzymuj anonimowe wiadomości od znajomych</p>
 
-        <form id="createUserForm">
-            <div class="form-group">
-                <label for="username">Wybierz swoją nazwę użytkownika:</label>
-                <input type="text" id="username" name="username" placeholder="np. jankowalski" required>
+        <!-- Sekcja dla powracających użytkowników -->
+        <div class="returning-user" id="returningUser">
+            <h3>👋 Witaj z powrotem!</h3>
+            <p>Znaleźliśmy Twoje poprzednie konto:</p>
+            <div class="user-info">
+                <strong id="savedUsername">@username</strong><br>
+                <small>ID: <span id="savedUserId"></span></small>
             </div>
-            <button type="submit" class="btn" id="submitBtn">Stwórz mój link</button>
-        </form>
+            <div class="btn-group">
+                <a href="#" class="btn secondary small" id="gotoDashboard">📊 Mój Dashboard</a>
+                <button class="btn outline small" onclick="clearSavedData()">🆕 Nowe konto</button>
+            </div>
+        </div>
+
+        <div class="divider" id="divider" style="display: none;">
+            <span>lub</span>
+        </div>
+
+        <!-- Formularz tworzenia nowego konta -->
+        <div id="newUserForm">
+            <form id="createUserForm">
+                <div class="form-group">
+                    <label for="username">Wybierz swoją nazwę użytkownika:</label>
+                    <input type="text" id="username" name="username" placeholder="np. jankowalski" required>
+                </div>
+                <button type="submit" class="btn full-width" id="submitBtn">Stwórz mój link</button>
+            </form>
+        </div>
 
         <div class="loading" id="loading">
             <div class="spinner"></div>
@@ -234,6 +341,7 @@
                 <li>Prywatny panel do czytania wiadomości</li>
                 <li>Bezpieczne i szyfrowane połączenie</li>
                 <li>Łatwe udostępnianie przez link</li>
+                <li>Automatyczne zapisywanie dostępu</li>
             </ul>
         </div>
     </div>
@@ -241,6 +349,60 @@
     <script>
         const API_BASE = 'https://tbh-fun.onrender.com'; // Zmień na swój URL Render
         let currentUserId = null;
+
+        // Cookie functions
+        function setCookie(name, value, days = 365) {
+            const expires = new Date();
+            expires.setTime(expires.getTime() + (days * 24 * 60 * 60 * 1000));
+            document.cookie = `${name}=${value};expires=${expires.toUTCString()};path=/;SameSite=Lax`;
+        }
+
+        function getCookie(name) {
+            const nameEQ = name + "=";
+            const ca = document.cookie.split(';');
+            for(let i = 0; i < ca.length; i++) {
+                let c = ca[i];
+                while (c.charAt(0) === ' ') c = c.substring(1, c.length);
+                if (c.indexOf(nameEQ) === 0) return c.substring(nameEQ.length, c.length);
+            }
+            return null;
+        }
+
+        function deleteCookie(name) {
+            document.cookie = `${name}=;expires=Thu, 01 Jan 1970 00:00:00 UTC;path=/;`;
+        }
+
+        // Sprawdź czy użytkownik już istnieje
+        function checkSavedUser() {
+            const savedUserId = getCookie('tbh_user_id');
+            const savedUsername = getCookie('tbh_username');
+            
+            if (savedUserId && savedUsername) {
+                // Pokaż sekcję powracającego użytkownika
+                document.getElementById('returningUser').style.display = 'block';
+                document.getElementById('divider').style.display = 'block';
+                document.getElementById('savedUsername').textContent = `@${savedUsername}`;
+                document.getElementById('savedUserId').textContent = savedUserId;
+                document.getElementById('gotoDashboard').href = `dashboard.html?user=${savedUserId}`;
+                
+                return true;
+            }
+            return false;
+        }
+
+        // Wyczyść zapisane dane
+        function clearSavedData() {
+            deleteCookie('tbh_user_id');
+            deleteCookie('tbh_username');
+            document.getElementById('returningUser').style.display = 'none';
+            document.getElementById('divider').style.display = 'none';
+            document.getElementById('username').focus();
+        }
+
+        // Inicjalizacja strony
+        document.addEventListener('DOMContentLoaded', function() {
+            checkSavedUser();
+        });
 
         document.getElementById('createUserForm').addEventListener('submit', async (e) => {
             e.preventDefault();
@@ -261,6 +423,17 @@
                 return;
             }
 
+            if (username.length > 20) {
+                showResult('Nazwa użytkownika nie może być dłuższa niż 20 znaków', 'error');
+                return;
+            }
+
+            // Sprawdź czy username zawiera tylko dozwolone znaki
+            if (!/^[a-zA-Z0-9_-]+$/.test(username)) {
+                showResult('Nazwa użytkownika może zawierać tylko litery, cyfry, _ i -', 'error');
+                return;
+            }
+
             submitBtn.disabled = true;
             loading.style.display = 'block';
             result.style.display = 'none';
@@ -277,9 +450,18 @@
                 const data = await response.json();
 
                 if (data.success) {
-                    currentUserId = data.user_id;
+                    currentUserId = data.data.id;
+                    
+                    // Zapisz w cookies
+                    setCookie('tbh_user_id', data.data.id);
+                    setCookie('tbh_username', data.data.username);
+                    
                     showResult('Link został utworzony pomyślnie!', 'success');
-                    showGeneratedLink(data.link, data.username, data.user_id);
+                    showGeneratedLink(data.data.link, data.data.username, data.data.id);
+                    
+                    // Ukryj sekcję powracającego użytkownika
+                    document.getElementById('returningUser').style.display = 'none';
+                    document.getElementById('divider').style.display = 'none';
                 } else {
                     showResult(data.error || 'Wystąpił błąd', 'error');
                 }
@@ -306,7 +488,9 @@
             const generatedLink = document.getElementById('generatedLink');
             const dashboardLink = document.getElementById('dashboardLink');
             
-            generatedLink.textContent = link;
+            // Użyj właściwego formatu linku
+            const shareLink = `${window.location.origin}/send.html?u=${username}`;
+            generatedLink.textContent = shareLink;
             dashboardLink.href = `dashboard.html?user=${userId}`;
             linkContainer.style.display = 'block';
         }
@@ -329,4 +513,4 @@
         }
     </script>
 </body>
-</html>
+                </html>
