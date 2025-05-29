@@ -21,7 +21,7 @@
             padding: 20px;
         }
 
-       .container {
+        .container {
             background: white;
             border-radius: 20px;
             padding: 40px;
@@ -38,13 +38,13 @@
             font-weight: 700;
         }
 
-       .subtitle {
+        .subtitle {
             color: #666;
             margin-bottom: 40px;
             font-size: 1.1em;
         }
 
-       .form-group {
+        .form-group {
             margin-bottom: 30px;
             text-align: left;
         }
@@ -70,7 +70,7 @@
             border-color: #667eea;
         }
 
-       .btn {
+        .btn {
             background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
             color: white;
             border: none;
@@ -83,36 +83,36 @@
             width: 100%;
         }
 
-       .btn:hover {
+        .btn:hover {
             transform: translateY(-2px);
         }
 
-       .btn:disabled {
+        .btn:disabled {
             opacity: 0.6;
             cursor: not-allowed;
             transform: none;
         }
 
-       .result {
+        .result {
             margin-top: 30px;
             padding: 20px;
             border-radius: 10px;
             display: none;
         }
 
-       .result.success {
+        .result.success {
             background: #d4edda;
             border: 1px solid #c3e6cb;
             color: #155724;
         }
 
-       .result.error {
+        .result.error {
             background: #f8d7da;
             border: 1px solid #f5c6cb;
             color: #721c24;
         }
 
-       .link-container {
+        .link-container {
             margin-top: 20px;
             padding: 15px;
             background: #f8f9fa;
@@ -120,7 +120,7 @@
             border: 1px solid #e9ecef;
         }
 
-       .generated-link {
+        .generated-link {
             word-break: break-all;
             font-family: monospace;
             font-size: 14px;
@@ -128,33 +128,33 @@
             margin-bottom: 10px;
         }
 
-       .copy-btn {
+        .copy-btn {
             background: #28a745;
             font-size: 14px;
             padding: 8px 16px;
             margin-top: 10px;
         }
 
-       .dashboard-link {
+        .dashboard-link {
             margin-top: 15px;
         }
 
-       .dashboard-link a {
+        .dashboard-link a {
             color: #667eea;
             text-decoration: none;
             font-weight: 600;
         }
 
-       .dashboard-link a:hover {
+        .dashboard-link a:hover {
             text-decoration: underline;
         }
 
-       .loading {
+        .loading {
             display: none;
             margin-top: 20px;
         }
 
-       .spinner {
+        .spinner {
             border: 3px solid #f3f3f3;
             border-top: 3px solid #667eea;
             border-radius: 50%;
@@ -169,27 +169,27 @@
             100% { transform: rotate(360deg); }
         }
 
-       .features {
+        .features {
             margin-top: 40px;
             text-align: left;
         }
 
-       .features h3 {
+        .features h3 {
             color: #333;
             margin-bottom: 15px;
         }
 
-       .features ul {
+        .features ul {
             list-style: none;
             padding: 0;
         }
 
-       .features li {
+        .features li {
             padding: 8px 0;
             color: #666;
         }
 
-       .features li::before {
+        .features li::before {
             content: "✓";
             color: #28a745;
             font-weight: bold;
@@ -239,18 +239,17 @@
     </div>
 
     <script>
-        const API_BASE = 'https://tbh-fun.onrender.com'; // Zmień na swój URL Render
-        // currentUserId nie jest już używane do sesji, ale do generowania linku do panelu
+        const API_BASE = 'https://your-render-app.onrender.com'; // Zmień na swój URL Render
         let currentUserId = null;
 
         document.getElementById('createUserForm').addEventListener('submit', async (e) => {
             e.preventDefault();
-
+            
             const username = document.getElementById('username').value.trim();
             const submitBtn = document.getElementById('submitBtn');
             const loading = document.getElementById('loading');
             const result = document.getElementById('result');
-
+            
             if (!username) {
                 showResult('Wprowadź nazwę użytkownika', 'error');
                 return;
@@ -261,12 +260,6 @@
                 showResult('Nazwa użytkownika musi mieć co najmniej 3 znaki', 'error');
                 return;
             }
-            // Prosta walidacja znaków (tylko litery, cyfry, podkreślenia)
-            if (!/^[a-zA-Z0-9_]+$/.test(username)) {
-                showResult('Nazwa użytkownika może zawierać tylko litery, cyfry i podkreślenia.', 'error');
-                return;
-            }
-
 
             submitBtn.disabled = true;
             loading.style.display = 'block';
@@ -278,20 +271,17 @@
                     headers: {
                         'Content-Type': 'application/json',
                     },
-                    body: JSON.stringify({ username: username }) // Upewnij się, że wysyłasz 'username'
+                    body: JSON.stringify({ username })
                 });
 
                 const data = await response.json();
 
-                if (data.success) { // Backend teraz zwraca 'success: true'
+                if (data.success) {
                     currentUserId = data.user_id;
                     showResult('Link został utworzony pomyślnie!', 'success');
-                    // Generuj linki na podstawie danych z backendu
-                    const publicMessageLink = `${window.location.origin}/send_message.html?u=${data.nickname}`;
-                    showGeneratedLink(publicMessageLink, data.nickname, data.user_id);
+                    showGeneratedLink(data.link, data.username, data.user_id);
                 } else {
-                    showResult(data.error |
-| 'Wystąpił błąd', 'error');
+                    showResult(data.error || 'Wystąpił błąd', 'error');
                 }
             } catch (error) {
                 console.error('Error:', error);
@@ -305,7 +295,7 @@
         function showResult(message, type) {
             const result = document.getElementById('result');
             const resultMessage = document.getElementById('resultMessage');
-
+            
             result.className = `result ${type}`;
             result.style.display = 'block';
             resultMessage.textContent = message;
@@ -315,9 +305,8 @@
             const linkContainer = document.getElementById('linkContainer');
             const generatedLink = document.getElementById('generatedLink');
             const dashboardLink = document.getElementById('dashboardLink');
-
+            
             generatedLink.textContent = link;
-            // Link do panelu wiadomości używa user_id
             dashboardLink.href = `dashboard.html?user=${userId}`;
             linkContainer.style.display = 'block';
         }
@@ -329,7 +318,7 @@
                 const originalText = copyBtn.textContent;
                 copyBtn.textContent = '✅ Skopiowano!';
                 copyBtn.style.background = '#28a745';
-
+                
                 setTimeout(() => {
                     copyBtn.textContent = originalText;
                     copyBtn.style.background = '#28a745';
