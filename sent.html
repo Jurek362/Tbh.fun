@@ -1,0 +1,31 @@
+<!DOCTYPE html>
+<html lang="pl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AnonMsg - Wysłano!</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+    <meta name="robots" content="noindex">
+</head>
+<body>
+    <div class="container">
+        <div class="logo">
+            <h1>AnonMsg</h1>
+            <p>Wiadomość wysłana</p>
+        </div>
+
+        <div class="card">
+            <h3 style="text-align: center; margin-bottom: 20px; color: #333;">Twoja anonimowa wiadomość została wysłana!</h3>
+            <p style="text-align: center; color: #666; margin-bottom: 30px;">Dziękujemy za skorzystanie z AnonMsg. Wiadomość dotarła do @{{ user_profile.username }}.</p>
+            
+            <button class="btn" onclick="window.location.href = '/'">Wróć do strony głównej</button>
+            
+            <a href="/{{ user_profile.username }}" class="btn info-btn" style="margin-top: 10px;">Wyślij kolejną wiadomość do @{{ user_profile.username }}</a>
+        </div>
+
+        <div class="footer">
+            <p>Wszystkie wiadomości są całkowicie anonimowe</p>
+        </div>
+    </div>
+</body>
+</html>
