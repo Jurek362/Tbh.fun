@@ -3,16 +3,16 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Wyślij Anonimową Wiadomość - NGL Clone</title>
+    <title>Wyślij wiadomość - AnonLink</title>
     <style>
         * {
             margin: 0;
             padding: 0;
             box-sizing: border-box;
         }
-
+        
         body {
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
             background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
             min-height: 100vh;
             display: flex;
@@ -20,527 +20,323 @@
             justify-content: center;
             padding: 20px;
         }
-
+        
         .container {
             background: white;
             border-radius: 20px;
             padding: 40px;
             box-shadow: 0 20px 40px rgba(0,0,0,0.1);
-            max-width: 500px;
+            max-width: 600px;
             width: 100%;
+        }
+        
+        .header {
             text-align: center;
-        }
-
-        .profile-section {
             margin-bottom: 30px;
-            padding: 20px;
-            background: linear-gradient(135deg, #f8f9ff 0%, #e3e8ff 100%);
-            border-radius: 15px;
-            border: 1px solid #e1e5e9;
         }
-
-        .profile-avatar {
-            width: 80px;
-            height: 80px;
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            border-radius: 50%;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            margin: 0 auto 15px;
-            font-size: 2em;
-            color: white;
+        
+        .logo {
+            font-size: 2.2em;
+            font-weight: bold;
+            color: #667eea;
+            margin-bottom: 10px;
         }
-
-        .profile-username {
-            font-size: 1.5em;
-            font-weight: 700;
-            color: #333;
+        
+        .recipient {
+            background: #f8f9fa;
+            padding: 15px;
+            border-radius: 10px;
+            margin-bottom: 25px;
+            text-align: center;
+            border: 2px solid #e9ecef;
+        }
+        
+        .recipient-label {
+            color: #666;
+            font-size: 14px;
             margin-bottom: 5px;
         }
-
-        .profile-subtitle {
-            color: #666;
-            font-size: 0.9em;
-        }
-
-        h1 {
+        
+        .recipient-name {
+            font-size: 1.2em;
+            font-weight: bold;
             color: #333;
-            margin-bottom: 10px;
-            font-size: 2em;
-            font-weight: 700;
         }
-
-        .subtitle {
-            color: #666;
-            margin-bottom: 30px;
-            font-size: 1.1em;
-            line-height: 1.5;
-        }
-
+        
         .form-group {
-            margin-bottom: 20px;
-            text-align: left;
+            margin-bottom: 25px;
         }
-
+        
         label {
             display: block;
-            margin-bottom: 8px;
+            margin-bottom: 10px;
             font-weight: 600;
             color: #333;
+            font-size: 16px;
         }
-
+        
         textarea {
             width: 100%;
-            padding: 15px;
+            min-height: 150px;
+            padding: 20px;
             border: 2px solid #e1e5e9;
             border-radius: 15px;
             font-size: 16px;
             font-family: inherit;
-            transition: border-color 0.3s;
             resize: vertical;
-            min-height: 120px;
+            transition: border-color 0.3s;
+            line-height: 1.5;
         }
-
+        
         textarea:focus {
             outline: none;
             border-color: #667eea;
         }
-
+        
         .char-counter {
             text-align: right;
-            margin-top: 5px;
-            font-size: 14px;
             color: #666;
+            font-size: 14px;
+            margin-top: 5px;
         }
-
+        
         .char-counter.warning {
-            color: #ff6b35;
+            color: #e74c3c;
         }
-
-        .char-counter.error {
-            color: #dc3545;
-        }
-
+        
         .btn {
             background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
             color: white;
+            padding: 18px 40px;
             border: none;
-            padding: 15px 30px;
-            border-radius: 12px;
-            font-size: 16px;
+            border-radius: 15px;
+            font-size: 18px;
             font-weight: 600;
             cursor: pointer;
-            transition: transform 0.2s;
             width: 100%;
-            margin-bottom: 15px;
+            transition: transform 0.2s;
         }
-
+        
         .btn:hover {
             transform: translateY(-2px);
         }
-
+        
         .btn:disabled {
-            opacity: 0.6;
+            background: #ccc;
             cursor: not-allowed;
             transform: none;
         }
-
-        .btn.secondary {
-            background: #28a745;
-        }
-
-        .result {
-            margin-top: 20px;
-            padding: 15px;
-            border-radius: 12px;
-            display: none;
-            font-weight: 500;
-        }
-
-        .result.success {
-            background: #d4edda;
-            border: 1px solid #c3e6cb;
-            color: #155724;
-        }
-
-        .result.error {
-            background: #f8d7da;
-            border: 1px solid #f5c6cb;
-            color: #721c24;
-        }
-
-        .loading {
-            display: none;
-            margin-top: 20px;
-        }
-
-        .spinner {
-            border: 3px solid #f3f3f3;
-            border-top: 3px solid #667eea;
-            border-radius: 50%;
-            width: 30px;
-            height: 30px;
-            animation: spin 1s linear infinite;
-            margin: 0 auto 15px;
-        }
-
-        @keyframes spin {
-            0% { transform: rotate(0deg); }
-            100% { transform: rotate(360deg); }
-        }
-
-        .info-box {
+        
+        .anonymous-note {
             background: #e3f2fd;
-            border: 1px solid #bbdefb;
-            border-radius: 12px;
-            padding: 15px;
+            padding: 20px;
+            border-radius: 10px;
             margin-bottom: 25px;
-            color: #0d47a1;
-            font-size: 14px;
+            border-left: 4px solid #2196f3;
         }
-
-        .info-box h4 {
-            margin-bottom: 8px;
-            color: #1565c0;
+        
+        .anonymous-note h4 {
+            color: #1976d2;
+            margin-bottom: 10px;
         }
-
-        .info-box ul {
-            margin: 0;
-            padding-left: 20px;
+        
+        .anonymous-note p {
+            color: #666;
+            line-height: 1.5;
         }
-
-        .info-box li {
-            margin-bottom: 5px;
-        }
-
-        .back-link {
-            margin-top: 20px;
+        
+        .success-message {
+            background: #d4edda;
+            color: #155724;
+            padding: 20px;
+            border-radius: 10px;
+            margin-bottom: 20px;
             text-align: center;
+            display: none;
         }
-
+        
+        .error-message {
+            background: #f8d7da;
+            color: #721c24;
+            padding: 20px;
+            border-radius: 10px;
+            margin-bottom: 20px;
+            text-align: center;
+            display: none;
+        }
+        
+        .back-link {
+            text-align: center;
+            margin-top: 20px;
+        }
+        
         .back-link a {
             color: #667eea;
             text-decoration: none;
-            font-weight: 600;
-            font-size: 14px;
+            font-weight: 500;
         }
-
+        
         .back-link a:hover {
             text-decoration: underline;
-        }
-
-        .error-page {
-            background: #fff3cd;
-            border: 1px solid #ffeaa7;
-            border-radius: 15px;
-            padding: 30px;
-            text-align: center;
-            color: #856404;
-        }
-
-        .error-page h2 {
-            color: #856404;
-            margin-bottom: 15px;
-        }
-
-        .anonymous-badge {
-            display: inline-flex;
-            align-items: center;
-            gap: 8px;
-            background: #28a745;
-            color: white;
-            padding: 6px 12px;
-            border-radius: 20px;
-            font-size: 12px;
-            font-weight: 600;
-            margin-bottom: 20px;
-        }
-
-        @media (max-width: 768px) {
-            .container {
-                padding: 25px;
-                margin: 10px;
-            }
-
-            h1 {
-                font-size: 1.8em;
-            }
-
-            .profile-avatar {
-                width: 60px;
-                height: 60px;
-                font-size: 1.5em;
-            }
-
-            .profile-username {
-                font-size: 1.3em;
-            }
         }
     </style>
 </head>
 <body>
     <div class="container">
-        <div id="errorPage" class="error-page" style="display: none;">
-            <h2>❌ Błąd dostępu</h2>
-            <p id="errorMessage"></p>
-            <div class="back-link">
-                <a href="index.html">← Stwórz własny link</a>
-            </div>
+        <div class="header">
+            <div class="logo">📝 AnonLink</div>
+            <p>Wyślij anonimową wiadomość</p>
         </div>
-
-        <div id="mainContent" style="display: none;">
-            <div class="profile-section">
-                <div class="profile-avatar" id="profileAvatar">👤</div>
-                <div class="profile-username" id="profileUsername">Ładowanie...</div>
-                <div class="profile-subtitle">Wyślij mi anonimową wiadomość</div>
-            </div>
-
-            <div class="anonymous-badge">
-                🔒 Całkowicie anonimowe
-            </div>
-
-            <h1>💌 Wyślij wiadomość</h1>
-            <p class="subtitle">Twoja wiadomość zostanie wysłana anonimowo. Nadawca nie będzie znany.</p>
-
-            <div class="info-box">
-                <h4>🛡️ Zasady bezpieczeństwa:</h4>
-                <ul>
-                    <li>Twoja tożsamość pozostanie w pełni anonimowa</li>
-                    <li>Nie wysyłaj treści obraźliwych lub szkodliwych</li>
-                    <li>Bądź miły i szanuj innych użytkowników</li>
-                    <li>Wiadomość może mieć maksymalnie 500 znaków</li>
-                </ul>
-            </div>
-
-            <form id="sendMessageForm">
-                <div class="form-group">
-                    <label for="message">Twoja anonimowa wiadomość:</label>
-                    <textarea 
-                        id="message" 
-                        name="message" 
-                        placeholder="Napisz swoją wiadomość tutaj... (maksymalnie 500 znaków)"
-                        maxlength="500"
-                        required
-                    ></textarea>
-                    <div class="char-counter" id="charCounter">0/500</div>
+        
+        <div class="recipient" id="recipientInfo">
+            <div class="recipient-label">Wysyłasz do:</div>
+            <div class="recipient-name" id="recipientName">Ładowanie...</div>
+        </div>
+        
+        <div class="anonymous-note">
+            <h4>🕶️ Całkowicie anonimowo</h4>
+            <p>Twoja wiadomość zostanie wysłana całkowicie anonimowo. Odbiorca nie będzie wiedział, kto ją wysłał. Bądź szczery, ale też uprzejmy!</p>
+        </div>
+        
+        <div id="successMessage" class="success-message"></div>
+        <div id="errorMessage" class="error-message"></div>
+        
+        <form id="messageForm">
+            <div class="form-group">
+                <label for="message">Twoja wiadomość:</label>
+                <textarea 
+                    id="message" 
+                    name="message" 
+                    placeholder="Napisz tutaj swoją szczerą, anonimową wiadomość..."
+                    maxlength="1000"
+                    required
+                ></textarea>
+                <div class="char-counter">
+                    <span id="charCount">0</span>/1000 znaków
                 </div>
-                
-                <button type="submit" class="btn" id="submitBtn">📤 Wyślij anonimowo</button>
-                <button type="button" class="btn secondary" onclick="clearMessage()">🗑️ Wyczyść</button>
-            </form>
-
-            <div class="loading" id="loading">
-                <div class="spinner"></div>
-                <p>Wysyłanie wiadomości...</p>
             </div>
-
-            <div class="result" id="result">
-                <div id="resultMessage"></div>
-            </div>
-
-            <div class="back-link">
-                <a href="index.html">← Stwórz własny link do otrzymywania wiadomości</a>
-            </div>
+            
+            <button type="submit" class="btn" id="sendBtn">
+                📤 Wyślij anonimowo
+            </button>
+        </form>
+        
+        <div class="back-link">
+            <a href="/">← Stwórz własny link</a>
         </div>
     </div>
-
+    
     <script>
-        const API_BASE = 'https://tbh-fun.onrender.com'; // Zmień na swój URL Render
+        let recipient = '';
         
-        let targetUsername = null;
-        let targetUserId = null;
-
-        // Pobierz username z URL
+        // Pobierz odbiorcę z URL
         const urlParams = new URLSearchParams(window.location.search);
-        targetUsername = urlParams.get('u');
-
-        if (!targetUsername) {
-            showError('Nieprawidłowy link. Brak nazwy użytkownika w URL.');
+        recipient = urlParams.get('to');
+        
+        if (!recipient) {
+            showError('Nieprawidłowy link. Brak odbiorcy.');
         } else {
-            loadUserProfile();
+            document.getElementById('recipientName').textContent = '@' + recipient;
         }
-
-        async function loadUserProfile() {
-            try {
-                // Pobierz informacje o użytkowniku
-                const response = await fetch(`${API_BASE}/api/user-by-username/${targetUsername}`);
-                
-                if (!response.ok) {
-                    throw new Error('Użytkownik nie został znaleziony');
-                }
-
-                const data = await response.json();
-                
-                if (data.success) {
-                    targetUserId = data.data.id;
-                    setupProfile(data.data);
-                    document.getElementById('mainContent').style.display = 'block';
-                } else {
-                    throw new Error(data.error || 'Nie można załadować profilu użytkownika');
-                }
-            } catch (error) {
-                console.error('Error loading user profile:', error);
-                showError('Nie można znaleźć tego użytkownika. Sprawdź czy link jest poprawny.');
-            }
-        }
-
-        function setupProfile(userData) {
-            document.getElementById('profileUsername').textContent = '@' + userData.username;
-            
-            // Utwórz awatar z pierwszą literą username
-            const firstLetter = userData.username.charAt(0).toUpperCase();
-            document.getElementById('profileAvatar').textContent = firstLetter;
-            
-            // Aktualizuj tytuł strony
-            document.title = `Wyślij wiadomość dla @${userData.username} - NGL Clone`;
-        }
-
+        
         // Licznik znaków
         const messageTextarea = document.getElementById('message');
-        const charCounter = document.getElementById('charCounter');
-
+        const charCountSpan = document.getElementById('charCount');
+        const charCounter = document.querySelector('.char-counter');
+        
         messageTextarea.addEventListener('input', function() {
-            const currentLength = this.value.length;
-            const maxLength = 500;
+            const length = this.value.length;
+            charCountSpan.textContent = length;
             
-            charCounter.textContent = `${currentLength}/${maxLength}`;
-            
-            // Zmień kolor w zależności od ilości znaków
-            charCounter.classList.remove('warning', 'error');
-            if (currentLength > maxLength * 0.8) {
+            if (length > 900) {
                 charCounter.classList.add('warning');
-            }
-            if (currentLength >= maxLength) {
-                charCounter.classList.add('error');
+            } else {
+                charCounter.classList.remove('warning');
             }
         });
-
+        
         // Obsługa formularza
-        document.getElementById('sendMessageForm').addEventListener('submit', async (e) => {
+        document.getElementById('messageForm').addEventListener('submit', function(e) {
             e.preventDefault();
             
-            const message = document.getElementById('message').value.trim();
-            const submitBtn = document.getElementById('submitBtn');
-            const loading = document.getElementById('loading');
-            const result = document.getElementById('result');
+            const message = messageTextarea.value.trim();
+            const sendBtn = document.getElementById('sendBtn');
             
             if (!message) {
-                showResult('Wpisz wiadomość przed wysłaniem', 'error');
+                showError('Wiadomość nie może być pusta!');
                 return;
             }
-
-            if (message.length > 500) {
-                showResult('Wiadomość jest za długa (maksymalnie 500 znaków)', 'error');
+            
+            if (!recipient) {
+                showError('Nieprawidłowy odbiorca!');
                 return;
             }
-
-            // Podstawowa walidacja treści
-            if (containsInappropriateContent(message)) {
-                showResult('Wiadomość zawiera nieodpowiednią treść. Bądź miły i szanuj innych.', 'error');
-                return;
-            }
-
-            submitBtn.disabled = true;
-            loading.style.display = 'block';
-            result.style.display = 'none';
-
-            try {
-                const response = await fetch(`${API_BASE}/api/send-message`, {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json',
-                    },
-                    body: JSON.stringify({
-                        recipient_id: targetUserId,
-                        recipient_username: targetUsername,
-                        message: message
-                    })
-                });
-
-                const data = await response.json();
-
+            
+            // Dezaktywuj przycisk podczas wysyłania
+            sendBtn.disabled = true;
+            sendBtn.textContent = '📤 Wysyłanie...';
+            
+            // Wyślij wiadomość
+            fetch('/send_message', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/x-www-form-urlencoded',
+                },
+                body: `to=${encodeURIComponent(recipient)}&message=${encodeURIComponent(message)}`
+            })
+            .then(response => response.json())
+            .then(data => {
                 if (data.success) {
-                    showResult('✅ Wiadomość została wysłana anonimowo!', 'success');
-                    document.getElementById('message').value = '';
-                    charCounter.textContent = '0/500';
-                    charCounter.classList.remove('warning', 'error');
-                    
-                    // Ukryj formularz na 3 sekundy, żeby pokazać sukces
-                    setTimeout(() => {
-                        document.getElementById('sendMessageForm').style.display = 'block';
-                    }, 3000);
+                    showSuccess('✅ Wiadomość została wysłana anonimowo!');
+                    messageTextarea.value = '';
+                    charCountSpan.textContent = '0';
+                    charCounter.classList.remove('warning');
                 } else {
-                    showResult(data.error || 'Wystąpił błąd podczas wysyłania wiadomości', 'error');
+                    showError(data.message || 'Wystąpił błąd podczas wysyłania.');
                 }
-            } catch (error) {
+            })
+            .catch(error => {
+                showError('Wystąpił błąd. Spróbuj ponownie.');
                 console.error('Error:', error);
-                showResult('Błąd połączenia z serwerem. Spróbuj ponownie.', 'error');
-            } finally {
-                submitBtn.disabled = false;
-                loading.style.display = 'none';
-            }
+            })
+            .finally(() => {
+                // Reaktywuj przycisk
+                sendBtn.disabled = false;
+                sendBtn.textContent = '📤 Wyślij anonimowo';
+            });
         });
-
-        function showResult(message, type) {
-            const result = document.getElementById('result');
-            const resultMessage = document.getElementById('resultMessage');
+        
+        function showSuccess(message) {
+            const successDiv = document.getElementById('successMessage');
+            const errorDiv = document.getElementById('errorMessage');
             
-            result.className = `result ${type}`;
-            result.style.display = 'block';
-            resultMessage.textContent = message;
+            errorDiv.style.display = 'none';
+            successDiv.textContent = message;
+            successDiv.style.display = 'block';
             
-            // Przewiń do wyniku
-            result.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+            // Scroll do góry aby zobaczyć wiadomość
+            window.scrollTo(0, 0);
+            
+            setTimeout(() => {
+                successDiv.style.display = 'none';
+            }, 5000);
         }
-
+        
         function showError(message) {
-            document.getElementById('mainContent').style.display = 'none';
-            document.getElementById('errorPage').style.display = 'block';
-            document.getElementById('errorMessage').textContent = message;
-        }
-
-        function clearMessage() {
-            document.getElementById('message').value = '';
-            charCounter.textContent = '0/500';
-            charCounter.classList.remove('warning', 'error');
-            document.getElementById('result').style.display = 'none';
-        }
-
-        // Podstawowa funkcja filtrowania nieodpowiednich treści
-        function containsInappropriateContent(text) {
-            const inappropriateWords = [
-                // Dodaj tutaj słowa, które chcesz filtrować
-                // Przykład: 'spam', 'reklama', itp.
-            ];
+            const errorDiv = document.getElementById('errorMessage');
+            const successDiv = document.getElementById('successMessage');
             
-            const lowerText = text.toLowerCase();
-            return inappropriateWords.some(word => lowerText.includes(word.toLowerCase()));
+            successDiv.style.display = 'none';
+            errorDiv.textContent = message;
+            errorDiv.style.display = 'block';
+            
+            // Scroll do góry aby zobaczyć błąd
+            window.scrollTo(0, 0);
+            
+            setTimeout(() => {
+                errorDiv.style.display = 'none';
+            }, 5000);
         }
-
-        // Zapobieganie spamowi - ograniczenie częstotliwości wysyłania
-        let lastSentTime = 0;
-        const SEND_COOLDOWN = 10000; // 10 sekund
-
-        function checkCooldown() {
-            const now = Date.now();
-            if (now - lastSentTime < SEND_COOLDOWN) {
-                const remainingTime = Math.ceil((SEND_COOLDOWN - (now - lastSentTime)) / 1000);
-                showResult(`Poczekaj ${remainingTime} sekund przed wysłaniem kolejnej wiadomości`, 'error');
-                return false;
-            }
-            lastSentTime = now;
-            return true;
-        }
-
-        // Dodaj sprawdzenie cooldown do formularza
-        const originalSubmitHandler = document.getElementById('sendMessageForm').onsubmit;
-        document.getElementById('sendMessageForm').addEventListener('submit', (e) => {
-            if (!checkCooldown()) {
-                e.preventDefault();
-                return false;
-            }
-        });
     </script>
 </body>
 </html>
