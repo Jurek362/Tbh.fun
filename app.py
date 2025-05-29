@@ -1,301 +1,198 @@
-# app.py - Naprawiony Flask backend z poprawnym obsługiwaniem username
-from flask import Flask, request, jsonify
-from flask_cors import CORS
-import json
+from flask import Flask, render_template, request, redirect, url_for, jsonify, g
+import sqlite3
 import os
-from datetime import datetime
+import uuid # Used for generating unique identifiers
 
-app = Flask(__name__)
+# Flask application configuration
+# template_folder='.' and static_folder='.' tell Flask to look for templates
+# and static files (like style.css) in the same directory as app.py.
+app = Flask(__name__, template_folder='.', static_folder='.')
+app.config['DATABASE'] = 'database.db' # SQLite database file name
 
-# ===== KONFIGURACJA CORS =====
-CORS(app, origins=['https://jurek362.github.io'])
+# --- Database Initialization and Management ---
 
-# Tymczasowa baza danych w pamięci (w produkcji użyj prawdziwej bazy)
-users_db = {}
-messages_db = {}
+def init_db():
+    """
+    Initializes the database schema if tables do not exist.
+    Also adds a default user for testing purposes if no users are present.
+    """
+    with app.app_context():
+        db = get_db()
+        cursor = db.cursor()
 
-@app.before_request
-def log_request():
-    """Debug logging"""
-    print(f"{datetime.now().isoformat()} - {request.method} {request.path}")
-    if request.headers.get('Origin'):
-        print(f"Origin: {request.headers.get('Origin')}")
+        # Create 'users' table: stores user profiles for NGL-like functionality.
+        # 'uid' is a unique identifier, 'username' is also unique for easy URL access.
+        # 'avatar' uses an external placeholder URL as local files are not allowed.
+        cursor.execute('''
+            CREATE TABLE IF NOT EXISTS users (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                uid TEXT UNIQUE NOT NULL,
+                username TEXT UNIQUE NOT NULL,
+                avatar TEXT DEFAULT 'https://placehold.co/40x40/EC1187/ffffff?text=AV', -- External URL for avatar
+                region TEXT DEFAULT 'PL',
+                game_id TEXT
+            )
+        ''')
 
-# ===== ROUTES =====
+        # Create 'messages' table: stores anonymous messages sent to users.
+        # 'user_id' links to the 'users' table.
+        # 'device_id' is a client-generated ID for basic tracking (not for security).
+        cursor.execute('''
+            CREATE TABLE IF NOT EXISTS messages (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                user_id INTEGER NOT NULL,
+                message TEXT NOT NULL,
+                device_id TEXT,
+                timestamp DATETIME DEFAULT CURRENT_TIMESTAMP,
+                FOREIGN KEY (user_id) REFERENCES users (id)
+            )
+        ''')
+        db.commit() # Commit changes to the database
+
+        # Check if the default user 'lsjulia_t' exists. If not, create it.
+        cursor.execute("SELECT COUNT(*) FROM users WHERE username = 'lsjulia_t'")
+        if cursor.fetchone()[0] == 0:
+            default_uid = str(uuid.uuid4()) # Generate a unique ID for the default user
+            default_avatar_url = 'https://placehold.co/40x40/EC1187/ffffff?text=LS'
+            cursor.execute("INSERT INTO users (uid, username, avatar, region, game_id) VALUES (?, ?, ?, ?, ?)",
+                           (default_uid, 'lsjulia_t', default_avatar_url, 'PL', 'some_game_id'))
+            db.commit()
+            print("Domyślny użytkownik 'lsjulia_t' dodany do bazy danych.")
+
+def get_db():
+    """
+    Establishes a connection to the SQLite database.
+    The connection is stored in Flask's 'g' object to be reused within the same request.
+    'sqlite3.Row' allows accessing columns by name (e.g., row['username']).
+    """
+    if 'db' not in g:
+        g.db = sqlite3.connect(
+            app.config['DATABASE'],
+            detect_types=sqlite3.PARSE_DATES # Automatically parse date/time strings
+        )
+        g.db.row_factory = sqlite3.Row
+    return g.db
+
+@app.teardown_appcontext
+def close_db(e=None):
+    """
+    Closes the database connection at the end of the request context.
+    Ensures that database resources are properly released.
+    """
+    db = g.pop('db', None)
+    if db is not None:
+        db.close()
+
+# --- Application Routes ---
 
 @app.route('/')
 def home():
-    """Root endpoint"""
-    return jsonify({
-        'message': 'Tbh.fun API is running',
-        'status': 'OK',
-        'cors_enabled': True
-    })
+    """
+    Renders the main landing page of the application.
+    This is the entry point for users who visit the base URL.
+    """
+    return render_template('index.html')
 
-@app.route('/api/health')
-def health():
-    """Health check"""
-    return jsonify({
-        'status': 'healthy',
-        'timestamp': datetime.now().isoformat()
-    })
+@app.route('/<username>')
+def user_profile(username):
+    """
+    Renders the profile page for a specific user, allowing others to send messages.
+    If the requested username does not exist, a new user profile is created on the fly.
+    """
+    db = get_db()
+    user = db.execute('SELECT * FROM users WHERE username = ?', (username,)).fetchone()
 
-@app.route('/api/create-user', methods=['POST'])
-def create_user():
-    """Create new user"""
-    try:
-        data = request.get_json()
-        
-        if not data:
-            return jsonify({
-                'success': False,
-                'error': 'Brak danych JSON'
-            }), 400
-        
-        username = data.get('username', '').strip()
-        
-        if not username:
-            return jsonify({
-                'success': False,
-                'error': 'Username jest wymagany'
-            }), 400
-        
-        if len(username) < 3:
-            return jsonify({
-                'success': False,
-                'error': 'Username musi mieć przynajmniej 3 znaki'
-            }), 400
-        
-        if len(username) > 20:
-            return jsonify({
-                'success': False,
-                'error': 'Username nie może być dłuższy niż 20 znaków'
-            }), 400
-        
-        # Sprawdź czy username nie jest już zajęty
-        for user_id, user_data in users_db.items():
-            if user_data['username'].lower() == username.lower():
-                return jsonify({
-                    'success': False,
-                    'error': 'Ta nazwa użytkownika jest już zajęta'
-                }), 400
-        
-        # Sprawdź dozwolone znaki
-        import re
-        if not re.match("^[a-zA-Z0-9_-]+$", username):
-            return jsonify({
-                'success': False,
-                'error': 'Username może zawierać tylko litery, cyfry, _ i -'
-            }), 400
-        
-        # Utwórz użytkownika
-        user_id = str(int(datetime.now().timestamp() * 1000))
-        user_data = {
-            'id': user_id,
-            'username': username,
-            'created_at': datetime.now().isoformat(),
-        }
-        
-        # Zapisz do bazy
-        users_db[user_id] = user_data
-        messages_db[user_id] = []  # Pusta lista wiadomości
-        
-        # Zwróć link do wysyłania wiadomości (z username, nie ID)
-        send_link = f'https://jurek362.github.io/Tbh.fun/send.html?u={username}'
-        
-        print(f"Użytkownik utworzony: {user_id}, username: {username}")
-        
-        return jsonify({
-            'success': True,
-            'message': 'Konto utworzone pomyślnie!',
-            'user_id': user_id,
-            'username': username,
-            'link': send_link
-        }), 201
-        
-    except Exception as e:
-        print(f"Błąd podczas tworzenia użytkownika: {str(e)}")
-        return jsonify({
-            'success': False,
-            'error': 'Błąd serwera',
-            'details': str(e)
-        }), 500
+    if not user:
+        # If user does not exist, create a new one.
+        new_uid = str(uuid.uuid4())
+        # Use a placeholder avatar URL that includes the first letter of the username.
+        new_avatar_url = f'https://placehold.co/40x40/EC1187/ffffff?text={username[0].upper()}'
+        try:
+            db.execute("INSERT INTO users (uid, username, avatar, region, game_id) VALUES (?, ?, ?, ?, ?)",
+                       (new_uid, username, new_avatar_url, 'PL', str(uuid.uuid4()))) # Assign a new game_id
+            db.commit()
+            print(f"Nowy użytkownik '@{username}' utworzony pomyślnie.")
+            # Fetch the newly created user to ensure all data is available
+            user = db.execute('SELECT * FROM users WHERE username = ?', (username,)).fetchone()
+        except sqlite3.IntegrityError as e:
+            # Handle potential race conditions where another request might have created the user
+            print(f"Błąd integralności podczas tworzenia użytkownika {username}: {e}. Próba pobrania istniejącego użytkownika.")
+            user = db.execute('SELECT * FROM users WHERE username = ?', (username,)).fetchone()
+            if not user:
+                 return "Nie można stworzyć profilu użytkownika. Spróbuj ponownie lub wybierz inną nazwę.", 500
+        except Exception as e:
+            print(f"Nieoczekiwany błąd podczas tworzenia użytkownika {username}: {e}")
+            return "Wystąpił nieoczekiwany błąd podczas tworzenia profilu.", 500
 
-@app.route('/api/user/<username>', methods=['GET'])
-def get_user_by_username(username):
-    """Sprawdź czy użytkownik o danej nazwie istnieje"""
-    try:
-        # Szukaj użytkownika po username
-        for user_id, user_data in users_db.items():
-            if user_data['username'].lower() == username.lower():
-                return jsonify({
-                    'success': True,
-                    'exists': True,
-                    'data': {
-                        'id': user_data['id'],
-                        'username': user_data['username'],
-                        'created_at': user_data['created_at']
-                    }
-                })
-        
-        # Użytkownik nie został znaleziony
-        return jsonify({
-            'success': False,
-            'exists': False,
-            'error': 'Użytkownik nie istnieje'
-        }), 404
-        
-    except Exception as e:
-        print(f"Błąd podczas pobierania użytkownika: {str(e)}")
-        return jsonify({
-            'success': False,
-            'error': 'Błąd serwera'
-        }), 500
+    # Prepare user data to be passed to the template
+    user_profile_data = {
+        'username': user['username'],
+        'uid': user['uid'],
+        'avatar': user['avatar'],
+        'region': user['region'],
+        'game_id': user['game_id']
+    }
+    # Render the 'send.html' template for the user's profile
+    return render_template('send.html', user_profile=user_profile_data)
 
-@app.route('/api/send-message', methods=['POST'])
-def send_message():
-    """Wyślij anonimową wiadomość"""
-    try:
-        data = request.get_json()
-        
-        if not data:
-            return jsonify({
-                'success': False,
-                'error': 'Brak danych JSON'
-            }), 400
-        
-        username = data.get('username', '').strip()
-        message = data.get('message', '').strip()
-        
-        if not username or not message:
-            return jsonify({
-                'success': False,
-                'error': 'Username i wiadomość są wymagane'
-            }), 400
-        
-        # Znajdź użytkownika po username
-        target_user_id = None
-        for user_id, user_data in users_db.items():
-            if user_data['username'].lower() == username.lower():
-                target_user_id = user_id
-                break
-        
-        if not target_user_id:
-            return jsonify({
-                'success': False,
-                'error': 'Użytkownik nie istnieje'
-            }), 404
-        
-        # Dodaj wiadomość
-        message_data = {
-            'id': str(int(datetime.now().timestamp() * 1000)),
-            'message': message,
-            'timestamp': datetime.now().isoformat(),
-            'read': False
-        }
-        
-        if target_user_id not in messages_db:
-            messages_db[target_user_id] = []
-        
-        messages_db[target_user_id].append(message_data)
-        
-        print(f"Wiadomość wysłana do {username} (ID: {target_user_id})")
-        
-        return jsonify({
-            'success': True,
-            'message': 'Wiadomość została wysłana pomyślnie!'
-        })
-        
-    except Exception as e:
-        print(f"Błąd podczas wysyłania wiadomości: {str(e)}")
-        return jsonify({
-            'success': False,
-            'error': 'Błąd serwera'
-        }), 500
 
-@app.route('/api/messages/<user_id>', methods=['GET'])
-def get_messages(user_id):
-    """Pobierz wiadomości użytkownika"""
-    try:
-        if user_id not in messages_db:
-            return jsonify({
-                'success': False,
-                'error': 'Użytkownik nie istnieje'
-            }), 404
-        
-        messages = messages_db.get(user_id, [])
-        
-        return jsonify({
-            'success': True,
-            'messages': messages,
-            'count': len(messages)
-        })
-        
-    except Exception as e:
-        print(f"Błąd podczas pobierania wiadomości: {str(e)}")
-        return jsonify({
-            'success': False,
-            'error': 'Błąd serwera'
-        }), 500
+@app.route('/send_message/<uid>', methods=['POST'])
+def send_message_post(uid):
+    """
+    Handles the submission of anonymous messages via POST request.
+    Saves the message to the database and redirects to a confirmation page.
+    """
+    question = request.form.get('question')
+    device_id = request.form.get('deviceId')
 
-@app.route('/api/users', methods=['GET'])
-def get_users():
-    """Pobierz wszystkich użytkowników"""
-    try:
-        users = list(users_db.values())
-        
-        return jsonify({
-            'success': True,
-            'data': users,
-            'count': len(users)
-        })
-        
-    except Exception as e:
-        print(f"Błąd podczas pobierania użytkowników: {str(e)}")
-        return jsonify({
-            'success': False,
-            'error': 'Błąd serwera'
-        }), 500
+    if not question or not question.strip(): # Ensure message is not empty or just whitespace
+        return "Treść wiadomości nie może być pusta.", 400
 
-# ===== ERROR HANDLERS =====
+    db = get_db()
+    # Retrieve user by UID to link the message correctly
+    user = db.execute('SELECT id, username FROM users WHERE uid = ?', (uid,)).fetchone()
 
-@app.errorhandler(404)
-def not_found(error):
-    return jsonify({
-        'success': False,
-        'error': 'Endpoint nie istnieje',
-        'path': request.path
-    }), 404
+    if user:
+        user_id = user['id']
+        user_username = user['username']
+        try:
+            db.execute('INSERT INTO messages (user_id, message, device_id) VALUES (?, ?, ?)',
+                       (user_id, question.strip(), device_id)) # Strip whitespace from message
+            db.commit()
+            # Redirect to a confirmation page, passing relevant user data
+            user_profile_data = {'username': user_username}
+            return render_template('sent.html', user_profile=user_profile_data)
+        except Exception as e:
+            print(f"Błąd podczas zapisywania wiadomości: {e}")
+            return "Wystąpił błąd podczas wysyłania wiadomości. Spróbuj ponownie.", 500
+    else:
+        return "Nieprawidłowy UID użytkownika. Wiadomość nie może zostać wysłana.", 400
 
-@app.errorhandler(405)
-def method_not_allowed(error):
-    return jsonify({
-        'success': False,
-        'error': 'Metoda nie dozwolona',
-        'method': request.method,
-        'path': request.path
-    }), 405
+@app.route('/dashboard/<username>')
+def dashboard(username):
+    """
+    Displays the messages received by a specific user.
+    NOTE: In a real application, this route would require robust authentication
+    to ensure only the profile owner can view their messages.
+    """
+    db = get_db()
+    user = db.execute('SELECT id FROM users WHERE username = ?', (username,)).fetchone()
+    if user:
+        # Fetch messages for the user, ordered by timestamp (newest first)
+        messages = db.execute('SELECT message, timestamp FROM messages WHERE user_id = ? ORDER BY timestamp DESC', (user['id'],)).fetchall()
+        return render_template('dashboard.html', username=username, messages=messages)
+    else:
+        return "Użytkownik nie znaleziony.", 404
 
-@app.errorhandler(500)
-def internal_error(error):
-    print(f"Błąd serwera: {str(error)}")
-    return jsonify({
-        'success': False,
-        'error': 'Wewnętrzny błąd serwera'
-    }), 500
-
-# ===== MAIN =====
+# --- Application Entry Point ---
 if __name__ == '__main__':
-    port = int(os.environ.get('PORT', 5000))
-    debug = os.environ.get('FLASK_ENV') == 'development'
-    
-    print("🚀 Uruchamianie serwera Flask...")
-    print(f"📡 CORS włączony dla: https://jurek362.github.io")
-    print(f"🌍 Port: {port}")
-    print(f"🔧 Debug: {debug}")
-    
-    app.run(
-        host='0.0.0.0',
-        port=port,
-        debug=debug
-          )
+    # Initialize the database when the application starts.
+    # This ensures the database file and tables are created before the app runs.
+    if not os.path.exists(app.config['DATABASE']):
+        print(f"Plik bazy danych nie znaleziony. Tworzenie {app.config['DATABASE']}...")
+    init_db()
+    # Run the Flask application.
+    # 'debug=True' enables reloader and debugger (for development).
+    # 'host='0.0.0.0'' makes the server accessible externally (important for Render).
+    # 'port' uses the environment variable PORT provided by Render, or defaults to 5000.
+    app.run(debug=True, host='0.0.0.0', port=os.environ.get('PORT', 5000))
