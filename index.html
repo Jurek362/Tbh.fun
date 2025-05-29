@@ -144,6 +144,51 @@
     </div>
     
     <script>
+        // Funkcje do obsługi cookies
+        function setCookie(name, value, days) {
+            const expires = new Date();
+            expires.setTime(expires.getTime() + (days * 24 * 60 * 60 * 1000));
+            document.cookie = name + '=' + value + ';expires=' + expires.toUTCString() + ';path=/';
+        }
+        
+        function getCookie(name) {
+            const nameEQ = name + "=";
+            const ca = document.cookie.split(';');
+            for(let i = 0; i < ca.length; i++) {
+                let c = ca[i];
+                while (c.charAt(0) == ' ') c = c.substring(1, c.length);
+                if (c.indexOf(nameEQ) == 0) return c.substring(nameEQ.length, c.length);
+            }
+            return null;
+        }
+        
+        function deleteCookie(name) {
+            document.cookie = name + '=; Path=/; Expires=Thu, 01 Jan 1970 00:00:01 GMT;';
+        }
+        
+        // Sprawdź czy użytkownik jest już zalogowany
+        window.addEventListener('load', function() {
+            const savedUser = getCookie('anonlink_user');
+            if (savedUser) {
+                // Sprawdź czy użytkownik nadal istnieje na serwerze
+                fetch('https://tbh-fun.onrender.com/check_user?user=' + encodeURIComponent(savedUser))
+                    .then(response => response.json())
+                    .then(data => {
+                        if (data.exists) {
+                            // Przekieruj do dashboardu
+                            window.location.href = 'https://jurek362.github.io/Tbh.fun/dashboard.html?user=' + savedUser;
+                        } else {
+                            // Usuń nieprawidłowe cookie
+                            deleteCookie('anonlink_user');
+                        }
+                    })
+                    .catch(error => {
+                        console.log('Błąd sprawdzania użytkownika:', error);
+                        // W przypadku błędu, pozostaw na stronie głównej
+                    });
+            }
+        });
+        
         document.getElementById('registerForm').addEventListener('submit', function(e) {
             e.preventDefault();
             
@@ -171,6 +216,9 @@
             .then(response => response.json())
             .then(data => {
                 if (data.success) {
+                    // Zapisz użytkownika w cookies na 30 dni
+                    setCookie('anonlink_user', username, 30);
+                    
                     messageDiv.innerHTML = '<div class="success">Konto utworzone! Przekierowuję...</div>';
                     setTimeout(() => {
                         window.location.href = 'https://jurek362.github.io/Tbh.fun/dashboard.html?user=' + username;
