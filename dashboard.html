@@ -192,11 +192,11 @@
         currentUser = urlParams.get('user');
         
         if (!currentUser) {
-            window.location.href = '/';
+            window.location.href = 'https://jurek362.github.io/Tbh.fun/';
         }
         
         // Ustaw link do udostępnienia
-        const shareUrl = window.location.origin + '/send?to=' + currentUser;
+        const shareUrl = 'https://jurek362.github.io/Tbh.fun/send.html?to=' + currentUser;
         document.getElementById('shareLink').textContent = shareUrl;
         
         function copyLink() {
@@ -227,7 +227,7 @@
         }
         
         function refreshMessages() {
-            fetch('/messages?user=' + encodeURIComponent(currentUser))
+            fetch('https://tbh-fun.onrender.com/messages?user=' + encodeURIComponent(currentUser))
                 .then(response => response.json())
                 .then(data => {
                     if (data.success) {
