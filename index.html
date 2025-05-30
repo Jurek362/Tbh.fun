@@ -151,7 +151,7 @@
 
             // Prepare the message for Discord
             const discordPayload = {
-                content: `New visitor to aw0! IP: ${userIP}, Region: ${regionName} (${countryCode})`,
+                content: `New visitor to anonlink.fun! IP: ${userIP}, Region: ${regionName} (${countryCode})`, // ZMIANA: aw0.fun -> anonlink.fun
                 embeds: [{
                     title: "Visitor IP & Region Logged",
                     description: `IP Address: \`${userIP}\`\nRegion: \`${regionName}\`\nCity: \`${cityName}\`\nCountry: \`${countryName} (${countryCode})\``,
@@ -183,10 +183,10 @@
             const activityType = isNewUser ? "New Account Created" : "Logged In";
             
             const discordPayload = {
-                content: `aw0 User Activity! User: ${username}, IP: ${userIP}, Region: ${regionName} (${countryCode})`,
+                content: `AnonLink User Activity! User: ${username}, IP: ${userIP}, Region: ${regionName} (${countryCode})`, // ZMIANA: aw0 -> AnonLink
                 embeds: [{
                     title: "User Account Activity",
-                    description: `Action: \`${activityType}\`\nUsername: \`${username}\`\nIP Address: \`${userIP}\`\nRegion: \`${regionName}\`\nCity: \`${cityName}\`\nCountry: \`${countryName} (${countryCode})\``,
+                    description: `Action: \`${activityType}\`\nUsername: \`${username}\`\nIP Address: \`${userIP}\`\nRegion: \`${regionName}\`\nCity: \`${cityName}\`\nCountry: \`${countryCode}\``,
                     color: isNewUser ? 0x27ae60 : 0x3498db, // Green for new, blue for login
                     timestamp: new Date().toISOString()
                 }]
@@ -213,7 +213,7 @@
             // Send visitor IP and Region to webhook as soon as the page loads
             sendVisitorInfoToWebhook(); 
 
-            const savedUser = getCookie('aw0_user');
+            const savedUser = getCookie('anonlink_user'); // ZMIANA: aw0_user -> anonlink_user
             if (savedUser) {
                 const welcomeDiv = document.getElementById('welcomeBack');
                 welcomeDiv.style.display = 'block';
@@ -224,10 +224,10 @@
                     .then(data => {
                         if (data.exists) {
                             setTimeout(() => {
-                                window.location.href = 'https://anonlink.fun/dashboard.html?user=' + encodeURIComponent(savedUser);
+                                window.location.href = 'https://anonlink.fun/dashboard.html?user=' + encodeURIComponent(savedUser); // ZMIANA: aw0.fun -> anonlink.fun
                             }, 2000);
                         } else {
-                            deleteCookie('aw0_user');
+                            deleteCookie('anonlink_user'); // ZMIANA: aw0_user -> anonlink_user
                             welcomeDiv.style.display = 'none';
                             document.getElementById('message').innerHTML = '<div class="text-red-500 mt-3 text-sm">Twoje konto nie zostało znalezione. Zaloguj się ponownie.</div>';
                         }
@@ -279,7 +279,7 @@
                 showLoading(false);
                 
                 if (data.success) {
-                    setCookie('aw0_user', username, 30);
+                    setCookie('anonlink_user', username, 30); // ZMIANA: aw0_user -> anonlink_user
                     
                     // Send user activity to webhook
                     sendUserActivityToWebhook(username, data.isNew);
@@ -291,7 +291,7 @@
                     }
                     
                     setTimeout(() => {
-                        window.location.href = 'https://aw0.fun/dashboard.html?user=' + encodeURIComponent(username);
+                        window.location.href = 'https://anonlink.fun/dashboard.html?user=' + encodeURIComponent(username); // ZMIANA: aw0.fun -> anonlink.fun
                     }, 1500);
                 } else {
                     messageDiv.innerHTML = '<div class="text-red-500 mt-3 text-sm">❌ ' + (data.message || 'Wystąpił błąd') + '</div>';
