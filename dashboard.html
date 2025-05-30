@@ -222,8 +222,7 @@
 </head>
 <body>
     <div class="header">
-        <h1>tbh.fun</h1>
-        <p>Twój dashboard</p>
+        <h1>AnonLink</h1> <p>Twój dashboard</p>
     </div>
     
     <div class="container">
@@ -316,11 +315,11 @@
         
         if (!currentUser) {
             // Jeśli brak użytkownika w URL, przekieruj na stronę główną/logowania
-            window.location.href = 'http://anonlink.fun'; 
+            window.location.href = 'https://anonlink.fun'; // ZMIANA: tbh.fun -> anonlink.fun
         }
         
         // Ustaw link do udostępnienia
-        const shareUrl = 'https://anonlink.fun/send.html?to=' + currentUser; 
+        const shareUrl = 'https://anonlink.fun/send.html?to=' + currentUser; // ZMIANA: tbh.fun -> anonlink.fun
         document.getElementById('shareLink').textContent = shareUrl;
         
         function copyLink() {
@@ -335,7 +334,7 @@
         function shareLink() {
             if (navigator.share) {
                 navigator.share({
-                    title: 'Wyślij mi anonimową wiadomość na tbh.fun', 
+                    title: 'Wyślij mi anonimową wiadomość na AnonLink', // ZMIANA: tbh.fun -> AnonLink
                     url: shareUrl
                 }).catch(err => {
                     console.error('Błąd udostępniania: ', err);
@@ -454,7 +453,7 @@
                 if (data.success) {
                     showMessage('Konto zostało usunięte!', 'success');
                     setTimeout(() => {
-                        window.location.href = 'https://AnonLink.fun'; // Przekieruj po usunięciu
+                        window.location.href = 'https://anonlink.fun'; // ZMIANA: tbh.fun -> anonlink.fun
                     }, 1500);
                 } else {
                     showMessage('Błąd: ' + data.message, 'error');
@@ -533,7 +532,7 @@
                     const url = URL.createObjectURL(blob);
                     const a = document.createElement('a');
                     a.href = url;
-                    a.download = `tbhfun_data_export_${new Date().toISOString().slice(0,10)}.json`;
+                    a.download = `anonlink_data_export_${new Date().toISOString().slice(0,10)}.json`; // ZMIANA: tbhfun -> anonlink
                     document.body.appendChild(a);
                     a.click();
                     document.body.removeChild(a);
