@@ -249,6 +249,47 @@ def get_messages():
             'message': 'Błąd serwera'
         }), 500
 
+# ===== NOWY ENDPOINT: USUWANIE KONTA =====
+@app.route('/delete_user', methods=['DELETE'])
+def delete_user():
+    """Usuń konto użytkownika"""
+    try:
+        data = request.get_json()
+        
+        if not data:
+            return jsonify({
+                'success': False,
+                'message': 'Brak danych JSON'
+            }), 400
+        
+        username = data.get('username', '').strip()
+        
+        if not username:
+            return jsonify({
+                'success': False,
+                'message': 'Username jest wymagany do usunięcia konta'
+            }), 400
+        
+        if username in users_db:
+            del users_db[username]
+            print(f"Użytkownik usunięty: {username}")
+            return jsonify({
+                'success': True,
+                'message': f'Konto użytkownika {username} zostało usunięte.'
+            }), 200
+        else:
+            return jsonify({
+                'success': False,
+                'message': 'Użytkownik nie istnieje.'
+            }), 404
+            
+    except Exception as e:
+        print(f"Błąd podczas usuwania użytkownika: {str(e)}")
+        return jsonify({
+            'success': False,
+            'message': 'Błąd serwera podczas usuwania konta.'
+        }), 500
+
 # ===== POZOSTAŁE ENDPOINTY =====
 
 @app.route('/')
@@ -260,9 +301,10 @@ def home():
         'endpoints': {
             'register': 'POST /register',
             'check_user': 'GET /check_user?user=USERNAME',
-            'get_user_details': 'GET /get_user_details?username=USERNAME', # Dodano nowy endpoint
+            'get_user_details': 'GET /get_user_details?username=USERNAME',
             'send_message': 'POST /send_message',
-            'get_messages': 'GET /get_messages?user=USERNAME'
+            'get_messages': 'GET /get_messages?user=USERNAME',
+            'delete_user': 'DELETE /delete_user' # Dodano nowy endpoint
         }
     })
 
@@ -318,9 +360,10 @@ def not_found(error):
         'available_endpoints': [
             'POST /register',
             'GET /check_user',
-            'GET /get_user_details?username=USERNAME', # Dodano nowy endpoint
+            'GET /get_user_details?username=USERNAME',
             'POST /send_message',
-            'GET /get_messages'
+            'GET /get_messages',
+            'DELETE /delete_user' # Dodano nowy endpoint
         ]
     }), 404
 
@@ -353,9 +396,10 @@ if __name__ == '__main__':
     print("📋 Dostępne endpointy:")
     print("   POST /register - rejestracja/logowanie")
     print("   GET /check_user?user=USERNAME - sprawdź użytkownika")
-    print("   GET /get_user_details?username=USERNAME - pobierz szczegóły użytkownika") # Dodano nowy opis
+    print("   GET /get_user_details?username=USERNAME - pobierz szczegóły użytkownika")
     print("   POST /send_message - wyślij wiadomość")
     print("   GET /get_messages?user=USERNAME - pobierz wiadomości")
+    print("   DELETE /delete_user - usuń konto użytkownika") # Dodano nowy opis
     
     app.run(
         host='0.0.0.0',
