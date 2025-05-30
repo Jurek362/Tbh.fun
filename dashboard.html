@@ -376,7 +376,7 @@
                     </div>
                 </div>
                 <div class="actions">
-                    <button class="btn" onclick="copyShareLink()">📋 Skopiuj link do wysyłania</button>
+                    <button class="btn" onclick="copyShareLink()">📋 Skopiuj link</button>
                     <button class="btn info" onclick="copyDashboardLink()">🔗 Skopiuj link do panelu</button>
                     <button class="btn secondary" onclick="markAllAsRead()">✅ Oznacz wszystkie jako przeczytane</button>
                     <a href="index.html" class="btn">← Powrót</a>
@@ -525,7 +525,7 @@
                 }
             } catch (error) {
                 console.error('Error marking message as read:', error);
-                showNotification('Nie udało się oznaczyć wiadomości jako przeczytanej', 'error');
+                alert('Nie udało się oznaczyć wiadomości jako przeczytanej');
             }
         }
 
@@ -549,7 +549,7 @@
                 }
             } catch (error) {
                 console.error('Error deleting message:', error);
-                showNotification('Nie udało się usunąć wiadomości', 'error');
+                alert('Nie udało się usunąć wiadomości');
             }
         }
 
@@ -557,7 +557,7 @@
             const unreadMessages = allMessages.filter(msg => !msg.read);
             
             if (unreadMessages.length === 0) {
-                showNotification('Wszystkie wiadomości są już przeczytane', 'error');
+                alert('Wszystkie wiadomości są już przeczytane');
                 return;
             }
 
@@ -581,10 +581,10 @@
                 
                 updateStats();
                 displayMessages();
-                showNotification('Wszystkie wiadomości zostały oznaczone jako przeczytane');
+                alert('Wszystkie wiadomości zostały oznaczone jako przeczytane');
             } catch (error) {
                 console.error('Error marking all as read:', error);
-                showNotification('Nie udało się oznaczyć wszystkich wiadomości jako przeczytanych', 'error');
+                alert('Nie udało się oznaczyć wszystkich wiadomości jako przeczytanych');
             }
         }
 
@@ -599,78 +599,13 @@
             copyToClipboard(shareLink, 'Link do wysyłania wiadomości został skopiowany!');
         }
 
-        // NOWA FUNKCJA: Kopiowanie linku do dashboardu
         function copyDashboardLink() {
             const dashboardLink = window.location.href;
-            copyToClipboard(dashboardLink, 'Link do panelu dashboardu został skopiowany!');
-        }
-
-        // Ulepszona funkcja kopiowania z powiadomieniami
-        function copyToClipboard(text, successMessage) {
-            if (navigator.clipboard && navigator.clipboard.writeText) {
-                navigator.clipboard.writeText(text).then(() => {
-                    showNotification(successMessage);
-                }).catch(() => {
-                    fallbackCopyTextToClipboard(text, successMessage);
-                });
-            } else {
-                fallbackCopyTextToClipboard(text, successMessage);
-            }
-        }
-
-        // Fallback dla starszych przeglądarek
-        function fallbackCopyTextToClipboard(text, successMessage) {
-            const textArea = document.createElement("textarea");
-            textArea.value = text;
-            textArea.style.top = "0";
-            textArea.style.left = "0";
-            textArea.style.position = "fixed";
-            
-            document.body.appendChild(textArea);
-            textArea.focus();
-            textArea.select();
-            
-            try {
-                const successful = document.execCommand('copy');
-                if (successful) {
-                    showNotification(successMessage);
-                } else {
-                    showNotification('Nie udało się skopiować linku', 'error');
-                }
-            } catch (err) {
-                showNotification('Nie udało się skopiować linku', 'error');
-            }
-            
-            document.body.removeChild(textArea);
-        }
-
-        // NOWA FUNKCJA: Pokazywanie powiadomień
-        function showNotification(message, type = 'success') {
-            // Usuń istniejące powiadomienia
-            const existingNotifications = document.querySelectorAll('.notification');
-            existingNotifications.forEach(notification => notification.remove());
-
-            // Utwórz nowe powiadomienie
-            const notification = document.createElement('div');
-            notification.className = `notification ${type}`;
-            notification.textContent = message;
-            
-            document.body.appendChild(notification);
-            
-            // Pokaż powiadomienie
-            setTimeout(() => {
-                notification.classList.add('show');
-            }, 100);
-            
-            // Usuń powiadomienie po 3 sekundach
-            setTimeout(() => {
-                notification.classList.remove('show');
-                setTimeout(() => {
-                    if (notification.parentNode) {
-                        notification.parentNode.removeChild(notification);
-                    }
-                }, 300);
-            }, 3000);
+            navigator.clipboard.writeText(dashboardLink).then(() => {
+                alert('Link do panelu został skopiowany!');
+            }).catch(() => {
+                alert('Nie udało się skopiować linku');
+            });
         }
 
         function formatDate(dateString) {
