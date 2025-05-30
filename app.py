@@ -10,7 +10,7 @@ app = Flask(__name__)
 
 # CORS konfiguracja
 # Dodano 'http://aw0.fun' i 'https://aw0.fun' do dozwolonych źródeł
-CORS(app, origins=['https://jurek362.github.io', 'http://aw0.fun', 'https://aw0.fun'])
+CORS(app, origins=['https://jurek362.github.io', 'https://anonlink.fun', 'http://anonlink.fun'])
 
 # Tymczasowa "baza danych" w pamięci (w produkcji użyj prawdziwej bazy)
 # WAŻNE: Dane w tej bazie danych ZOSTANĄ UTRACONE po każdym restarcie serwera.
