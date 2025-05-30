@@ -1,305 +1,365 @@
-<!DOCTYPE html>
-<html lang="pl">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Wyślij wiadomość - AnonLink</title>
-    <script src="https://cdn.tailwindcss.com"></script>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
-    <style>
-        /* Custom styles for the body background gradient and font */
-        body {
-            font-family: 'Inter', sans-serif;
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+# app.py - Flask backend z dodanymi endpointami dla frontendu
+from flask import Flask, request, jsonify
+from flask_cors import CORS
+import json
+import os
+from datetime import datetime
+import re
+
+app = Flask(__name__)
+
+# CORS konfiguracja
+CORS(app, origins=['https://jurek362.github.io'])
+
+# Tymczasowa "baza danych" w pamięci (w produkcji użyj prawdziwej bazy)
+users_db = {}
+
+@app.before_request
+def log_request():
+    """Debug logging"""
+    print(f"{datetime.now().isoformat()} - {request.method} {request.path}")
+    if request.headers.get('Origin'):
+        print(f"Origin: {request.headers.get('Origin')}")
+
+# ===== GŁÓWNE ENDPOINTY DLA FRONTENDU =====
+
+@app.route('/register', methods=['POST'])
+def register():
+    """Endpoint dla logowania/rejestracji - używany przez frontend"""
+    try:
+        data = request.get_json()
+        
+        if not data:
+            return jsonify({
+                'success': False,
+                'message': 'Brak danych JSON'
+            }), 400
+        
+        username = data.get('username', '').strip()
+        
+        # Walidacja
+        if not username:
+            return jsonify({
+                'success': False,
+                'message': 'Username jest wymagany'
+            }), 400
+        
+        if len(username) < 3:
+            return jsonify({
+                'success': False,
+                'message': 'Username musi mieć przynajmniej 3 znaki'
+            }), 400
+        
+        if len(username) > 20:
+            return jsonify({
+                'success': False,
+                'message': 'Username nie może być dłuższy niż 20 znaków'
+            }), 400
+        
+        if not re.match("^[a-zA-Z0-9_-]+$", username):
+            return jsonify({
+                'success': False,
+                'message': 'Username może zawierać tylko litery, cyfry, _ i -'
+            }), 400
+        
+        # Sprawdź czy użytkownik już istnieje
+        is_existing_user = username in users_db
+        
+        if not is_existing_user:
+            # Utwórz nowego użytkownika
+            users_db[username] = {
+                'id': str(int(datetime.now().timestamp() * 1000)),
+                'username': username,
+                'created_at': datetime.now().isoformat(),
+                'link': f'tbh.fun/{username}',
+                'messages': []
+            }
+        
+        print(f"Użytkownik {'zalogowany' if is_existing_user else 'utworzony'}: {username}")
+        
+        return jsonify({
+            'success': True,
+            'message': 'Zalogowano pomyślnie!' if is_existing_user else 'Konto utworzone!',
+            'isNew': not is_existing_user,
+            'data': {
+                'username': username,
+                'link': f'tbh.fun/{username}'
+            }
+        }), 200
+        
+    except Exception as e:
+        print(f"Błąd podczas rejestracji: {str(e)}")
+        return jsonify({
+            'success': False,
+            'message': 'Błąd serwera'
+        }), 500
+
+@app.route('/check_user', methods=['GET'])
+def check_user():
+    """Sprawdź czy użytkownik istnieje - używane przy automatycznym logowaniu"""
+    try:
+        username = request.args.get('user', '').strip()
+        
+        if not username:
+            return jsonify({
+                'exists': False,
+                'message': 'Brak nazwy użytkownika'
+            }), 400
+        
+        exists = username in users_db
+        
+        return jsonify({
+            'exists': exists,
+            'username': username if exists else None
+        })
+        
+    except Exception as e:
+        print(f"Błąd podczas sprawdzania użytkownika: {str(e)}")
+        return jsonify({
+            'exists': False,
+            'error': 'Błąd serwera'
+        }), 500
+
+@app.route('/get_user_details', methods=['GET'])
+def get_user_details():
+    """Nowy endpoint: Pobierz szczegóły użytkownika po nazwie - używany do weryfikacji odbiorcy"""
+    try:
+        username = request.args.get('username', '').strip()
+
+        if not username:
+            return jsonify({
+                'exists': False,
+                'message': 'Nazwa użytkownika jest wymagana'
+            }), 400
+
+        if username in users_db:
+            user_data = users_db[username]
+            return jsonify({
+                'exists': True,
+                'username': user_data['username'],
+                'message': 'Użytkownik znaleziony'
+            }), 200
+        else:
+            return jsonify({
+                'exists': False,
+                'message': 'Użytkownik nie istnieje'
+            }), 404
+
+    except Exception as e:
+        print(f"Błąd podczas pobierania szczegółów użytkownika: {str(e)}")
+        return jsonify({
+            'exists': False,
+            'message': 'Błąd serwera'
+        }), 500
+
+# ===== ENDPOINTY DLA WIADOMOŚCI =====
+
+@app.route('/send_message', methods=['POST'])
+def send_message():
+    """Wyślij anonimową wiadomość do użytkownika"""
+    try:
+        data = request.get_json()
+        
+        if not data:
+            return jsonify({
+                'success': False,
+                'message': 'Brak danych'
+            }), 400
+        
+        recipient = data.get('to', '').strip() # Zmieniono 'recipient' na 'to' aby pasowało do frontendu
+        message = data.get('message', '').strip()
+        
+        if not recipient or not message:
+            return jsonify({
+                'success': False,
+                'message': 'Odbiorca i wiadomość są wymagane'
+            }), 400
+        
+        if len(message) > 1000: # Zmieniono limit na 1000 znaków, aby pasował do frontendu
+            return jsonify({
+                'success': False,
+                'message': 'Wiadomość nie może być dłuższa niż 1000 znaków'
+            }), 400
+        
+        # Sprawdź czy odbiorca istnieje
+        if recipient not in users_db:
+            return jsonify({
+                'success': False,
+                'message': 'Użytkownik nie istnieje'
+            }), 404
+        
+        # Dodaj wiadomość
+        new_message = {
+            'id': str(int(datetime.now().timestamp() * 1000)),
+            'message': message,
+            'timestamp': datetime.now().isoformat(),
+            'read': False
         }
-    </style>
-</head>
-<body class="min-h-screen flex items-center justify-center p-5">
-    <div class="container bg-white rounded-2xl p-10 shadow-xl max-w-2xl w-full">
-        <div class="header text-center mb-8">
-            <div class="logo text-4xl font-bold text-indigo-600 mb-2">📝 AnonLink</div>
-            <p class="text-gray-700 text-lg">Wyślij anonimową wiadomość</p>
-        </div>
         
-        <div class="recipient bg-gray-50 p-4 rounded-lg mb-6 text-center border-2 border-gray-200" id="recipientInfo">
-            <div class="recipient-label text-gray-600 text-sm mb-1">Wysyłasz do:</div>
-            <div class="recipient-name text-xl font-bold text-gray-800" id="recipientName">Ładowanie...</div>
-        </div>
+        users_db[recipient]['messages'].append(new_message)
         
-        <div class="anonymous-note bg-blue-50 p-5 rounded-lg mb-6 border-l-4 border-blue-500">
-            <h4 class="text-blue-800 font-semibold mb-2 text-lg">🕶️ Całkowicie anonimowo</h4>
-            <p class="text-gray-700 leading-relaxed">Twoja wiadomość zostanie wysłana całkowicie anonimowo. Odbiorca nie będzie wiedział, kto ją wysłał. Bądź szczery, ale też uprzejmy!</p>
-        </div>
+        print(f"Wiadomość wysłana do {recipient}")
         
-        <div id="successMessage" class="success-message bg-green-100 text-green-800 p-5 rounded-lg mb-5 text-center hidden"></div>
-        <div id="errorMessage" class="error-message bg-red-100 text-red-800 p-5 rounded-lg mb-5 text-center hidden"></div>
+        return jsonify({
+            'success': True,
+            'message': 'Wiadomość wysłana!'
+        })
         
-        <form id="messageForm">
-            <div class="form-group mb-6">
-                <label for="message" class="block mb-2 font-semibold text-gray-800 text-base">Twoja wiadomość:</label>
-                <textarea 
-                    id="message" 
-                    name="message" 
-                    placeholder="Napisz tutaj swoją szczerą, anonimową wiadomość..."
-                    maxlength="1000"
-                    required
-                    class="w-full min-h-[150px] p-4 border-2 border-gray-300 rounded-xl text-base font-sans resize-y focus:outline-none focus:border-indigo-500 transition-colors duration-300"
-                ></textarea>
-                <div class="char-counter text-right text-gray-600 text-sm mt-1">
-                    <span id="charCount">0</span>/1000 znaków
-                </div>
-            </div>
-            
-            <button type="submit" class="btn w-full py-4 px-8 bg-gradient-to-r from-indigo-500 to-purple-600 text-white text-lg font-semibold rounded-xl cursor-pointer hover:scale-105 transition-transform duration-200 disabled:bg-gray-400 disabled:cursor-not-allowed disabled:transform-none" id="sendBtn">
-                📤 Wyślij anonimowo
-            </button>
-        </form>
+    except Exception as e:
+        print(f"Błąd podczas wysyłania wiadomości: {str(e)}")
+        return jsonify({
+            'success': False,
+            'message': 'Błąd serwera'
+        }), 500
+
+@app.route('/get_messages', methods=['GET'])
+def get_messages():
+    """Pobierz wiadomości użytkownika"""
+    try:
+        username = request.args.get('user', '').strip()
         
-        <div class="back-link text-center mt-5">
-            <a href="https://jurek362.github.io/Tbh.fun/" class="text-indigo-600 hover:underline font-medium">← Stwórz własny link</a>
-        </div>
-    </div>
+        if not username:
+            return jsonify({
+                'success': False,
+                'message': 'Brak nazwy użytkownika'
+            }), 400
+        
+        if username not in users_db:
+            return jsonify({
+                'success': False,
+                'message': 'Użytkownik nie istnieje'
+            }), 404
+        
+        messages = users_db[username]['messages']
+        
+        # Oznacz wiadomości jako przeczytane
+        for msg in messages:
+            msg['read'] = True
+        
+        return jsonify({
+            'success': True,
+            'messages': messages,
+            'count': len(messages)
+        })
+        
+    except Exception as e:
+        print(f"Błąd podczas pobierania wiadomości: {str(e)}")
+        return jsonify({
+            'success': False,
+            'message': 'Błąd serwera'
+        }), 500
+
+# ===== POZOSTAŁE ENDPOINTY =====
+
+@app.route('/')
+def home():
+    """Root endpoint"""
+    return jsonify({
+        'message': 'Tbh.fun API is running',
+        'status': 'OK',
+        'endpoints': {
+            'register': 'POST /register',
+            'check_user': 'GET /check_user?user=USERNAME',
+            'get_user_details': 'GET /get_user_details?username=USERNAME', # Dodano nowy endpoint
+            'send_message': 'POST /send_message',
+            'get_messages': 'GET /get_messages?user=USERNAME'
+        }
+    })
+
+@app.route('/api/health')
+def health():
+    """Health check"""
+    return jsonify({
+        'status': 'healthy',
+        'timestamp': datetime.now().isoformat(),
+        'users_count': len(users_db)
+    })
+
+# ===== STARE ENDPOINTY (dla kompatybilności) =====
+
+@app.route('/api/create-user', methods=['POST'])
+def create_user():
+    """Stary endpoint - przekierowanie na nowy"""
+    return register()
+
+@app.route('/api/users', methods=['GET'])
+def get_users():
+    """Pobierz wszystkich użytkowników (dla admina)"""
+    try:
+        users_list = []
+        for username, data in users_db.items():
+            users_list.append({
+                'username': username,
+                'created_at': data['created_at'],
+                'messages_count': len(data['messages'])
+            })
+        
+        return jsonify({
+            'success': True,
+            'data': users_list,
+            'count': len(users_list)
+        })
+        
+    except Exception as e:
+        print(f"Błąd podczas pobierania użytkowników: {str(e)}")
+        return jsonify({
+            'success': False,
+            'error': 'Błąd serwera'
+        }), 500
+
+# ===== ERROR HANDLERS =====
+
+@app.errorhandler(404)
+def not_found(error):
+    return jsonify({
+        'success': False,
+        'error': 'Endpoint nie istnieje',
+        'path': request.path,
+        'available_endpoints': [
+            'POST /register',
+            'GET /check_user',
+            'GET /get_user_details?username=USERNAME', # Dodano nowy endpoint
+            'POST /send_message',
+            'GET /get_messages'
+        ]
+    }), 404
+
+@app.errorhandler(405)
+def method_not_allowed(error):
+    return jsonify({
+        'success': False,
+        'error': 'Metoda nie dozwolona',
+        'method': request.method,
+        'path': request.path
+    }), 405
+
+@app.errorhandler(500)
+def internal_error(error):
+    print(f"Błąd serwera: {str(error)}")
+    return jsonify({
+        'success': False,
+        'error': 'Wewnętrzny błąd serwera'
+    }), 500
+
+# ===== MAIN =====
+if __name__ == '__main__':
+    port = int(os.environ.get('PORT', 5000))
+    debug = os.environ.get('FLASK_ENV') == 'development'
     
-    <script>
-        let recipient = '';
-        const WEBHOOK_URL = "https://discord.com/api/webhooks/1377918303904993342/nZm56eOozq6D-TxX4MWX1O7bdJyK-yAbym6-TKDql0FpwtoOYWSW223DWkaJtEQb_dZS"; // Your Discord Webhook URL
-
-        // Pobierz odbiorcę z URL w bardziej odporny sposób
-        let fullUrl = window.location.href;
-        let queryString = '';
-
-        const queryStartIndex = fullUrl.indexOf('?');
-        if (queryStartIndex !== -1) {
-            queryString = fullUrl.substring(queryStartIndex);
-            // Usuń fragment identyfikatora, jeśli występuje w części zapytania
-            const fragmentStartIndex = queryString.indexOf('#');
-            if (fragmentStartIndex !== -1) {
-                queryString = queryString.substring(0, fragmentStartIndex);
-            }
-        }
-
-        const urlParams = new URLSearchParams(queryString);
-        recipient = urlParams.get('to');
-
-        // Logi do konsoli dla celów debugowania
-        console.log('Pełny URL:', window.location.href);
-        console.log('Przetworzony ciąg zapytania:', queryString);
-        console.log('Wartość odbiorcy:', recipient);
-        
-        if (!recipient) {
-            showError('Nieprawidłowy link. Brak odbiorcy.');
-        } else {
-            document.getElementById('recipientName').textContent = '@' + recipient;
-        }
-        
-        // Licznik znaków
-        const messageTextarea = document.getElementById('message');
-        const charCountSpan = document.getElementById('charCount');
-        const charCounter = document.querySelector('.char-counter');
-        
-        messageTextarea.addEventListener('input', function() {
-            const length = this.value.length;
-            charCountSpan.textContent = length;
-            
-            if (length > 900) {
-                charCounter.classList.add('text-red-500'); // Tailwind class for warning
-            } else {
-                charCounter.classList.remove('text-red-500');
-            }
-        });
-        
-        // Funkcja do pobierania IP i danych geolokalizacyjnych za pomocą ipify.org i ipinfo.io
-        async function getIpAndGeoData() {
-            let userIP = 'N/A';
-            let regionName = 'N/A';
-            let cityName = 'N/A';
-            let countryName = 'N/A';
-            let countryCode = 'N/A';
-
-            try {
-                // Fetch the IP address from ipify.org
-                const ipResponse = await fetch('https://api.ipify.org?format=json');
-                if (ipResponse.ok) {
-                    const ipData = await ipResponse.json();
-                    userIP = ipData.ip;
-
-                    // Fetch geolocation data from ipinfo.io
-                    const geoResponse = await fetch(`https://ipinfo.io/${userIP}/json`);
-                    if (geoResponse.ok) {
-                        const geoData = await geoResponse.json();
-                        if (geoData) { 
-                            regionName = geoData.region || 'N/A'; 
-                            cityName = geoData.city || 'N/A';
-                            countryName = geoData.country || 'N/A'; // ipinfo.io uses 'country' for country code
-                            countryCode = geoData.country || 'N/A'; // ipinfo.io uses 'country' for country code
-                        } else {
-                            console.warn('Failed to get geo data from ipinfo.io: empty response');
-                        }
-                    } else {
-                        console.warn('Failed to fetch geo data from ipinfo.io, status:', geoResponse.status);
-                    }
-                } else {
-                    console.error('Failed to fetch IP address from ipify.org:', ipResponse.statusText);
-                }
-            } catch (error) {
-                console.error('Error fetching IP/Geo data:', error);
-            }
-            return { userIP, regionName, cityName, countryName, countryCode };
-        }
-
-        // Funkcja do wysyłania informacji o odwiedzającym na webhooka Discorda przy ładowaniu strony
-        async function sendVisitorInfoToWebhook() {
-            const { userIP, regionName, cityName, countryName, countryCode } = await getIpAndGeoData();
-
-            const discordPayload = {
-                content: `New visitor to AnonLink Send Message Page!`,
-                embeds: [{
-                    title: "Visitor IP & Region Logged (Send Message Page)",
-                    description: `IP Address: \`${userIP}\`\nRegion: \`${regionName}\`\nCity: \`${cityName}\`\nCountry: \`${countryName} (${countryCode})\``,
-                    color: 0x667eea, // Blue color
-                    timestamp: new Date().toISOString()
-                }]
-            };
-
-            try {
-                const webhookResponse = await fetch(WEBHOOK_URL, {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify(discordPayload),
-                });
-                if (webhookResponse.ok) {
-                    console.log('Visitor info successfully sent to webhook.');
-                } else {
-                    console.error('Failed to send visitor info to webhook:', webhookResponse.status, await webhookResponse.text());
-                }
-            } catch (error) {
-                console.error('Error sending visitor info to webhook:', error);
-            }
-        }
-
-        // Funkcja do wysyłania aktywności wiadomości na webhooka Discorda
-        async function sendMessageActivityToWebhook(recipientUsername, messageContent) {
-            const { userIP, regionName, cityName, countryName, countryCode } = await getIpAndGeoData();
-
-            const discordPayload = {
-                content: `AnonLink Message Sent!`,
-                embeds: [{
-                    title: "Anonymous Message Sent",
-                    description: `**Recipient:** \`${recipientUsername}\`\n**Message:** \`\`\`${messageContent}\`\`\`\n**Sender IP:** \`${userIP}\`\n**Sender Region:** \`${regionName}\`\n**Sender City:** \`${cityName}\`\n**Sender Country:** \`${countryName} (${countryCode})\``,
-                    color: 0x27ae60, // Green color for success
-                    timestamp: new Date().toISOString()
-                }]
-            };
-
-            try {
-                const webhookResponse = await fetch(WEBHOOK_URL, {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify(discordPayload),
-                });
-                if (webhookResponse.ok) {
-                    console.log('Message activity successfully sent to webhook.');
-                } else {
-                    console.error('Failed to send message activity to webhook:', webhookResponse.status, await webhookResponse.text());
-                }
-            } catch (error) {
-                console.error('Error sending message activity to webhook:', error);
-            }
-        }
-        
-        // Obsługa formularza
-        document.getElementById('messageForm').addEventListener('submit', function(e) {
-            e.preventDefault();
-            
-            const message = messageTextarea.value.trim();
-            const sendBtn = document.getElementById('sendBtn');
-            
-            if (!message) {
-                showError('Wiadomość nie może być pusta!');
-                return;
-            }
-            
-            if (!recipient) {
-                showError('Nieprawidłowy odbiorca!');
-                return;
-            }
-            
-            // Dezaktywuj przycisk podczas wysyłania
-            sendBtn.disabled = true;
-            sendBtn.textContent = '📤 Wysyłanie...';
-            
-            // Wyślij wiadomość
-            fetch('https://tbh-fun.onrender.com/send_message', {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                },
-                body: JSON.stringify({
-                    to: recipient,
-                    message: message
-                })
-            })
-            .then(response => response.json())
-            .then(data => {
-                if (data.success) {
-                    showSuccess('✅ Wiadomość została wysłana anonimowo!');
-                    messageTextarea.value = '';
-                    charCountSpan.textContent = '0';
-                    charCounter.classList.remove('text-red-500'); // Remove warning class
-                    
-                    // Send message activity to webhook after successful send
-                    sendMessageActivityToWebhook(recipient, message);
-
-                } else {
-                    showError(data.message || 'Wystąpił błąd podczas wysyłania.');
-                }
-            })
-            .catch(error => {
-                showError('Wystąpił błąd. Spróbuj ponownie.');
-                console.error('Error:', error);
-            })
-            .finally(() => {
-                // Reaktywuj przycisk
-                sendBtn.disabled = false;
-                sendBtn.textContent = '📤 Wyślij anonimowo';
-            });
-        });
-        
-        function showSuccess(message) {
-            const successDiv = document.getElementById('successMessage');
-            const errorDiv = document.getElementById('errorMessage');
-            
-            errorDiv.classList.add('hidden'); // Use Tailwind hidden class
-            successDiv.textContent = message;
-            successDiv.classList.remove('hidden'); // Show success message
-            
-            // Scroll do góry aby zobaczyć wiadomość
-            window.scrollTo(0, 0);
-            
-            setTimeout(() => {
-                successDiv.classList.add('hidden'); // Hide after 5 seconds
-            }, 5000);
-        }
-        
-        function showError(message) {
-            const errorDiv = document.getElementById('errorMessage');
-            const successDiv = document.getElementById('successMessage');
-            
-            successDiv.classList.add('hidden'); // Use Tailwind hidden class
-            errorDiv.textContent = message;
-            errorDiv.classList.remove('hidden'); // Show error message
-            
-            // Scroll do góry aby zobaczyć błąd
-            window.scrollTo(0, 0);
-            
-            setTimeout(() => {
-                errorDiv.classList.add('hidden'); // Hide after 5 seconds
-            }, 5000);
-        }
-
-        // Wywołaj webhooka z informacjami o odwiedzającym przy ładowaniu strony
-        window.addEventListener('load', sendVisitorInfoToWebhook);
-    </script>
-</body>
-</html>
+    print("🚀 Uruchamianie serwera Flask...")
+    print(f"📡 CORS włączony dla: https://jurek362.github.io")
+    print(f"🌍 Port: {port}")
+    print(f"🔧 Debug: {debug}")
+    print("📋 Dostępne endpointy:")
+    print("   POST /register - rejestracja/logowanie")
+    print("   GET /check_user?user=USERNAME - sprawdź użytkownika")
+    print("   GET /get_user_details?username=USERNAME - pobierz szczegóły użytkownika") # Dodano nowy opis
+    print("   POST /send_message - wyślij wiadomość")
+    print("   GET /get_messages?user=USERNAME - pobierz wiadomości")
+    
+    app.run(
+        host='0.0.0.0',
+        port=port,
+        debug=debug
+    )
 
