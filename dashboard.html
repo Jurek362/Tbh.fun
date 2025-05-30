@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Dashboard - AnonLink</title>
+    <title>Dashboard - tbh.fun</title>
     <style>
         * {
             margin: 0;
@@ -80,6 +80,10 @@
         .btn-secondary {
             background: #6c757d;
         }
+
+        .btn-danger { /* Nowy styl dla przycisku usuwania */
+            background: linear-gradient(135deg, #dc3545 0%, #c82333 100%);
+        }
         
         .messages-section h3 {
             color: #333;
@@ -98,7 +102,9 @@
         .message-text {
             color: #333;
             line-height: 1.6;
-            margin-bottom: 10px;
+            word-wrap: break-word;
+            overflow-wrap: break-word;
+            white-space: normal;
         }
         
         .message-time {
@@ -142,11 +148,53 @@
             margin-bottom: 15px;
             text-align: center;
         }
+
+        /* Styl dla modala */
+        .modal {
+            display: none; /* Ukryty domyślnie */
+            position: fixed; /* Pozycja stała */
+            z-index: 1; /* Na wierzchu */
+            left: 0;
+            top: 0;
+            width: 100%; /* Pełna szerokość */
+            height: 100%; /* Pełna wysokość */
+            overflow: auto; /* Włącz przewijanie, jeśli zawartość jest za duża */
+            background-color: rgba(0,0,0,0.4); /* Ciemne tło */
+            justify-content: center;
+            align-items: center;
+        }
+
+        .modal-content {
+            background-color: #fefefe;
+            margin: auto;
+            padding: 20px;
+            border-radius: 10px;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.3);
+            width: 80%;
+            max-width: 400px;
+            text-align: center;
+        }
+
+        .modal-content h3 {
+            margin-bottom: 15px;
+            color: #333;
+        }
+
+        .modal-buttons {
+            display: flex;
+            justify-content: space-around;
+            margin-top: 20px;
+        }
+
+        .modal-buttons .btn {
+            flex-grow: 1;
+            margin: 0 5px;
+        }
     </style>
 </head>
 <body>
     <div class="header">
-        <h1>AnonLink</h1>
+        <h1>tbh.fun</h1>
         <p>Twój dashboard</p>
     </div>
     
@@ -182,6 +230,25 @@
                 </div>
             </div>
         </div>
+
+        <div class="card">
+            <div class="settings-section text-center">
+                <h3>⚙️ Ustawienia konta</h3>
+                <button class="btn btn-secondary" onclick="logout()">Wyloguj</button>
+                <button class="btn btn-danger" onclick="showDeleteAccountModal()">Usuń konto</button>
+            </div>
+        </div>
+    </div>
+
+    <div id="deleteAccountModal" class="modal">
+        <div class="modal-content">
+            <h3>Czy na pewno chcesz usunąć swoje konto?</h3>
+            <p>Ta operacja jest nieodwracalna.</p>
+            <div class="modal-buttons">
+                <button class="btn btn-danger" onclick="deleteAccount()">Tak, usuń</button>
+                <button class="btn btn-secondary" onclick="hideDeleteAccountModal()">Anuluj</button>
+            </div>
+        </div>
     </div>
     
     <script>
@@ -192,27 +259,33 @@
         currentUser = urlParams.get('user');
         
         if (!currentUser) {
-            window.location.href = 'https://jurek362.github.io/Tbh.fun/';
+            // Jeśli brak użytkownika w URL, przekieruj na stronę główną/logowania
+            window.location.href = 'https://jurek362.github.io/Tbh.fun/'; 
         }
         
         // Ustaw link do udostępnienia
-        const shareUrl = 'https://jurek362.github.io/Tbh.fun/send.html?to=' + currentUser;
+        const shareUrl = 'https://jurek362.github.io/Tbh.fun/send.html?to=' + currentUser; 
         document.getElementById('shareLink').textContent = shareUrl;
         
         function copyLink() {
             navigator.clipboard.writeText(shareUrl).then(() => {
                 showSuccess('Link skopiowany do schowka!');
+            }).catch(err => {
+                console.error('Błąd kopiowania linku: ', err);
             });
         }
         
         function shareLink() {
             if (navigator.share) {
                 navigator.share({
-                    title: 'Wyślij mi anonimową wiadomość',
+                    title: 'Wyślij mi anonimową wiadomość na tbh.fun', 
                     url: shareUrl
+                }).catch(err => {
+                    console.error('Błąd udostępniania: ', err);
                 });
             } else {
-                copyLink();
+                copyLink(); 
+                showSuccess('Twoja przeglądarka nie obsługuje funkcji udostępniania. Link został skopiowany!');
             }
         }
         
@@ -220,38 +293,47 @@
             const successDiv = document.getElementById('successMessage');
             successDiv.textContent = message;
             successDiv.style.display = 'block';
-            successDiv.className = 'success-message';
+            successDiv.className = 'success-message'; 
             setTimeout(() => {
                 successDiv.style.display = 'none';
             }, 3000);
         }
         
         function refreshMessages() {
-            fetch('https://tbh-fun.onrender.com/messages?user=' + encodeURIComponent(currentUser))
-                .then(response => response.json())
+            fetch('https://tbh-fun.onrender.com/get_messages?user=' + encodeURIComponent(currentUser))
+                .then(response => {
+                    if (!response.ok) {
+                        return response.json().then(err => { throw new Error(err.message || 'Błąd sieci lub serwera'); });
+                    }
+                    return response.json();
+                })
                 .then(data => {
                     if (data.success) {
                         displayMessages(data.messages);
                         updateStats(data.messages);
                         showSuccess('Wiadomości odświeżone!');
+                    } else {
+                        console.error('Błąd z API:', data.message);
+                        showSuccess('Błąd: ' + data.message); 
                     }
                 })
                 .catch(error => {
-                    console.error('Błąd:', error);
+                    console.error('Błąd podczas pobierania wiadomości:', error);
+                    showSuccess('Wystąpił błąd podczas ładowania wiadomości.');
                 });
         }
         
         function displayMessages(messages) {
             const container = document.getElementById('messagesContainer');
             
-            if (messages.length === 0) {
+            if (!messages || messages.length === 0) {
                 container.innerHTML = '<div class="no-messages">Brak wiadomości. Udostępnij swój link!</div>';
                 return;
             }
             
             container.innerHTML = messages.map(msg => `
                 <div class="message">
-                    <div class="message-text">${escapeHtml(msg.content)}</div>
+                    <div class="message-text">${escapeHtml(msg.message)}</div> 
                     <div class="message-time">${formatDate(msg.timestamp)}</div>
                 </div>
             `).join('');
@@ -277,6 +359,60 @@
             div.textContent = text;
             return div.innerHTML;
         }
+
+        // Funkcja wylogowania
+        function logout() {
+            // W przypadku tej prostej aplikacji, "wylogowanie" oznacza usunięcie użytkownika z URL
+            // i przekierowanie na stronę główną/logowania.
+            // W bardziej złożonej aplikacji, tutaj byłoby czyszczenie tokenów sesji itp.
+            showSuccess('Wylogowano pomyślnie!');
+            setTimeout(() => {
+                window.location.href = 'https://jurek362.github.io/Tbh.fun/'; 
+            }, 1000);
+        }
+
+        // Funkcje do obsługi modala usunięcia konta
+        function showDeleteAccountModal() {
+            document.getElementById('deleteAccountModal').style.display = 'flex';
+        }
+
+        function hideDeleteAccountModal() {
+            document.getElementById('deleteAccountModal').style.display = 'none';
+        }
+
+        // Funkcja usuwania konta
+        async function deleteAccount() {
+            hideDeleteAccountModal(); // Ukryj modal po kliknięciu "Tak, usuń"
+            showSuccess('Usuwanie konta...');
+
+            try {
+                const response = await fetch('https://tbh-fun.onrender.com/delete_user', {
+                    method: 'DELETE',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({ username: currentUser })
+                });
+
+                if (!response.ok) {
+                    const errorData = await response.json();
+                    throw new Error(errorData.message || 'Błąd serwera podczas usuwania konta.');
+                }
+
+                const data = await response.json();
+                if (data.success) {
+                    showSuccess('Konto zostało usunięte!');
+                    setTimeout(() => {
+                        window.location.href = 'https://jurek362.github.io/Tbh.fun/'; // Przekieruj po usunięciu
+                    }, 1500);
+                } else {
+                    showSuccess('Błąd: ' + data.message);
+                }
+            } catch (error) {
+                console.error('Błąd usuwania konta:', error);
+                showSuccess('Wystąpił błąd podczas usuwania konta: ' + error.message);
+            }
+        }
         
         // Załaduj wiadomości przy starcie
         refreshMessages();
@@ -286,3 +422,4 @@
     </script>
 </body>
 </html>
+
