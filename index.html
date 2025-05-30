@@ -88,6 +88,12 @@
             transform: translateY(-2px);
         }
         
+        .btn:disabled {
+            opacity: 0.7;
+            cursor: not-allowed;
+            transform: none;
+        }
+        
         .features {
             margin-top: 30px;
             text-align: left;
@@ -118,12 +124,47 @@
             margin-top: 10px;
             font-size: 14px;
         }
+        
+        .welcome-back {
+            background: #e8f5e8;
+            border: 1px solid #4CAF50;
+            border-radius: 10px;
+            padding: 15px;
+            margin-bottom: 20px;
+            color: #2e7d32;
+        }
+        
+        .loading {
+            display: none;
+            align-items: center;
+            justify-content: center;
+            gap: 10px;
+        }
+        
+        .spinner {
+            width: 20px;
+            height: 20px;
+            border: 2px solid #f3f3f3;
+            border-top: 2px solid #667eea;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+        }
+        
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
     </style>
 </head>
 <body>
     <div class="container">
         <div class="logo">AnonLink</div>
         <p class="subtitle">Otrzymuj szczere, anonimowe wiadomości od znajomych</p>
+        
+        <div id="welcomeBack" class="welcome-back" style="display: none;">
+            <strong>Witaj ponownie!</strong><br>
+            Przekierowywanie do twojego dashboardu...
+        </div>
         
         <form id="registerForm" method="POST" action="/register">
             <div class="form-group">
@@ -134,7 +175,13 @@
                 </small>
             </div>
             
-            <button type="submit" class="btn">Zaloguj / Stwórz konto</button>
+            <button type="submit" class="btn" id="submitBtn">
+                <span id="btnText">Zaloguj / Stwórz konto</span>
+                <div class="loading" id="btnLoading">
+                    <div class="spinner"></div>
+                    <span>Ładowanie...</span>
+                </div>
+            </button>
         </form>
         
         <div id="message"></div>
@@ -147,11 +194,11 @@
     </div>
     
     <script>
-        // Funkcje do obsługi cookies
+        // Funkcje do obsługi cookies z lepszym bezpieczeństwem
         function setCookie(name, value, days) {
             const expires = new Date();
             expires.setTime(expires.getTime() + (days * 24 * 60 * 60 * 1000));
-            document.cookie = name + '=' + value + ';expires=' + expires.toUTCString() + ';path=/';
+            document.cookie = `${name}=${value};expires=${expires.toUTCString()};path=/;SameSite=Lax;Secure=${location.protocol === 'https:'}`;
         }
         
         function getCookie(name) {
@@ -159,39 +206,69 @@
             const ca = document.cookie.split(';');
             for(let i = 0; i < ca.length; i++) {
                 let c = ca[i];
-                while (c.charAt(0) == ' ') c = c.substring(1, c.length);
-                if (c.indexOf(nameEQ) == 0) return c.substring(nameEQ.length, c.length);
+                while (c.charAt(0) === ' ') c = c.substring(1, c.length);
+                if (c.indexOf(nameEQ) === 0) return c.substring(nameEQ.length, c.length);
             }
             return null;
         }
         
         function deleteCookie(name) {
-            document.cookie = name + '=; Path=/; Expires=Thu, 01 Jan 1970 00:00:01 GMT;';
+            document.cookie = `${name}=; Path=/; Expires=Thu, 01 Jan 1970 00:00:01 GMT;`;
         }
         
-        // Sprawdź czy użytkownik jest już zalogowany
+        function showLoading(show) {
+            const btnText = document.getElementById('btnText');
+            const btnLoading = document.getElementById('btnLoading');
+            const submitBtn = document.getElementById('submitBtn');
+            
+            if (show) {
+                btnText.style.display = 'none';
+                btnLoading.style.display = 'flex';
+                submitBtn.disabled = true;
+            } else {
+                btnText.style.display = 'inline';
+                btnLoading.style.display = 'none';
+                submitBtn.disabled = false;
+            }
+        }
+        
+        // Sprawdź czy użytkownik jest już zalogowany przy ładowaniu strony
         window.addEventListener('load', function() {
             const savedUser = getCookie('anonlink_user');
             if (savedUser) {
+                const welcomeDiv = document.getElementById('welcomeBack');
+                welcomeDiv.style.display = 'block';
+                welcomeDiv.innerHTML = `<strong>Witaj ponownie, ${savedUser}!</strong><br>Sprawdzanie konta i przekierowywanie...`;
+                
                 // Sprawdź czy użytkownik nadal istnieje na serwerze
                 fetch('https://tbh-fun.onrender.com/check_user?user=' + encodeURIComponent(savedUser))
                     .then(response => response.json())
                     .then(data => {
                         if (data.exists) {
-                            // Przekieruj do dashboardu
-                            window.location.href = 'https://jurek362.github.io/Tbh.fun/dashboard.html?user=' + savedUser;
+                            // Przekieruj do dashboardu po 2 sekundach
+                            setTimeout(() => {
+                                window.location.href = 'https://jurek362.github.io/Tbh.fun/dashboard.html?user=' + encodeURIComponent(savedUser);
+                            }, 2000);
                         } else {
-                            // Usuń nieprawidłowe cookie
+                            // Usuń nieprawidłowe cookie i ukryj wiadomość
                             deleteCookie('anonlink_user');
+                            welcomeDiv.style.display = 'none';
+                            document.getElementById('message').innerHTML = '<div class="error">Twoje konto nie zostało znalezione. Zaloguj się ponownie.</div>';
                         }
                     })
                     .catch(error => {
                         console.log('Błąd sprawdzania użytkownika:', error);
-                        // W przypadku błędu, pozostaw na stronie głównej
+                        // W przypadku błędu, ukryj wiadomość i pozwól na normalne logowanie
+                        welcomeDiv.style.display = 'none';
+                        document.getElementById('message').innerHTML = '<div class="error">Nie można połączyć z serwerem. Spróbuj się zalogować ponownie.</div>';
                     });
+            } else {
+                // Jeśli nie ma zapisanego użytkownika, ustaw focus na pole input
+                document.getElementById('username').focus();
             }
         });
         
+        // Obsługa formularza
         document.getElementById('registerForm').addEventListener('submit', function(e) {
             e.preventDefault();
             
@@ -203,11 +280,20 @@
                 return;
             }
             
-            // Sprawdź czy nazwa użytkownika zawiera tylko dozwolone znaki
+            // Walidacja nazwy użytkownika
+            if (username.length < 3 || username.length > 20) {
+                messageDiv.innerHTML = '<div class="error">Nazwa musi mieć od 3 do 20 znaków</div>';
+                return;
+            }
+            
             if (!/^[a-zA-Z0-9_-]+$/.test(username)) {
                 messageDiv.innerHTML = '<div class="error">Nazwa może zawierać tylko litery, cyfry, - i _</div>';
                 return;
             }
+            
+            // Pokaż loading
+            showLoading(true);
+            messageDiv.innerHTML = '';
             
             fetch('https://tbh-fun.onrender.com/register', {
                 method: 'POST',
@@ -218,26 +304,45 @@
             })
             .then(response => response.json())
             .then(data => {
+                showLoading(false);
+                
                 if (data.success) {
                     // Zapisz użytkownika w cookies na 30 dni
                     setCookie('anonlink_user', username, 30);
                     
                     if (data.isNew) {
-                        messageDiv.innerHTML = '<div class="success">Konto utworzone! Przekierowuję...</div>';
+                        messageDiv.innerHTML = '<div class="success">✅ Konto utworzone pomyślnie! Przekierowuję do dashboardu...</div>';
                     } else {
-                        messageDiv.innerHTML = '<div class="success">Zalogowano! Przekierowuję...</div>';
+                        messageDiv.innerHTML = '<div class="success">✅ Zalogowano pomyślnie! Przekierowuję do dashboardu...</div>';
                     }
                     
                     setTimeout(() => {
-                        window.location.href = 'https://jurek362.github.io/Tbh.fun/dashboard.html?user=' + username;
+                        window.location.href = 'https://jurek362.github.io/Tbh.fun/dashboard.html?user=' + encodeURIComponent(username);
                     }, 1500);
                 } else {
-                    messageDiv.innerHTML = '<div class="error">' + data.message + '</div>';
+                    messageDiv.innerHTML = '<div class="error">❌ ' + (data.message || 'Wystąpił błąd') + '</div>';
                 }
             })
             .catch(error => {
-                messageDiv.innerHTML = '<div class="error">Wystąpił błąd. Spróbuj ponownie.</div>';
+                showLoading(false);
+                console.error('Błąd:', error);
+                messageDiv.innerHTML = '<div class="error">❌ Wystąpił błąd połączenia. Sprawdź internetowe i spróbuj ponownie.</div>';
             });
+        });
+        
+        // Obsługa klawisza Enter
+        document.getElementById('username').addEventListener('keypress', function(e) {
+            if (e.key === 'Enter') {
+                document.getElementById('registerForm').dispatchEvent(new Event('submit'));
+            }
+        });
+        
+        // Wyczyść komunikaty błędów podczas pisania
+        document.getElementById('username').addEventListener('input', function() {
+            const messageDiv = document.getElementById('message');
+            if (messageDiv.innerHTML.includes('error')) {
+                messageDiv.innerHTML = '';
+            }
         });
     </script>
 </body>
