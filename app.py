@@ -120,6 +120,38 @@ def check_user():
             'error': 'Błąd serwera'
         }), 500
 
+@app.route('/get_user_details', methods=['GET'])
+def get_user_details():
+    """Nowy endpoint: Pobierz szczegóły użytkownika po nazwie - używany do weryfikacji odbiorcy"""
+    try:
+        username = request.args.get('username', '').strip()
+
+        if not username:
+            return jsonify({
+                'exists': False,
+                'message': 'Nazwa użytkownika jest wymagana'
+            }), 400
+
+        if username in users_db:
+            user_data = users_db[username]
+            return jsonify({
+                'exists': True,
+                'username': user_data['username'],
+                'message': 'Użytkownik znaleziony'
+            }), 200
+        else:
+            return jsonify({
+                'exists': False,
+                'message': 'Użytkownik nie istnieje'
+            }), 404
+
+    except Exception as e:
+        print(f"Błąd podczas pobierania szczegółów użytkownika: {str(e)}")
+        return jsonify({
+            'exists': False,
+            'message': 'Błąd serwera'
+        }), 500
+
 # ===== ENDPOINTY DLA WIADOMOŚCI =====
 
 @app.route('/send_message', methods=['POST'])
@@ -134,7 +166,7 @@ def send_message():
                 'message': 'Brak danych'
             }), 400
         
-        recipient = data.get('recipient', '').strip()
+        recipient = data.get('to', '').strip() # Zmieniono 'recipient' na 'to' aby pasowało do frontendu
         message = data.get('message', '').strip()
         
         if not recipient or not message:
@@ -143,10 +175,10 @@ def send_message():
                 'message': 'Odbiorca i wiadomość są wymagane'
             }), 400
         
-        if len(message) > 500:
+        if len(message) > 1000: # Zmieniono limit na 1000 znaków, aby pasował do frontendu
             return jsonify({
                 'success': False,
-                'message': 'Wiadomość nie może być dłuższa niż 500 znaków'
+                'message': 'Wiadomość nie może być dłuższa niż 1000 znaków'
             }), 400
         
         # Sprawdź czy odbiorca istnieje
@@ -228,6 +260,7 @@ def home():
         'endpoints': {
             'register': 'POST /register',
             'check_user': 'GET /check_user?user=USERNAME',
+            'get_user_details': 'GET /get_user_details?username=USERNAME', # Dodano nowy endpoint
             'send_message': 'POST /send_message',
             'get_messages': 'GET /get_messages?user=USERNAME'
         }
@@ -285,6 +318,7 @@ def not_found(error):
         'available_endpoints': [
             'POST /register',
             'GET /check_user',
+            'GET /get_user_details?username=USERNAME', # Dodano nowy endpoint
             'POST /send_message',
             'GET /get_messages'
         ]
@@ -319,6 +353,7 @@ if __name__ == '__main__':
     print("📋 Dostępne endpointy:")
     print("   POST /register - rejestracja/logowanie")
     print("   GET /check_user?user=USERNAME - sprawdź użytkownika")
+    print("   GET /get_user_details?username=USERNAME - pobierz szczegóły użytkownika") # Dodano nowy opis
     print("   POST /send_message - wyślij wiadomość")
     print("   GET /get_messages?user=USERNAME - pobierz wiadomości")
     
@@ -326,4 +361,5 @@ if __name__ == '__main__':
         host='0.0.0.0',
         port=port,
         debug=debug
-        )
+    )
+
