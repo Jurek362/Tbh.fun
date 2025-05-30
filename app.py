@@ -9,7 +9,7 @@ import re
 app = Flask(__name__)
 
 # CORS konfiguracja
-CORS(app, origins=['https://jurek362.github.io'])
+CORS(app, origins=['https://www.aw0.fun'])
 
 # Tymczasowa "baza danych" w pamięci (w produkcji użyj prawdziwej bazy)
 # WAŻNE: Dane w tej bazie danych ZOSTANĄ UTRACONE po każdym restarcie serwera.
