@@ -10,7 +10,7 @@ app = Flask(__name__)
 
 # CORS konfiguracja
 # Dodano 'http://aw0.fun' i 'https://aw0.fun' do dozwolonych źródeł
-CORS(app, origins=['https://jurek362.github.io', 'https://anonlink.fun', 'http://anonlink.fun'])
+CORS(app, origins=['https://jurek362.github.io', 'http://aw0.fun', 'https://aw0.fun', 'https://anonlink.fun']) # Dodano anonlink.fun
 
 # Tymczasowa "baza danych" w pamięci (w produkcji użyj prawdziwej bazy)
 # WAŻNE: Dane w tej bazie danych ZOSTANĄ UTRACONE po każdym restarcie serwera.
@@ -65,30 +65,34 @@ def register():
                 'message': 'Username może zawierać tylko litery, cyfry, _ i -'
             }), 400
         
-        # Sprawdź czy użytkownik już istnieje
-        is_existing_user = username in users_db
+        # ZMIANA: Sprawdź, czy użytkownik już istnieje. Jeśli tak, zwróć błąd.
+        if username in users_db:
+            print(f"Próba rejestracji istniejącego użytkownika: {username}")
+            return jsonify({
+                'success': False,
+                'message': 'Nazwa użytkownika jest już zajęta. Proszę wybrać inną.'
+            }), 409 # Conflict
         
-        if not is_existing_user:
-            # Utwórz nowego użytkownika
-            users_db[username] = {
-                'id': str(int(datetime.now().timestamp() * 1000)),
-                'username': username,
-                'created_at': datetime.now().isoformat(),
-                'link': f'tbh.fun/{username}',
-                'messages': []
-            }
+        # Jeśli użytkownik nie istnieje, utwórz nowe konto
+        users_db[username] = {
+            'id': str(int(datetime.now().timestamp() * 1000)),
+            'username': username,
+            'created_at': datetime.now().isoformat(),
+            'link': f'anonlink.fun/{username}', # Zaktualizowano link
+            'messages': []
+        }
         
-        print(f"Użytkownik {'zalogowany' if is_existing_user else 'utworzony'}: {username}")
+        print(f"Użytkownik utworzony: {username}")
         
         return jsonify({
             'success': True,
-            'message': 'Zalogowano pomyślnie!' if is_existing_user else 'Konto utworzone!',
-            'isNew': not is_existing_user,
+            'message': 'Konto utworzone pomyślnie!',
+            'isNew': True, # Zawsze True, bo tworzymy nowe konto
             'data': {
                 'username': username,
-                'link': f'tbh.fun/{username}'
+                'link': f'anonlink.fun/{username}' # Zaktualizowano link
             }
-        }), 200
+        }), 201 # Created
         
     except Exception as e:
         print(f"Błąd podczas rejestracji: {str(e)}")
@@ -411,7 +415,7 @@ def import_all_data():
 def home():
     """Root endpoint"""
     return jsonify({
-        'message': 'Tbh.fun API is running',
+        'message': 'AnonLink API is running', # Zaktualizowano nazwę aplikacji
         'status': 'OK',
         'endpoints': {
             'register': 'POST /register',
@@ -530,3 +534,4 @@ if __name__ == '__main__':
         port=port,
         debug=debug
     )
+
