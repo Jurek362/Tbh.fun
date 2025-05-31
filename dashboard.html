@@ -4,6 +4,15 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Dashboard - AnonLink</title>
+    <meta property="og:title" content="AnonLink - Twój Dashboard">
+    <meta property="og:description" content="Zarządzaj swoimi anonimowymi wiadomościami na AnonLink.">
+    <meta property="og:image" content="https://i.postimg.cc/Bbg49svM/anonlink-logo.png">
+    <meta property="og:url" content="https://anonlink.fun/dashboard.html">
+    <meta property="og:type" content="website">
+    <meta name="twitter:card" content="summary_large_image">
+    <meta name="twitter:title" content="AnonLink - Twój Dashboard">
+    <meta name="twitter:description" content="Zarządzaj swoimi anonimowymi wiadomościami na AnonLink.">
+    <meta name="twitter:image" content="https://i.postimg.cc/Bbg49svM/anonlink-logo.png">
     <style>
         * {
             margin: 0;
@@ -222,7 +231,9 @@
 </head>
 <body>
     <div class="header">
-        <h1>AnonLink</h1> <p>Twój dashboard</p>
+        <img src="https://i.postimg.cc/Bbg49svM/anonlink-logo.png" alt="AnonLink Logo" class="mx-auto mb-5 w-32 h-32 object-contain rounded-full">
+        <h1>AnonLink</h1> 
+        <p>Twój dashboard</p>
     </div>
     
     <div class="container">
@@ -315,11 +326,11 @@
         
         if (!currentUser) {
             // Jeśli brak użytkownika w URL, przekieruj na stronę główną/logowania
-            window.location.href = 'https://anonlink.fun'; // ZMIANA: tbh.fun -> anonlink.fun
+            window.location.href = 'https://anonlink.fun'; 
         }
         
         // Ustaw link do udostępnienia
-        const shareUrl = 'https://anonlink.fun/send.html?to=' + currentUser; // ZMIANA: tbh.fun -> anonlink.fun
+        const shareUrl = 'https://anonlink.fun/send.html?to=' + currentUser; 
         document.getElementById('shareLink').textContent = shareUrl;
         
         function copyLink() {
@@ -334,7 +345,7 @@
         function shareLink() {
             if (navigator.share) {
                 navigator.share({
-                    title: 'Wyślij mi anonimową wiadomość na AnonLink', // ZMIANA: tbh.fun -> AnonLink
+                    title: 'Wyślij mi anonimową wiadomość na AnonLink', 
                     url: shareUrl
                 }).catch(err => {
                     console.error('Błąd udostępniania: ', err);
@@ -453,7 +464,7 @@
                 if (data.success) {
                     showMessage('Konto zostało usunięte!', 'success');
                     setTimeout(() => {
-                        window.location.href = 'https://anonlink.fun'; // ZMIANA: tbh.fun -> anonlink.fun
+                        window.location.href = 'https://anonlink.fun'; 
                     }, 1500);
                 } else {
                     showMessage('Błąd: ' + data.message, 'error');
@@ -532,7 +543,7 @@
                     const url = URL.createObjectURL(blob);
                     const a = document.createElement('a');
                     a.href = url;
-                    a.download = `anonlink_data_export_${new Date().toISOString().slice(0,10)}.json`; // ZMIANA: tbhfun -> anonlink
+                    a.download = `anonlink_data_export_${new Date().toISOString().slice(0,10)}.json`; 
                     document.body.appendChild(a);
                     a.click();
                     document.body.removeChild(a);
