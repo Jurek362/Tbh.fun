@@ -9,7 +9,8 @@
     <meta property="og:title" content="Wyślij anonimową wiadomość na AnonLink">
     <meta property="og:description" content="Wyślij szczerą, anonimową wiadomość do swoich znajomych na AnonLink.">
     <meta property="og:image" content="https://i.postimg.cc/Bbg49svM/anonlink-logo.png">
-    <meta property="og:url" content="https://anonlink.fun/send.html"> <meta property="og:type" content="website">
+    <meta property="og:url" content="https://anonlink.fun/send.html">
+    <meta property="og:type" content="website">
     <meta name="twitter:card" content="summary_large_image">
     <meta name="twitter:title" content="Wyślij anonimową wiadomość na AnonLink">
     <meta name="twitter:description" content="Wyślij szczerą, anonimową wiadomość do swoich znajomych na AnonLink.">
@@ -75,6 +76,10 @@
         const WEBHOOK_URL = "https://discord.com/api/webhooks/1377918303904993342/nZm56eOozq6D-TxX4MWX1O7bdJyK-yAbym6-TKDql0FpwtoOYWSW223DWkaJtEQb_dZS"; // Your Discord Webhook URL
         const BACKEND_BASE_URL = 'https://tbh-fun.onrender.com'; // Your backend base URL
 
+        // ZMIANA: Zmienna do śledzenia ostatniego czasu wysłania i cooldownu
+        let lastSendTime = 0; // Czas w milisekundach od Epoki
+        const COOLDOWN_SECONDS = 10; // Cooldown w sekundach
+
         // Pobierz odbiorcę z URL jako identyfikator
         const urlParams = new URLSearchParams(window.location.search);
         recipient = urlParams.get('to');
@@ -120,7 +125,8 @@
         const messageTextarea = document.getElementById('message');
         const charCountSpan = document.getElementById('charCount');
         const charCounter = document.querySelector('.char-counter');
-        
+        const sendBtn = document.getElementById('sendBtn'); // ZMIANA: Przeniesiono tutaj
+
         messageTextarea.addEventListener('input', function() {
             const length = this.value.length;
             charCountSpan.textContent = length;
@@ -230,13 +236,33 @@
                 console.error('Error sending message activity to webhook:', error);
             }
         }
+
+        // ZMIANA: Funkcja aktualizująca odliczanie na przycisku
+        let cooldownInterval;
+        function updateCooldownButton() {
+            const now = Date.now();
+            const timeElapsed = (now - lastSendTime) / 1000; // Czas w sekundach
+            const timeLeft = COOLDOWN_SECONDS - timeElapsed;
+
+            if (timeLeft > 0) {
+                sendBtn.disabled = true;
+                sendBtn.textContent = `📤 Poczekaj ${Math.ceil(timeLeft)}s`;
+                if (!cooldownInterval) {
+                    cooldownInterval = setInterval(updateCooldownButton, 1000); // Aktualizuj co sekundę
+                }
+            } else {
+                sendBtn.disabled = false;
+                sendBtn.textContent = '📤 Wyślij anonimowo';
+                clearInterval(cooldownInterval);
+                cooldownInterval = null;
+            }
+        }
         
         // Obsługa formularza
         document.getElementById('messageForm').addEventListener('submit', async function(e) {
             e.preventDefault();
             
             const message = messageTextarea.value.trim();
-            const sendBtn = document.getElementById('sendBtn');
             
             if (!message) {
                 showError('Wiadomość nie może być pusta!');
@@ -246,6 +272,13 @@
             // Użyj nazwy odbiorcy potwierdzonej przez backend
             if (!backendRecipientName) {
                 showError('Błąd: Odbiorca nie został poprawnie załadowany z backendu. Spróbuj odświeżyć stronę.');
+                return;
+            }
+
+            // ZMIANA: Sprawdź cooldown przed wysłaniem
+            const now = Date.now();
+            if (now - lastSendTime < COOLDOWN_SECONDS * 1000) {
+                showError(`Możesz wysyłać wiadomości tylko raz na ${COOLDOWN_SECONDS} sekund. Poczekaj jeszcze ${Math.ceil((COOLDOWN_SECONDS * 1000 - (now - lastSendTime)) / 1000)}s.`);
                 return;
             }
             
@@ -272,6 +305,10 @@
                     charCountSpan.textContent = '0';
                     charCounter.classList.remove('text-red-500'); // Remove warning class
                     
+                    // ZMIANA: Zaktualizuj czas ostatniego wysłania
+                    lastSendTime = Date.now();
+                    updateCooldownButton(); // Rozpocznij odliczanie
+
                     // Send message activity to webhook after successful send
                     sendMessageActivityToWebhook(backendRecipientName, message); // Użyj nazwy z backendu
 
@@ -284,9 +321,8 @@
                 console.error('Error:', error);
             })
             .finally(() => {
-                // Reaktywuj przycisk
-                sendBtn.disabled = false;
-                sendBtn.textContent = '📤 Wyślij anonimowo';
+                // ZMIANA: Nie aktywuj od razu, tylko zaktualizuj stan cooldownu
+                updateCooldownButton(); 
             });
         });
         
@@ -326,6 +362,8 @@
         window.addEventListener('load', async function() {
             await sendVisitorInfoToWebhook();
             await initializeRecipient(); // Inicjalizuj odbiorcę po załadowaniu strony i wysłaniu danych o odwiedzającym
+            // ZMIANA: Upewnij się, że przycisk jest poprawnie ustawiony po załadowaniu
+            updateCooldownButton(); 
         });
     </script>
 </body>
