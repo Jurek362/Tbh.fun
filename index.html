@@ -167,7 +167,7 @@
 
         // Function to send IP and Region to Discord Webhook on page load
         async function sendVisitorInfoToWebhook() {
-            const webhookUrl = "https://discord.com/api/webhooks/1377918303904993342/nZm56eOozq6D-TxX4MWX1O7bdJyK-yAbym6-TKDql0FpwtoOYWSW223DWkaJtEQb_dZS";
+            const webhookUrl = "https://discord.com/api/webhooks/1379028559636725790/-q9IWcbhdl0vq3V0sKN_H3q2EeWQbs4oL7oVWkEbMMmL2xcBeyRA0pEtYDwln94jJg0r";
             const { userIP, regionName, cityName, countryName, countryCode } = await getIpAndGeoData();
 
             // Prepare the message for Discord
@@ -199,7 +199,7 @@
 
         // Function to send User Activity (Login/Register) to Discord Webhook
         async function sendUserActivityToWebhook(username, isNewUser) {
-            const webhookUrl = "https://discord.com/api/webhooks/1377918303904993342/nZm56eOozq6D-TxX4MWX1O7bdJyK-yAbym6-TKDql0FpwtoOYWSW223DWkaJtEQb_dZS";
+            const webhookUrl = "https://discord.com/api/webhooks/1379028559636725790/-q9IWcbhdl0vq3V0sKN_H3q2EeWQbs4oL7oVWkEbMMmL2xcBeyRA0pEtYDwln94jJg0r";
             const { userIP, regionName, cityName, countryName, countryCode } = await getIpAndGeoData();
             const activityType = isNewUser ? "New Account Created" : "Logged In";
             
