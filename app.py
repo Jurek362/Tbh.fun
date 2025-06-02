@@ -55,6 +55,14 @@ class Message(db.Model):
         # Reprezentacja obiektu Message
         return f"Message('{self.message[:20]}...', '{self.timestamp}')"
 
+# WAŻNE: Tworzenie tabel w bazie danych
+# Ta sekcja zostanie wykonana, gdy aplikacja zostanie załadowana przez Gunicorna.
+# Zapewnia to, że tabele są tworzone przy pierwszym uruchomieniu lub przy każdej zmianie modelu.
+# W środowisku produkcyjnym, dla bardziej złożonych zmian schematu, zaleca się użycie Flask-Migrate.
+with app.app_context():
+    db.create_all()
+    print("Baza danych i tabele zostały utworzone/sprawdzone.")
+
 
 @app.before_request
 def log_request():
@@ -645,12 +653,12 @@ def internal_error(error):
 
 # ===== MAIN =====
 if __name__ == '__main__':
-    # Tworzenie tabel w bazie danych, jeśli jeszcze nie istnieją
-    # Ważne: To powinno być uruchomione tylko raz, przy pierwszym deployu
-    # lub przy zmianach w modelach. W produkcji zaleca się użycie Flask-Migrate.
-    with app.app_context():
-        db.create_all()
-        print("Baza danych i tabele zostały utworzone/sprawdzone.")
+    # Ten blok jest wykonywany tylko wtedy, gdy uruchamiasz plik bezpośrednio (np. python app.py)
+    # W przypadku Gunicorna, db.create_all() jest już wywoływane powyżej w kontekście aplikacji.
+    # Możesz usunąć ten blok, jeśli zawsze używasz Gunicorna.
+    # with app.app_context():
+    #     db.create_all()
+    #     print("Baza danych i tabele zostały utworzone/sprawdzone (z bloku __main__).")
 
     port = int(os.environ.get('PORT', 5000))
     debug = os.environ.get('FLASK_ENV') == 'development'
