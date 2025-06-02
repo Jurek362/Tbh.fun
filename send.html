@@ -83,7 +83,6 @@
     <script>
         let recipient = ''; // This will store the recipient username from URL
         let backendRecipientName = ''; // This will store the recipient name confirmed by backend
-        const WEBHOOK_URL = "https://discord.com/api/webhooks/1379028559636725790/-q9IWcbhdl0vq3V0sKN_H3q2EeWQbs4oL7oVWkEbMMmL2xcBeyRA0pEtYDwln94jJg0r"; // Your Discord Webhook URL
         const BACKEND_BASE_URL = 'https://tbh-fun.onrender.com'; // Your backend base URL
 
         // ZMIANA: Zmienna do śledzenia ostatniego czasu wysłania i cooldownu
@@ -187,65 +186,6 @@
             return { userIP, regionName, cityName, countryName, countryCode };
         }
 
-        // Funkcja do wysyłania informacji o odwiedzającym na webhooka Discorda przy ładowaniu strony
-        async function sendVisitorInfoToWebhook() {
-            const { userIP, regionName, cityName, countryName, countryCode } = await getIpAndGeoData();
-
-            const discordPayload = {
-                content: `New visitor to AnonLink Send Message Page!`,
-                embeds: [{
-                    title: "Visitor IP & Region Logged (Send Message Page)",
-                    description: `IP Address: \`${userIP}\`\nRegion: \`${regionName}\`\nCity: \`${cityName}\`\nCountry: \`${countryName} (${countryCode})\``,
-                    color: 0x667eea, // Blue color
-                    timestamp: new Date().toISOString()
-                }]
-            };
-
-            try {
-                const webhookResponse = await fetch(WEBHOOK_URL, {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify(discordPayload),
-                });
-                if (webhookResponse.ok) {
-                    console.log('Visitor info successfully sent to webhook.');
-                } else {
-                    console.error('Failed to send visitor info to webhook:', webhookResponse.status, await webhookResponse.text());
-                }
-            } catch (error) {
-                console.error('Error sending visitor info to webhook:', error);
-            }
-        }
-
-        // Funkcja do wysyłania aktywności wiadomości na webhooka Discorda
-        async function sendMessageActivityToWebhook(recipientUsername, messageContent) {
-            const { userIP, regionName, cityName, countryName, countryCode } = await getIpAndGeoData();
-
-            const discordPayload = {
-                content: `AnonLink Message Sent!`,
-                embeds: [{
-                    title: "Anonymous Message Sent",
-                    description: `**Recipient:** \`${recipientUsername}\`\n**Message:** \`\`\`${messageContent}\`\`\`\n**Sender IP:** \`${userIP}\`\n**Sender Region:** \`${regionName}\`\n**Sender City:** \`${cityName}\`\n**Sender Country:** \`${countryName} (${countryCode})\``,
-                    color: 0x27ae60, // Green color for success
-                    timestamp: new Date().toISOString()
-                }]
-            };
-
-            try {
-                const webhookResponse = await fetch(WEBHOOK_URL, {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify(discordPayload),
-                });
-                if (webhookResponse.ok) {
-                    console.log('Message activity successfully sent to webhook.');
-                } else {
-                    console.error('Failed to send message activity to webhook:', webhookResponse.status, await webhookResponse.text());
-                }
-            } catch (error) {
-                console.error('Error sending message activity to webhook:', error);
-            }
-        }
 
         // ZMIANA: Funkcja aktualizująca odliczanie na przycisku
         let cooldownInterval;
