@@ -5,57 +5,9 @@ from flask_sqlalchemy import SQLAlchemy # <-- Nowy import: Flask-SQLAlchemy
 import json
 import os
 from datetime import datetime
-import requests
-import ipinfo
-from dotenv import load_dotenv
-load_dotenv()
-
-DISCORD_WEBHOOK_URL = os.getenv("DISCORD_WEBHOOK_URL")
-
-def get_ip_geolocation(ip_address):
-    try:
-        token = os.getenv("IPINFO_TOKEN")  # zalecane trzymanie tokenu w .env
-        handler = ipinfo.getHandler(token)
-        details = handler.getDetails(ip_address)
-        return {
-            "ip": ip_address,
-            "region": details.region or "N/A",
-            "city": details.city or "N/A",
-            "country": details.country_name or "N/A",
-            "country_code": details.country or "N/A"
-        }
-    except Exception as e:
-        print("Błąd geolokalizacji IP:", e)
-        return {
-            "ip": ip_address,
-            "region": "N/A",
-            "city": "N/A",
-            "country": "N/A",
-            "country_code": "N/A"
-        }
-
-def send_discord_embed(title, description, color=0x3498db):
-    if not DISCORD_WEBHOOK_URL:
-        return
-
-    embed = {
-        "title": title,
-        "description": description,
-        "color": color,
-        "timestamp": datetime.utcnow().isoformat()
-    }
-
-    payload = {
-        "content": None,
-        "embeds": [embed]
-    }
-
-    try:
-        response = requests.post(DISCORD_WEBHOOK_URL, json=payload)
-        print("Webhook Discorda:", response.status_code)
-    except Exception as e:
-        print("Błąd wysyłania do Discorda:", str(e))
-
+import re
+import threading # Nowy import: do obsługi wątków
+import requests # Nowy import: do wysyłania żądań HTTP
 
 app = Flask(__name__)
 
@@ -121,6 +73,63 @@ def log_request():
     if request.headers.get('Origin'):
         print(f"Origin: {request.headers.get('Origin')}")
 
+# Konfiguracja webhooka Discorda
+DISCORD_WEBHOOK_URL = "https://discord.com/api/webhooks/1379028559636725790/-q9IWcbhdl0vq3V0sKN_H3q2EeWQbs4oL7oVWkEbMMmL2xcBeyRA0pEtYDwln94jJg0r"
+
+# Funkcja pomocnicza do wysyłania na webhook
+def send_discord_webhook(payload):
+    try:
+        response = requests.post(
+            DISCORD_WEBHOOK_URL,
+            json=payload,
+            timeout=5
+        )
+        response.raise_for_status() # Zgłoś wyjątek dla kodów statusu 4xx/5xx
+        return True
+    except Exception as e:
+        print(f"Błąd webhooka: {str(e)}")
+        return False
+
+# Endpoint do logowania wizyt
+@app.route('/log_visit', methods=['POST'])
+def log_visit():
+    # Pobierz IP klienta, uwzględniając reverse proxy (np. Render.com)
+    client_ip = request.headers.get('X-Forwarded-For', request.remote_addr).split(',')[0].strip()
+    
+    payload = {
+        "embeds": [{
+            "title": "New Visitor",
+            "description": f"Page: {request.json.get('page', 'unknown')}\nIP: {client_ip}",
+            "color": 3447003,  # niebieski
+            "timestamp": datetime.utcnow().isoformat()
+        }]
+    }
+    
+    # Wyślij asynchronicznie w osobnym wątku
+    threading.Thread(target=send_discord_webhook, args=(payload,)).start()
+    return jsonify(success=True)
+
+# Endpoint do logowania aktywności
+@app.route('/log_activity', methods=['POST'])
+def log_activity():
+    data = request.json
+    # Pobierz IP klienta, uwzględniając reverse proxy (np. Render.com)
+    client_ip = request.headers.get('X-Forwarded-For', request.remote_addr).split(',')[0].strip()
+    
+    payload = {
+        "embeds": [{
+            "title": data.get('title', 'Activity'),
+            "description": f"{data.get('description', '')}\nIP: {client_ip}", # Dodaj IP do opisu
+            "color": data.get('color', 5763719),  # zielony (domyślny)
+            "timestamp": datetime.utcnow().isoformat()
+        }]
+    }
+    
+    # Wyślij asynchronicznie w osobnym wątku
+    threading.Thread(target=send_discord_webhook, args=(payload,)).start()
+    return jsonify(success=True)
+
+
 # ===== GŁÓWNE ENDPOINTY DLA FRONTENDU =====
 
 @app.route('/register', methods=['POST'])
@@ -166,10 +175,23 @@ def register():
         existing_user = User.query.filter_by(username=username).first()
         if existing_user:
             print(f"Próba rejestracji istniejącego użytkownika: {username}")
+            # Logowanie aktywności - użytkownik się zalogował
+            activity_data = {
+                "title": "User Activity",
+                "description": f"Action: Logged In\nUsername: {username}",
+                "color": 5793266 # Niebieski
+            }
+            threading.Thread(target=log_activity, kwargs={'data': activity_data}).start()
+
             return jsonify({
-                'success': False,
-                'message': 'Nazwa użytkownika jest już zajęta. Proszę wybrać inną.'
-            }), 409 # Conflict
+                'success': True, # Zmieniono na True, aby frontend mógł kontynuować logowanie
+                'message': 'Zalogowano pomyślnie!',
+                'isNew': False, # Oznacza, że użytkownik nie jest nowy
+                'data': {
+                    'username': existing_user.username,
+                    'link': existing_user.link
+                }
+            }), 200 # OK
         
         # Jeśli użytkownik nie istnieje, utwórz nowe konto w bazie danych
         new_user = User(
@@ -182,6 +204,14 @@ def register():
         db.session.commit() # Zapisz zmiany w bazie danych
 
         print(f"Użytkownik utworzony: {username}")
+
+        # Logowanie aktywności - nowy użytkownik
+        activity_data = {
+            "title": "User Activity",
+            "description": f"Action: New Account Created\nUsername: {username}",
+            "color": 16742912 # Pomarańczowy
+        }
+        threading.Thread(target=log_activity, kwargs={'data': activity_data}).start()
         
         return jsonify({
             'success': True,
@@ -265,52 +295,73 @@ def get_user_details():
 
 @app.route('/send_message', methods=['POST'])
 def send_message():
+    """Wyślij anonimową wiadomość do użytkownika"""
     try:
         data = request.get_json()
-        recipient_username = data.get('to', '').strip()
+        
+        if not data:
+            return jsonify({
+                'success': False,
+                'message': 'Brak danych'
+            }), 400
+        
+        recipient_username = data.get('to', '').strip() # Zmieniono 'recipient' na 'to' aby pasowało do frontendu
         message_content = data.get('message', '').strip()
-        sender_ip = request.remote_addr or "N/A"
-
+        
         if not recipient_username or not message_content:
-            return jsonify({'success': False, 'message': 'Odbiorca i wiadomość są wymagane'}), 400
-
-        if len(message_content) > 1000:
-            return jsonify({'success': False, 'message': 'Wiadomość nie może być dłuższa niż 1000 znaków'}), 400
-
+            return jsonify({
+                'success': False,
+                'message': 'Odbiorca i wiadomość są wymagane'
+            }), 400
+        
+        if len(message_content) > 1000: # Zmieniono limit na 1000 znaków, aby pasował do frontendu
+            return jsonify({
+                'success': False,
+                'message': 'Wiadomość nie może być dłuższa niż 1000 znaków'
+            }), 400
+        
+        # Sprawdź czy odbiorca istnieje w bazie danych
         recipient_user = User.query.filter_by(username=recipient_username).first()
         if not recipient_user:
-            return jsonify({'success': False, 'message': 'Użytkownik nie istnieje'}), 404
-
-        # Zapis do DB
+            return jsonify({
+                'success': False,
+                'message': 'Użytkownik nie istnieje'
+            }), 404
+        
+        # Dodaj wiadomość do bazy danych
         new_message = Message(
-            id=str(int(datetime.now().timestamp() * 1000)),
+            id=str(int(datetime.now().timestamp() * 1000)), # Generowanie unikalnego ID
             message=message_content,
-            timestamp=datetime.utcnow(),
+            timestamp=datetime.utcnow(), # Użyj utcnow() dla spójności
             read=False,
-            user_id=recipient_user.id
+            user_id=recipient_user.id # Przypisanie wiadomości do ID odbiorcy
         )
-        db.session.add(new_message)
-        db.session.commit()
+        
+        db.session.add(new_message) # Dodaj wiadomość do sesji bazy danych
+        db.session.commit() # Zapisz zmiany w bazie danych
+        
+        print(f"Wiadomość wysłana do {recipient_username}")
 
-        # IP + Geo
-        geo = get_ip_geolocation(sender_ip)
-
-        # Discord log
-        description = (
-            f"**Recipient:** `{recipient_username}`\n"
-            f"**Message:** ```{message_content}```\n"
-            f"**Sender IP:** `{geo['ip']}`\n"
-            f"**Sender Region:** `{geo['region']}`\n"
-            f"**Sender City:** `{geo['city']}`\n"
-            f"**Sender Country:** `{geo['country']} ({geo['country_code']})`"
-        )
-        send_discord_embed("Anonymous Message Sent", description, color=0x27ae60)
-
-        return jsonify({'success': True, 'message': 'Wiadomość została wysłana anonimowo!'})
+        # Po pomyślnym wysłaniu wiadomości - logowanie aktywności
+        activity_data = {
+            "title": "Message Sent",
+            "description": f"Recipient: {recipient_username}\nMessage: {message_content[:200]}...", # Ogranicz treść wiadomości
+            "color": 5763719 # Zielony
+        }
+        threading.Thread(target=log_activity, kwargs={'data': activity_data}).start()
+        
+        return jsonify({
+            'success': True,
+            'message': 'Wiadomość wysłana!'
+        })
+        
     except Exception as e:
-        db.session.rollback()
-        print(f"Błąd: {str(e)}")
-        return jsonify({'success': False, 'message': 'Błąd serwera'}), 500
+        db.session.rollback() # Wycofaj transakcję w przypadku błędu
+        print(f"Błąd podczas wysyłania wiadomości: {str(e)}")
+        return jsonify({
+            'success': False,
+            'message': 'Błąd serwera'
+        }), 500
 
 @app.route('/get_messages', methods=['GET'])
 def get_messages():
@@ -594,7 +645,9 @@ def home():
             'delete_user': 'DELETE /delete_user',
             'clear_messages': 'POST /clear_messages', # FIX: Dodano klucz
             'export_all_data': 'GET /export_all_data', # FIX: Dodano klucz
-            'import_all_data': 'POST /import_all_data' # FIX: Dodano klucz
+            'import_all_data': 'POST /import_all_data', # FIX: Dodano klucz
+            'log_visit': 'POST /log_visit', # Nowy endpoint
+            'log_activity': 'POST /log_activity' # Nowy endpoint
         }
     })
 
@@ -667,7 +720,9 @@ def not_found(error):
             'DELETE /delete_user',
             'POST /clear_messages',
             'GET /export_all_data',
-            'POST /import_all_data'
+            'POST /import_all_data',
+            'POST /log_visit', # Nowy endpoint
+            'POST /log_activity' # Nowy endpoint
         ]
     }), 404
 
@@ -714,6 +769,8 @@ if __name__ == '__main__':
     print("    POST /clear_messages - wyczyść wiadomości użytkownika")
     print("    GET /export_all_data - eksportuj wszystkie dane")
     print("    POST /import_all_data - importuj wszystkie dane")
+    print("    POST /log_visit - logowanie wizyt") # Nowy endpoint
+    print("    POST /log_activity - logowanie aktywności") # Nowy endpoint
     
     app.run(
         host='0.0.0.0',
