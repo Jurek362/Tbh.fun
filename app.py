@@ -1,6 +1,7 @@
-# app.py - Flask backend z tymczasową bazą danych oraz endpointami dla eksportu/importu
+# app.py - Flask backend z prawdziwą bazą danych (PostgreSQL)
 from flask import Flask, request, jsonify
 from flask_cors import CORS
+from flask_sqlalchemy import SQLAlchemy # <-- Nowy import: Flask-SQLAlchemy
 import json
 import os
 from datetime import datetime
@@ -8,14 +9,52 @@ import re
 
 app = Flask(__name__)
 
-# CORS konfiguracja
+# Konfiguracja CORS
 # Dodano 'http://aw0.fun' i 'https://aw0.fun' do dozwolonych źródeł
-CORS(app, origins=['https://jurek362.github.io', 'http://aw0.fun', 'https://aw0.fun', 'https://anonlink.fun']) # Dodano anonlink.fun
+CORS(app, origins=['https://jurek362.github.io', 'http://aw0.fun', 'https://aw0.fun', 'https://anonlink.fun'])
 
-# Tymczasowa "baza danych" w pamięci (w produkcji użyj prawdziwej bazy)
-# WAŻNE: Dane w tej bazie danych ZOSTANĄ UTRACONE po każdym restarcie serwera.
-# Funkcje eksportu/importu służą do ich zachowania.
-users_db = {}
+# Konfiguracja bazy danych PostgreSQL
+# Używamy bezpośrednio podanego URL bazy danych
+app.config['SQLALCHEMY_DATABASE_URI'] = 'postgresql://tbhfundb_user:QQmMSzyrb7t0Q9MGw32FeXG6iRVOKBXU@dpg-d0sp0715pdvs738vmg2g-a/tbhfundb'
+app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False # Wyłącz śledzenie modyfikacji, by oszczędzić zasoby
+
+db = SQLAlchemy(app) # Inicjalizacja SQLAlchemy
+
+# Definicja modeli bazy danych
+# Modele te mapują się na tabele w Twojej bazie danych
+class User(db.Model):
+    # Nazwa tabeli w bazie danych (domyślnie jest to nazwa klasy małymi literami)
+    __tablename__ = 'users'
+
+    id = db.Column(db.String(50), primary_key=True) # Unikalne ID użytkownika, string
+    username = db.Column(db.String(20), unique=True, nullable=False, index=True) # Nazwa użytkownika, unikalna, nie może być pusta
+    created_at = db.Column(db.DateTime, nullable=False, default=datetime.utcnow) # Data utworzenia konta
+    link = db.Column(db.String(100), nullable=False) # Link do profilu użytkownika
+    # Relacja z wiadomościami: 'messages' to lista obiektów Message powiązanych z tym użytkownikiem.
+    # 'backref' tworzy 'recipient' na obiekcie Message, odwołującego się do Usera.
+    # 'lazy=True' oznacza, że wiadomości będą ładowane tylko wtedy, gdy zostaną do nich odwołane.
+    # 'cascade="all, delete-orphan"' zapewnia, że wiadomości zostaną usunięte, gdy użytkownik zostanie usunięty.
+    messages = db.relationship('Message', backref='recipient', lazy=True, cascade="all, delete-orphan")
+
+    def __repr__(self):
+        # Reprezentacja obiektu User, przydatna do debugowania
+        return f"User('{self.username}', '{self.id}')"
+
+class Message(db.Model):
+    # Nazwa tabeli w bazie danych
+    __tablename__ = 'messages'
+
+    id = db.Column(db.String(50), primary_key=True) # Unikalne ID wiadomości, string
+    message = db.Column(db.String(1000), nullable=False) # Treść wiadomości
+    timestamp = db.Column(db.DateTime, nullable=False, default=datetime.utcnow) # Czas wysłania wiadomości
+    read = db.Column(db.Boolean, default=False) # Status przeczytania wiadomości
+    # Klucz obcy: 'user.id' odnosi się do kolumny 'id' w tabeli 'users'
+    user_id = db.Column(db.String(50), db.ForeignKey('users.id'), nullable=False)
+
+    def __repr__(self):
+        # Reprezentacja obiektu Message
+        return f"Message('{self.message[:20]}...', '{self.timestamp}')"
+
 
 @app.before_request
 def log_request():
@@ -65,23 +104,25 @@ def register():
                 'message': 'Username może zawierać tylko litery, cyfry, _ i -'
             }), 400
         
-        # ZMIANA: Sprawdź, czy użytkownik już istnieje. Jeśli tak, zwróć błąd.
-        if username in users_db:
+        # Sprawdź, czy użytkownik już istnieje w bazie danych
+        existing_user = User.query.filter_by(username=username).first()
+        if existing_user:
             print(f"Próba rejestracji istniejącego użytkownika: {username}")
             return jsonify({
                 'success': False,
                 'message': 'Nazwa użytkownika jest już zajęta. Proszę wybrać inną.'
             }), 409 # Conflict
         
-        # Jeśli użytkownik nie istnieje, utwórz nowe konto
-        users_db[username] = {
-            'id': str(int(datetime.now().timestamp() * 1000)),
-            'username': username,
-            'created_at': datetime.now().isoformat(),
-            'link': f'anonlink.fun/{username}', # Zaktualizowano link
-            'messages': []
-        }
-        
+        # Jeśli użytkownik nie istnieje, utwórz nowe konto w bazie danych
+        new_user = User(
+            id=str(int(datetime.now().timestamp() * 1000)), # Generowanie unikalnego ID
+            username=username,
+            created_at=datetime.utcnow(), # Użyj utcnow() dla spójności
+            link=f'anonlink.fun/{username}'
+        )
+        db.session.add(new_user) # Dodaj nowego użytkownika do sesji bazy danych
+        db.session.commit() # Zapisz zmiany w bazie danych
+
         print(f"Użytkownik utworzony: {username}")
         
         return jsonify({
@@ -89,12 +130,13 @@ def register():
             'message': 'Konto utworzone pomyślnie!',
             'isNew': True, # Zawsze True, bo tworzymy nowe konto
             'data': {
-                'username': username,
-                'link': f'anonlink.fun/{username}' # Zaktualizowano link
+                'username': new_user.username,
+                'link': new_user.link
             }
         }), 201 # Created
         
     except Exception as e:
+        db.session.rollback() # Wycofaj transakcję w przypadku błędu
         print(f"Błąd podczas rejestracji: {str(e)}")
         return jsonify({
             'success': False,
@@ -113,7 +155,8 @@ def check_user():
                 'message': 'Brak nazwy użytkownika'
             }), 400
         
-        exists = username in users_db
+        # Sprawdź istnienie użytkownika w bazie danych
+        exists = User.query.filter_by(username=username).first() is not None
         
         return jsonify({
             'exists': exists,
@@ -139,11 +182,12 @@ def get_user_details():
                 'message': 'Nazwa użytkownika jest wymagana'
             }), 400
 
-        if username in users_db:
-            user_data = users_db[username]
+        # Pobierz użytkownika z bazy danych
+        user_data = User.query.filter_by(username=username).first()
+        if user_data:
             return jsonify({
                 'exists': True,
-                'username': user_data['username'],
+                'username': user_data.username,
                 'message': 'Użytkownik znaleziony'
             }), 200
         else:
@@ -173,39 +217,42 @@ def send_message():
                 'message': 'Brak danych'
             }), 400
         
-        recipient = data.get('to', '').strip() # Zmieniono 'recipient' na 'to' aby pasowało do frontendu
-        message = data.get('message', '').strip()
+        recipient_username = data.get('to', '').strip() # Zmieniono 'recipient' na 'to' aby pasowało do frontendu
+        message_content = data.get('message', '').strip()
         
-        if not recipient or not message:
+        if not recipient_username or not message_content:
             return jsonify({
                 'success': False,
                 'message': 'Odbiorca i wiadomość są wymagane'
             }), 400
         
-        if len(message) > 1000: # Zmieniono limit na 1000 znaków, aby pasował do frontendu
+        if len(message_content) > 1000: # Zmieniono limit na 1000 znaków, aby pasował do frontendu
             return jsonify({
                 'success': False,
                 'message': 'Wiadomość nie może być dłuższa niż 1000 znaków'
             }), 400
         
-        # Sprawdź czy odbiorca istnieje
-        if recipient not in users_db:
+        # Sprawdź czy odbiorca istnieje w bazie danych
+        recipient_user = User.query.filter_by(username=recipient_username).first()
+        if not recipient_user:
             return jsonify({
                 'success': False,
                 'message': 'Użytkownik nie istnieje'
             }), 404
         
-        # Dodaj wiadomość
-        new_message = {
-            'id': str(int(datetime.now().timestamp() * 1000)),
-            'message': message,
-            'timestamp': datetime.now().isoformat(),
-            'read': False
-        }
+        # Dodaj wiadomość do bazy danych
+        new_message = Message(
+            id=str(int(datetime.now().timestamp() * 1000)), # Generowanie unikalnego ID
+            message=message_content,
+            timestamp=datetime.utcnow(), # Użyj utcnow() dla spójności
+            read=False,
+            user_id=recipient_user.id # Przypisanie wiadomości do ID odbiorcy
+        )
         
-        users_db[recipient]['messages'].append(new_message)
+        db.session.add(new_message) # Dodaj wiadomość do sesji bazy danych
+        db.session.commit() # Zapisz zmiany w bazie danych
         
-        print(f"Wiadomość wysłana do {recipient}")
+        print(f"Wiadomość wysłana do {recipient_username}")
         
         return jsonify({
             'success': True,
@@ -213,6 +260,7 @@ def send_message():
         })
         
     except Exception as e:
+        db.session.rollback() # Wycofaj transakcję w przypadku błędu
         print(f"Błąd podczas wysyłania wiadomości: {str(e)}")
         return jsonify({
             'success': False,
@@ -231,20 +279,30 @@ def get_messages():
                 'message': 'Brak nazwy użytkownika'
             }), 400
         
-        if username not in users_db:
+        # Pobierz użytkownika z bazy danych
+        user = User.query.filter_by(username=username).first()
+        if not user:
             return jsonify({
                 'success': False,
                 'message': 'Użytkownik nie istnieje'
             }), 404
         
-        messages = users_db[username]['messages']
+        # Pobierz wiadomości dla użytkownika, posortowane malejąco po dacie
+        messages = Message.query.filter_by(user_id=user.id).order_by(Message.timestamp.desc()).all()
         
-        # Oznacz wiadomości jako przeczytane (tworzymy kopię, aby nie modyfikować oryginalnej listy podczas iteracji)
-        # i sortujemy, aby najnowsze były na górze
-        messages_to_return = sorted(messages, key=lambda x: x['timestamp'], reverse=True)
+        messages_to_return = []
+        for msg in messages:
+            messages_to_return.append({
+                'id': msg.id,
+                'message': msg.message,
+                'timestamp': msg.timestamp.isoformat(),
+                'read': msg.read # Zwracamy aktualny status przeczytania
+            })
+            # Oznacz wiadomość jako przeczytaną, jeśli jeszcze nie jest
+            if not msg.read:
+                msg.read = True 
         
-        for msg in messages: # Oznaczamy oryginalne wiadomości jako przeczytane
-            msg['read'] = True
+        db.session.commit() # Zapisz zmiany (oznaczenie wiadomości jako przeczytanych)
         
         return jsonify({
             'success': True,
@@ -253,6 +311,7 @@ def get_messages():
         })
         
     except Exception as e:
+        db.session.rollback() # Wycofaj transakcję w przypadku błędu
         print(f"Błąd podczas pobierania wiadomości: {str(e)}")
         return jsonify({
             'success': False,
@@ -280,8 +339,12 @@ def delete_user():
                 'message': 'Username jest wymagany do usunięcia konta'
             }), 400
         
-        if username in users_db:
-            del users_db[username]
+        # Znajdź użytkownika w bazie danych
+        user_to_delete = User.query.filter_by(username=username).first()
+        
+        if user_to_delete:
+            db.session.delete(user_to_delete) # Usuń użytkownika (kaskadowo usunie też wiadomości)
+            db.session.commit() # Zapisz zmiany
             print(f"Użytkownik usunięty: {username}")
             return jsonify({
                 'success': True,
@@ -294,6 +357,7 @@ def delete_user():
             }), 404
             
     except Exception as e:
+        db.session.rollback() # Wycofaj transakcję w przypadku błędu
         print(f"Błąd podczas usuwania użytkownika: {str(e)}")
         return jsonify({
             'success': False,
@@ -321,8 +385,13 @@ def clear_messages():
                 'message': 'Username jest wymagany do wyczyszczenia wiadomości'
             }), 400
         
-        if username in users_db:
-            users_db[username]['messages'] = [] # Wyczyść listę wiadomości
+        # Znajdź użytkownika
+        user = User.query.filter_by(username=username).first()
+        
+        if user:
+            # Usuń wszystkie wiadomości powiązane z tym użytkownikiem
+            Message.query.filter_by(user_id=user.id).delete()
+            db.session.commit() # Zapisz zmiany
             print(f"Wiadomości dla użytkownika {username} zostały wyczyszczone.")
             return jsonify({
                 'success': True,
@@ -335,6 +404,7 @@ def clear_messages():
             }), 404
             
     except Exception as e:
+        db.session.rollback() # Wycofaj transakcję w przypadku błędu
         print(f"Błąd podczas czyszczenia wiadomości: {str(e)}")
         return jsonify({
             'success': False,
@@ -344,13 +414,32 @@ def clear_messages():
 # ===== NOWE ENDPOINTY DLA EKSPORTU/IMPORTU DANYCH =====
 @app.route('/export_all_data', methods=['GET'])
 def export_all_data():
-    """Eksportuje wszystkie dane użytkowników z bazy danych w pamięci."""
+    """Eksportuje wszystkie dane użytkowników z bazy danych."""
     try:
-        # Zwracamy kopię, aby uniknąć problemów z modyfikacją oryginalnego słownika
-        # podczas serializacji.
+        all_users = User.query.all()
+        exported_data = {}
+        for user in all_users:
+            user_messages = []
+            # Pobierz wiadomości dla każdego użytkownika
+            messages = Message.query.filter_by(user_id=user.id).all()
+            for msg in messages:
+                user_messages.append({
+                    'id': msg.id,
+                    'message': msg.message,
+                    'timestamp': msg.timestamp.isoformat(),
+                    'read': msg.read
+                })
+            exported_data[user.username] = {
+                'id': user.id,
+                'username': user.username,
+                'created_at': user.created_at.isoformat(),
+                'link': user.link,
+                'messages': user_messages
+            }
+        
         return jsonify({
             'success': True,
-            'data': users_db.copy(),
+            'data': exported_data,
             'message': 'Dane wyeksportowane pomyślnie.'
         }), 200
     except Exception as e:
@@ -362,9 +451,8 @@ def export_all_data():
 
 @app.route('/import_all_data', methods=['POST'])
 def import_all_data():
-    """Importuje wszystkie dane użytkowników do bazy danych w pamięci.
+    """Importuje wszystkie dane użytkowników do bazy danych.
     UWAGA: Ta operacja ZASTĄPI wszystkie istniejące dane."""
-    global users_db # Musimy użyć global, aby zmodyfikować globalny słownik
     try:
         data = request.get_json()
         
@@ -375,7 +463,6 @@ def import_all_data():
             }), 400
         
         # Prosta walidacja struktury importowanych danych
-        # Możesz dodać bardziej rygorystyczną walidację, jeśli potrzebujesz
         for username, user_data in data.items():
             if not isinstance(user_data, dict) or 'username' not in user_data or 'messages' not in user_data:
                 return jsonify({
@@ -383,25 +470,61 @@ def import_all_data():
                     'message': f'Nieprawidłowy format danych dla użytkownika: {username}.'
                 }), 400
             if not isinstance(user_data.get('messages'), list):
-                 return jsonify({
+                return jsonify({
                     'success': False,
                     'message': f'Nieprawidłowy format wiadomości dla użytkownika: {username}.'
                 }), 400
 
-        users_db.clear() # Wyczyść bieżącą bazę danych
-        users_db.update(data) # Zastąp danymi z importu
+        # Ostrzeżenie: Ta operacja usunie WSZYSTKIE istniejące dane
+        # W środowisku produkcyjnym powinieneś zaimplementować bardziej zaawansowaną logikę
+        # np. zapytać o potwierdzenie, lub zaimplementować aktualizację/scalanie danych.
+        # Dla uproszczenia, usuwamy wszystko i dodajemy na nowo.
         
-        print(f"Dane zaimportowane pomyślnie. Liczba użytkowników: {len(users_db)}")
+        # Usuń wszystkie istniejące wiadomości
+        db.session.query(Message).delete()
+        # Usuń wszystkich istniejących użytkowników
+        db.session.query(User).delete()
+        db.session.commit() # Zatwierdź usunięcie
+
+        imported_users_count = 0
+        for username, user_data in data.items():
+            # Twórz nowego użytkownika
+            new_user = User(
+                id=user_data.get('id', str(int(datetime.now().timestamp() * 1000))), # Użyj istniejącego ID lub wygeneruj nowe
+                username=user_data['username'],
+                created_at=datetime.fromisoformat(user_data['created_at']) if 'created_at' in user_data else datetime.utcnow(),
+                link=user_data.get('link', f'anonlink.fun/{user_data["username"]}')
+            )
+            db.session.add(new_user)
+            db.session.flush() # Upewnij się, że new_user.id jest dostępne dla wiadomości
+
+            # Dodaj wiadomości dla tego użytkownika
+            for msg_data in user_data['messages']:
+                new_message = Message(
+                    id=msg_data.get('id', str(int(datetime.now().timestamp() * 1000))), # Użyj istniejącego ID lub wygeneruj nowe
+                    message=msg_data['message'],
+                    timestamp=datetime.fromisoformat(msg_data['timestamp']) if 'timestamp' in msg_data else datetime.utcnow(),
+                    read=msg_data.get('read', False),
+                    user_id=new_user.id # Powiąż z nowo utworzonym użytkownikiem
+                )
+                db.session.add(new_message)
+            imported_users_count += 1
+        
+        db.session.commit() # Zapisz wszystkie zaimportowane dane
+        
+        print(f"Dane zaimportowane pomyślnie. Liczba użytkowników: {imported_users_count}")
         return jsonify({
             'success': True,
-            'message': f'Dane zaimportowane pomyślnie. Zaimportowano {len(users_db)} użytkowników.'
+            'message': f'Dane zaimportowane pomyślnie. Zaimportowano {imported_users_count} użytkowników.'
         }), 200
     except json.JSONDecodeError:
+        db.session.rollback() # Wycofaj transakcję w przypadku błędu
         return jsonify({
             'success': False,
             'message': 'Nieprawidłowy format JSON.'
         }), 400
     except Exception as e:
+        db.session.rollback() # Wycofaj transakcję w przypadku błędu
         print(f"Błąd podczas importu danych: {str(e)}")
         return jsonify({
             'success': False,
@@ -424,19 +547,29 @@ def home():
             'send_message': 'POST /send_message',
             'get_messages': 'GET /get_messages?user=USERNAME',
             'delete_user': 'DELETE /delete_user',
-            'clear_messages': 'POST /clear_messages',
-            'export_all_data': 'GET /export_all_data', # Dodano
-            'import_all_data': 'POST /import_all_data' # Dodano
+            'POST /clear_messages',
+            'GET /export_all_data',
+            'POST /import_all_data'
         }
     })
 
 @app.route('/api/health')
 def health():
     """Health check"""
+    try:
+        # Próba zapytania do bazy danych, aby sprawdzić połączenie
+        user_count = db.session.query(User).count()
+        db_status = 'connected'
+    except Exception as e:
+        user_count = 0
+        db_status = f'disconnected - {str(e)}'
+        print(f"Błąd połączenia z bazą danych w health check: {e}")
+
     return jsonify({
         'status': 'healthy',
         'timestamp': datetime.now().isoformat(),
-        'users_count': len(users_db) # Zaktualizowano dla bazy w pamięci
+        'users_count': user_count,
+        'database_status': db_status
     })
 
 # ===== STARE ENDPOINTY (dla kompatybilności) =====
@@ -451,11 +584,12 @@ def get_users():
     """Pobierz wszystkich użytkowników (dla admina)"""
     try:
         users_list = []
-        for username, data in users_db.items():
+        all_users = User.query.all() # Pobierz wszystkich użytkowników z bazy
+        for user in all_users:
             users_list.append({
-                'username': username,
-                'created_at': data['created_at'],
-                'messages_count': len(data['messages'])
+                'username': user.username,
+                'created_at': user.created_at.isoformat(),
+                'messages_count': len(user.messages) # SQLAlchemy automatycznie ładuje relację
             })
         
         return jsonify({
@@ -487,8 +621,8 @@ def not_found(error):
             'GET /get_messages',
             'DELETE /delete_user',
             'POST /clear_messages',
-            'GET /export_all_data', # Dodano
-            'POST /import_all_data' # Dodano
+            'GET /export_all_data',
+            'POST /import_all_data'
         ]
     }), 404
 
@@ -511,27 +645,33 @@ def internal_error(error):
 
 # ===== MAIN =====
 if __name__ == '__main__':
+    # Tworzenie tabel w bazie danych, jeśli jeszcze nie istnieją
+    # Ważne: To powinno być uruchomione tylko raz, przy pierwszym deployu
+    # lub przy zmianach w modelach. W produkcji zaleca się użycie Flask-Migrate.
+    with app.app_context():
+        db.create_all()
+        print("Baza danych i tabele zostały utworzone/sprawdzone.")
+
     port = int(os.environ.get('PORT', 5000))
     debug = os.environ.get('FLASK_ENV') == 'development'
     
     print("🚀 Uruchamianie serwera Flask...")
-    print(f"📡 CORS włączony dla: https://jurek362.github.io")
+    print(f"📡 CORS włączony dla: https://jurek362.github.io, http://aw0.fun, https://aw0.fun, https://anonlink.fun")
     print(f"🌍 Port: {port}")
     print(f"🔧 Debug: {debug}")
     print("📋 Dostępne endpointy:")
-    print("   POST /register - rejestracja/logowanie")
-    print("   GET /check_user?user=USERNAME - sprawdź użytkownika")
-    print("   GET /get_user_details?username=USERNAME - pobierz szczegóły użytkownika")
-    print("   POST /send_message - wyślij wiadomość")
-    print("   GET /get_messages?user=USERNAME - pobierz wiadomości")
-    print("   DELETE /delete_user - usuń konto użytkownika")
-    print("   POST /clear_messages - wyczyść wiadomości użytkownika")
-    print("   GET /export_all_data - eksportuj wszystkie dane") # Dodano
-    print("   POST /import_all_data - importuj wszystkie dane") # Dodano
+    print("    POST /register - rejestracja/logowanie")
+    print("    GET /check_user?user=USERNAME - sprawdź użytkownika")
+    print("    GET /get_user_details?username=USERNAME - pobierz szczegóły użytkownika")
+    print("    POST /send_message - wyślij wiadomość")
+    print("    GET /get_messages?user=USERNAME - pobierz wiadomości")
+    print("    DELETE /delete_user - usuń konto użytkownika")
+    print("    POST /clear_messages - wyczyść wiadomości użytkownika")
+    print("    GET /export_all_data - eksportuj wszystkie dane")
+    print("    POST /import_all_data - importuj wszystkie dane")
     
     app.run(
         host='0.0.0.0',
         port=port,
         debug=debug
     )
-
