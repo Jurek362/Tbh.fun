@@ -547,9 +547,9 @@ def home():
             'send_message': 'POST /send_message',
             'get_messages': 'GET /get_messages?user=USERNAME',
             'delete_user': 'DELETE /delete_user',
-            'POST /clear_messages',
-            'GET /export_all_data',
-            'POST /import_all_data'
+            'clear_messages': 'POST /clear_messages', # FIX: Dodano klucz
+            'export_all_data': 'GET /export_all_data', # FIX: Dodano klucz
+            'import_all_data': 'POST /import_all_data' # FIX: Dodano klucz
         }
     })
 
