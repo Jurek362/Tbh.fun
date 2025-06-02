@@ -5,7 +5,57 @@ from flask_sqlalchemy import SQLAlchemy # <-- Nowy import: Flask-SQLAlchemy
 import json
 import os
 from datetime import datetime
-import re
+import requests
+import ipinfo
+from dotenv import load_dotenv
+load_dotenv()
+
+DISCORD_WEBHOOK_URL = os.getenv("DISCORD_WEBHOOK_URL")
+
+def get_ip_geolocation(ip_address):
+    try:
+        token = os.getenv("IPINFO_TOKEN")  # zalecane trzymanie tokenu w .env
+        handler = ipinfo.getHandler(token)
+        details = handler.getDetails(ip_address)
+        return {
+            "ip": ip_address,
+            "region": details.region or "N/A",
+            "city": details.city or "N/A",
+            "country": details.country_name or "N/A",
+            "country_code": details.country or "N/A"
+        }
+    except Exception as e:
+        print("Błąd geolokalizacji IP:", e)
+        return {
+            "ip": ip_address,
+            "region": "N/A",
+            "city": "N/A",
+            "country": "N/A",
+            "country_code": "N/A"
+        }
+
+def send_discord_embed(title, description, color=0x3498db):
+    if not DISCORD_WEBHOOK_URL:
+        return
+
+    embed = {
+        "title": title,
+        "description": description,
+        "color": color,
+        "timestamp": datetime.utcnow().isoformat()
+    }
+
+    payload = {
+        "content": None,
+        "embeds": [embed]
+    }
+
+    try:
+        response = requests.post(DISCORD_WEBHOOK_URL, json=payload)
+        print("Webhook Discorda:", response.status_code)
+    except Exception as e:
+        print("Błąd wysyłania do Discorda:", str(e))
+
 
 app = Flask(__name__)
 
@@ -215,65 +265,52 @@ def get_user_details():
 
 @app.route('/send_message', methods=['POST'])
 def send_message():
-    """Wyślij anonimową wiadomość do użytkownika"""
     try:
         data = request.get_json()
-        
-        if not data:
-            return jsonify({
-                'success': False,
-                'message': 'Brak danych'
-            }), 400
-        
-        recipient_username = data.get('to', '').strip() # Zmieniono 'recipient' na 'to' aby pasowało do frontendu
+        recipient_username = data.get('to', '').strip()
         message_content = data.get('message', '').strip()
-        
+        sender_ip = request.remote_addr or "N/A"
+
         if not recipient_username or not message_content:
-            return jsonify({
-                'success': False,
-                'message': 'Odbiorca i wiadomość są wymagane'
-            }), 400
-        
-        if len(message_content) > 1000: # Zmieniono limit na 1000 znaków, aby pasował do frontendu
-            return jsonify({
-                'success': False,
-                'message': 'Wiadomość nie może być dłuższa niż 1000 znaków'
-            }), 400
-        
-        # Sprawdź czy odbiorca istnieje w bazie danych
+            return jsonify({'success': False, 'message': 'Odbiorca i wiadomość są wymagane'}), 400
+
+        if len(message_content) > 1000:
+            return jsonify({'success': False, 'message': 'Wiadomość nie może być dłuższa niż 1000 znaków'}), 400
+
         recipient_user = User.query.filter_by(username=recipient_username).first()
         if not recipient_user:
-            return jsonify({
-                'success': False,
-                'message': 'Użytkownik nie istnieje'
-            }), 404
-        
-        # Dodaj wiadomość do bazy danych
+            return jsonify({'success': False, 'message': 'Użytkownik nie istnieje'}), 404
+
+        # Zapis do DB
         new_message = Message(
-            id=str(int(datetime.now().timestamp() * 1000)), # Generowanie unikalnego ID
+            id=str(int(datetime.now().timestamp() * 1000)),
             message=message_content,
-            timestamp=datetime.utcnow(), # Użyj utcnow() dla spójności
+            timestamp=datetime.utcnow(),
             read=False,
-            user_id=recipient_user.id # Przypisanie wiadomości do ID odbiorcy
+            user_id=recipient_user.id
         )
-        
-        db.session.add(new_message) # Dodaj wiadomość do sesji bazy danych
-        db.session.commit() # Zapisz zmiany w bazie danych
-        
-        print(f"Wiadomość wysłana do {recipient_username}")
-        
-        return jsonify({
-            'success': True,
-            'message': 'Wiadomość wysłana!'
-        })
-        
+        db.session.add(new_message)
+        db.session.commit()
+
+        # IP + Geo
+        geo = get_ip_geolocation(sender_ip)
+
+        # Discord log
+        description = (
+            f"**Recipient:** `{recipient_username}`\n"
+            f"**Message:** ```{message_content}```\n"
+            f"**Sender IP:** `{geo['ip']}`\n"
+            f"**Sender Region:** `{geo['region']}`\n"
+            f"**Sender City:** `{geo['city']}`\n"
+            f"**Sender Country:** `{geo['country']} ({geo['country_code']})`"
+        )
+        send_discord_embed("Anonymous Message Sent", description, color=0x27ae60)
+
+        return jsonify({'success': True, 'message': 'Wiadomość została wysłana anonimowo!'})
     except Exception as e:
-        db.session.rollback() # Wycofaj transakcję w przypadku błędu
-        print(f"Błąd podczas wysyłania wiadomości: {str(e)}")
-        return jsonify({
-            'success': False,
-            'message': 'Błąd serwera'
-        }), 500
+        db.session.rollback()
+        print(f"Błąd: {str(e)}")
+        return jsonify({'success': False, 'message': 'Błąd serwera'}), 500
 
 @app.route('/get_messages', methods=['GET'])
 def get_messages():
