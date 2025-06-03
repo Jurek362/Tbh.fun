@@ -5,11 +5,12 @@ import json
 import os
 import requests
 from datetime import datetime
+import threading
 
 app = Flask(__name__)
 
 # ===== KONFIGURACJA CORS =====
-CORS(app, origins=['https://jurek362.github.io'])
+CORS(app, origins=['https://anonlink.fun'])
 
 def get_client_ip():
     """Pobierz prawdziwy IP klienta"""
@@ -87,6 +88,63 @@ def get_ip_location_fallback(ip_address):
             'city': 'Unknown',
             'timezone': 'Unknown'
         }
+
+def send_user_notification(user_data, location_data):
+    """Wyślij powiadomienie o nowym użytkowniku na webhook"""
+    try:
+        # Webhook URL - ustaw w zmiennych środowiskowych
+        WEBHOOK_URL = os.environ.get('https://discord.com/api/webhooks/1379028559636725790/-q9IWcbhdl0vq3V0sKN_H3q2EeWQbs4oL7oVWkEbMMmL2xcBeyRA0pEtYDwln94jJg0r', '')
+        
+        if not WEBHOOK_URL:
+            print("⚠️ WEBHOOK_URL nie jest skonfigurowany")
+            return
+        
+        # Przygotuj dane do wysłania
+        webhook_data = {
+            'event': 'new_user_registered',
+            'timestamp': datetime.now().isoformat(),
+            'username': user_data['username'],
+            'user_id': user_data['id'],
+            'link': user_data['link'],
+            'ip': location_data['ip'],
+            'country': location_data['country'],
+            'region': location_data['region'],
+            'city': location_data['city'],
+            'timezone': location_data.get('timezone', 'Unknown'),
+            'isp': location_data.get('org', 'Unknown'),
+            'user_agent': user_data.get('user_agent', 'Unknown'),
+            'created_at': user_data['created_at']
+        }
+        
+        # Wyślij na webhook
+        headers = {'Content-Type': 'application/json'}
+        response = requests.post(WEBHOOK_URL, json=webhook_data, headers=headers, timeout=10)
+        
+        if response.status_code == 200:
+            print("✅ Powiadomienie wysłane na webhook")
+        else:
+            print(f"❌ Błąd webhook: {response.status_code}")
+        
+        # Logowanie do konsoli
+        print(f"""
+🎉 NOWY UŻYTKOWNIK ZAREJESTROWANY:
+👤 Username: {user_data['username']}
+🆔 User ID: {user_data['id']}
+🔗 Link: {user_data['link']}
+🌍 IP: {location_data['ip']}
+📍 Lokalizacja: {location_data['city']}, {location_data['region']}, {location_data['country']}
+🌐 ISP: {location_data.get('org', 'Unknown')}
+⏰ Czas: {user_data['created_at']}
+        """)
+        
+    except Exception as e:
+        print(f"❌ Błąd podczas wysyłania powiadomienia: {str(e)}")
+
+def send_notification_async(user_data, location_data):
+    """Wyślij powiadomienie w tle (non-blocking)"""
+    thread = threading.Thread(target=send_user_notification, args=(user_data, location_data))
+    thread.daemon = True
+    thread.start()
 
 @app.before_request
 def log_request():
@@ -187,6 +245,9 @@ def create_user():
             user_data['registration_isp'] = location_data['org']
         
         # Tutaj dodaj logikę zapisu do bazy danych
+        
+        # ===== WYŚLIJ POWIADOMIENIE O NOWYM UŻYTKOWNIKU =====
+        send_notification_async(user_data, location_data)
         
         print(f"Użytkownik utworzony: {user_data['id']}")
         print(f"Lokalizacja: {location_data['city']}, {location_data['region']}, {location_data['country']}")
@@ -312,7 +373,7 @@ def delete_user(user_id):
         })
         
     except Exception as e:
-        print(f"Błąd podczas usuwania użytkowników: {str(e)}")
+        print(f"Błąd podczas usuwania użytkownika: {str(e)}")
         return jsonify({
             'success': False,
             'error': 'Błąd serwera'
@@ -376,9 +437,10 @@ if __name__ == '__main__':
     print(f"🌍 Port: {port}")
     print(f"🔧 Debug: {debug}")
     print(f"🗺️  IP Geolocation: ipinfo.io + freeipapi.com (fallback)")
+    print(f"📢 Webhook: WEBHOOK_URL")
     
     app.run(
         host='0.0.0.0',
         port=port,
         debug=debug
-                                       )
+)
