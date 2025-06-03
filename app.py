@@ -15,7 +15,7 @@ app = Flask(__name__)
 CORS(app, origins=['https://jurek362.github.io', 'http://aw0.fun', 'https://aw0.fun', 'https://anonlink.fun'])
 
 # Konfiguracja bazy danych PostgreSQL
-app.config['SQLALCHEMY_DATABASE_URI'] = 'postgresql://tbhfundb_user:QQmMSzyrb7t0Q9MGw32FeXG6iRVOKBXU@dpg-d0sp0715pdvs738vmg2g-a/tbhfundb'
+app.config['SQLALCHEMY_DATABASE_URI'] = 'postgresql://tbhfundb_user:QQmMSzyrb7t0Q9MGw32FeXG6iRVRVOKBXU@dpg-d0sp0715pdvs738vmg2g-a/tbhfundb'
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 
 db = SQLAlchemy(app)
@@ -26,6 +26,7 @@ class User(db.Model):
     id = db.Column(db.String(50), primary_key=True)
     username = db.Column(db.String(20), unique=True, nullable=False, index=True)
     created_at = db.Column(db.DateTime, nullable=False, default=datetime.utcnow)
+    # ZMIANA: Link teraz będzie bazował na ID użytkownika, a nie na nazwie użytkownika
     link = db.Column(db.String(100), nullable=False)
     messages = db.relationship('Message', backref='recipient', lazy=True, cascade="all, delete-orphan")
 
@@ -55,8 +56,7 @@ def log_request():
         print(f"Origin: {request.headers.get('Origin')}")
 
 # Konfiguracja webhooka Discorda
-# Możesz ustawić to jako zmienną środowiskową np. w Render.com
-DISCORD_WEBHOOK_URL = os.environ.get('https://discord.com/api/webhooks/1379028559636725790/-q9IWcbhdl0vq3V0sKN_H3q2EeWQbs4oL7oVWkEbMMmL2xcBeyRA0pEtYDwln94jJg0r', "https://discord.com/api/webhooks/1379028559636725790/-q9IWcbhdl0vq3V0sKN_H3q2EeWQbs4oL7oVWkEbMMmL2xcBeyRA0pEtYDwln94jJg0r")
+DISCORD_WEBHOOK_URL = "https://discord.com/api/webhooks/1379028559636725790/-q9IWcbhdl0vq3V0sKN_H3q2EeWQbs4oL7oVWkEbMMmL2xcBeyRA0pEtYDwln94jJg0r"
 
 # Funkcja pomocnicza do wysyłania na webhook
 def send_discord_webhook(payload):
@@ -78,14 +78,11 @@ def send_discord_webhook(payload):
 
 def get_client_ip():
     """Pobierz prawdziwy IP klienta, uwzględniając nagłówki proxy."""
-    # Sprawdź nagłówki proxy (np. z Cloudflare, Render.com, Heroku)
     if request.headers.get('X-Forwarded-For'):
-        # X-Forwarded-For może zawierać listę IP, bierzemy pierwszy (prawdziwy IP klienta)
         return request.headers.get('X-Forwarded-For').split(',')[0].strip()
     elif request.headers.get('X-Real-IP'):
         return request.headers.get('X-Real-IP').strip()
     else:
-        # Ostateczny fallback, jeśli brak nagłówków proxy
         return request.remote_addr.strip()
 
 def get_ip_location(ip_address):
@@ -308,33 +305,33 @@ def register():
         existing_user = User.query.filter_by(username=username).first()
         if existing_user:
             print(f"Próba rejestracji istniejącego użytkownika: {username}")
-            # Log activity - user logged in
+            # ZMIANA: Zwróć błąd, jeśli nazwa użytkownika jest zajęta
             activity_data = {
-                "title": "Aktywność Użytkownika",
-                "description": f"Akcja: Zalogowano\nNazwa użytkownika: {username}\nID Użytkownika: {existing_user.id}",
-                "color": 5793266 # Blue
+                "title": "Próba Rejestracji",
+                "description": f"Akcja: Nazwa użytkownika zajęta\nNazwa użytkownika: {username}",
+                "color": 15158332 # Red
             }
             threading.Thread(target=log_activity, kwargs={'data': activity_data}).start()
 
             return jsonify({
-                'success': True, # Changed to True so frontend can proceed with login
-                'message': 'Zalogowano pomyślnie!',
-                'isNew': False, # Indicates user is not new
-                'data': {
-                    'username': existing_user.username,
-                    'link': existing_user.link
-                }
-            }), 200 # OK
+                'success': False, # Zmieniono na False, aby frontend pokazał błąd
+                'message': 'Nazwa użytkownika jest już zajęta. Proszę wybrać inną.'
+            }), 409 # Conflict
         
-        # If user does not exist, create a new account in the database
+        # Jeśli użytkownik nie istnieje, utwórz nowe konto w bazie danych
         new_user = User(
             id=str(int(datetime.now().timestamp() * 1000)), # Generate unique ID
             username=username,
             created_at=datetime.utcnow(), # Use utcnow() for consistency
-            link=f'anonlink.fun/{username}'
+            # ZMIANA: Link do dashboardu bazuje na ID użytkownika
+            link=f'anonlink.fun/dashboard.html?user_id='
         )
         db.session.add(new_user) # Add new user to the database session
         db.session.commit() # Save changes to the database
+
+        # Po commicie, ID użytkownika jest dostępne, więc możemy je dodać do linku
+        new_user.link = f'anonlink.fun/dashboard.html?user_id={new_user.id}'
+        db.session.commit() # Zapisz zaktualizowany link
 
         print(f"Użytkownik utworzony: {username}")
 
@@ -352,7 +349,8 @@ def register():
             'isNew': True, # Always True, as we are creating a new account
             'data': {
                 'username': new_user.username,
-                'link': new_user.link
+                'link': new_user.link, # Zwróć link z ID użytkownika
+                'id': new_user.id # Dodaj ID użytkownika do odpowiedzi
             }
         }), 201 # Created
         
@@ -396,19 +394,26 @@ def get_user_details():
     """New endpoint: Get user details by name - used for recipient verification."""
     try:
         username = request.args.get('username', '').strip()
+        user_id = request.args.get('user_id', '').strip() # Dodano możliwość pobierania po ID
 
-        if not username:
+        user_data = None
+        if username:
+            user_data = User.query.filter_by(username=username).first()
+        elif user_id:
+            user_data = User.query.filter_by(id=user_id).first()
+
+        if not user_data:
             return jsonify({
                 'exists': False,
-                'message': 'Nazwa użytkownika jest wymagana'
+                'message': 'Nazwa użytkownika lub ID jest wymagane'
             }), 400
 
-        # Get user from the database
-        user_data = User.query.filter_by(username=username).first()
         if user_data:
             return jsonify({
                 'exists': True,
                 'username': user_data.username,
+                'id': user_data.id, # Dodano ID do odpowiedzi
+                'link': user_data.link, # Dodano link do odpowiedzi
                 'message': 'Użytkownik znaleziony'
             }), 200
         else:
@@ -478,7 +483,7 @@ def send_message():
         # After successful message sending - log activity
         activity_data = {
             "title": "Wysłano Wiadomość",
-            "description": f"Odbiorca: {recipient_username}\nWiadomość: {message_content[:200]}...", # Truncate message content
+            "description": f"Odbiorca: {recipient_username}\nID Odbiorcy: {recipient_user.id}\nWiadomość: {message_content[:200]}...", # Truncate message content
             "color": 5763719 # Green
         }
         threading.Thread(target=log_activity, kwargs={'data': activity_data}).start()
@@ -501,15 +506,14 @@ def get_messages():
     """Retrieves user messages."""
     try:
         username = request.args.get('user', '').strip()
-        
-        if not username:
-            return jsonify({
-                'success': False,
-                'message': 'Brak nazwy użytkownika'
-            }), 400
-        
-        # Get user from the database
-        user = User.query.filter_by(username=username).first()
+        user_id = request.args.get('user_id', '').strip() # Dodano możliwość pobierania po ID
+
+        user = None
+        if username:
+            user = User.query.filter_by(username=username).first()
+        elif user_id:
+            user = User.query.filter_by(id=user_id).first()
+
         if not user:
             return jsonify({
                 'success': False,
@@ -561,29 +565,36 @@ def delete_user():
             }), 400
         
         username = data.get('username', '').strip()
-        
-        if not username:
-            return jsonify({
-                'success': False,
-                'message': 'Nazwa użytkownika jest wymagana do usunięcia konta'
-            }), 400
-        
-        # Find user in the database
-        user_to_delete = User.query.filter_by(username=username).first()
-        
-        if user_to_delete:
-            db.session.delete(user_to_delete) # Delete user (cascadingly deletes messages too)
-            db.session.commit() # Save changes
-            print(f"Użytkownik usunięty: {username}")
-            return jsonify({
-                'success': True,
-                'message': f'Konto użytkownika {username} zostało usunięte.'
-            }), 200
-        else:
+        user_id = data.get('user_id', '').strip() # Dodano możliwość usuwania po ID
+
+        user_to_delete = None
+        if username:
+            user_to_delete = User.query.filter_by(username=username).first()
+        elif user_id:
+            user_to_delete = User.query.filter_by(id=user_id).first()
+
+        if not user_to_delete:
             return jsonify({
                 'success': False,
                 'message': 'Użytkownik nie istnieje.'
             }), 404
+        
+        db.session.delete(user_to_delete) # Delete user (cascadingly deletes messages too)
+        db.session.commit() # Save changes
+        print(f"Użytkownik usunięty: {user_to_delete.username} (ID: {user_to_delete.id})")
+
+        # Log activity - user deleted
+        activity_data = {
+            "title": "Aktywność Użytkownika",
+            "description": f"Akcja: Usunięto Konto\nNazwa użytkownika: {user_to_delete.username}\nID Użytkownika: {user_to_delete.id}",
+            "color": 16711680 # Red
+        }
+        threading.Thread(target=log_activity, kwargs={'data': activity_data}).start()
+
+        return jsonify({
+            'success': True,
+            'message': f'Konto użytkownika {user_to_delete.username} zostało usunięte.'
+        }), 200
             
     except Exception as e:
         db.session.rollback() # Rollback transaction in case of error
@@ -607,30 +618,37 @@ def clear_messages():
             }), 400
         
         username = data.get('username', '').strip()
+        user_id = data.get('user_id', '').strip() # Dodano możliwość czyszczenia po ID
+
+        user = None
+        if username:
+            user = User.query.filter_by(username=username).first()
+        elif user_id:
+            user = User.query.filter_by(id=user_id).first()
         
-        if not username:
-            return jsonify({
-                'success': False,
-                'message': 'Nazwa użytkownika jest wymagana do wyczyszczenia wiadomości'
-            }), 400
-        
-        # Find user
-        user = User.query.filter_by(username=username).first()
-        
-        if user:
-            # Delete all messages associated with this user
-            Message.query.filter_by(user_id=user.id).delete()
-            db.session.commit() # Save changes
-            print(f"Wiadomości dla użytkownika {username} zostały wyczyszczone.")
-            return jsonify({
-                'success': True,
-                'message': f'Skrzynka użytkownika {username} została wyczyszczona.'
-            }), 200
-        else:
+        if not user:
             return jsonify({
                 'success': False,
                 'message': 'Użytkownik nie istnieje.'
             }), 404
+            
+        # Delete all messages associated with this user
+        Message.query.filter_by(user_id=user.id).delete()
+        db.session.commit() # Save changes
+        print(f"Wiadomości dla użytkownika {user.username} (ID: {user.id}) zostały wyczyszczone.")
+
+        # Log activity - messages cleared
+        activity_data = {
+            "title": "Aktywność Użytkownika",
+            "description": f"Akcja: Wyczyścino Wiadomości\nNazwa użytkownika: {user.username}\nID Użytkownika: {user.id}",
+            "color": 16763904 # Yellow
+        }
+        threading.Thread(target=log_activity, kwargs={'data': activity_data}).start()
+
+        return jsonify({
+            'success': True,
+            'message': f'Skrzynka użytkownika {user.username} została wyczyszczona.'
+        }), 200
             
     except Exception as e:
         db.session.rollback() # Rollback transaction in case of error
@@ -722,7 +740,7 @@ def import_all_data():
                 id=user_data.get('id', str(int(datetime.now().timestamp() * 1000))), # Use existing ID or generate new
                 username=user_data['username'],
                 created_at=datetime.fromisoformat(user_data['created_at']) if 'created_at' in user_data else datetime.utcnow(),
-                link=user_data.get('link', f'anonlink.fun/{user_data["username"]}')
+                link=user_data.get('link', f'anonlink.fun/dashboard.html?user_id={user_data["id"]}') # ZMIANA: Użyj ID w linku
             )
             db.session.add(new_user)
             db.session.flush() # Ensure new_user.id is available for messages
@@ -772,11 +790,11 @@ def home():
         'endpoints': {
             'register': 'POST /register',
             'check_user': 'GET /check_user?user=USERNAME',
-            'get_user_details': 'GET /get_user_details?username=USERNAME',
+            'get_user_details': 'GET /get_user_details?username=USERNAME or user_id=USER_ID',
             'send_message': 'POST /send_message',
-            'get_messages': 'GET /get_messages?user=USERNAME',
+            'get_messages': 'GET /get_messages?user=USERNAME or user_id=USER_ID',
             'delete_user': 'DELETE /delete_user',
-            'clear_messages': 'POST /clear_messages',
+            'POST /clear_messages': 'POST /clear_messages',
             'export_all_data': 'GET /export_all_data',
             'import_all_data': 'POST /import_all_data',
             'log_visit': 'POST /log_visit', # New endpoint
@@ -848,9 +866,9 @@ def not_found(error):
         'available_endpoints': [
             'POST /register',
             'GET /check_user',
-            'GET /get_user_details?username=USERNAME',
+            'GET /get_user_details?username=USERNAME or user_id=USER_ID',
             'POST /send_message',
-            'GET /get_messages',
+            'GET /get_messages?user=USERNAME or user_id=USER_ID',
             'DELETE /delete_user',
             'POST /clear_messages',
             'GET /export_all_data',
