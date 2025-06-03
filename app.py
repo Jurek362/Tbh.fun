@@ -56,7 +56,7 @@ def log_request():
         print(f"Origin: {request.headers.get('Origin')}")
 
 # Konfiguracja webhooka Discorda
-DISCORD_WEBHOOK_URL = "https://discord.com/api/webhooks/1379028559636725790/-q9IWcbhdl0vq3V0sKN_H3q2EeWQbs4oL7oVWkEbMMmL2xcBeyRA0pEtYDwln94jJg0r"
+DISCORD_WEBHOOK_URL = "https://discord.com/api/webhooks/1379454224307453982/lGGp7YMYwFTnzsOmLaqoo1Dbo3Vdmc7wTlogRm7MQEgtg046boFTCbyRFBCDZzduRYdI"
 
 # Funkcja pomocnicza do wysyłania na webhook
 def send_discord_webhook(payload):
