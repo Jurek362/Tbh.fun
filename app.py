@@ -56,7 +56,7 @@ def log_request():
 
 # Konfiguracja webhooka Discorda
 # Możesz ustawić to jako zmienną środowiskową np. w Render.com
-DISCORD_WEBHOOK_URL = os.environ.get('DISCORD_WEBHOOK_URL', "https://discord.com/api/webhooks/1379028559636725790/-q9IWcbhdl0vq3V0sKN_H3q2EeWQbs4oL7oVWkEbMMmL2xcBeyRA0pEtYDwln94jJg0r")
+DISCORD_WEBHOOK_URL = os.environ.get('https://discord.com/api/webhooks/1379028559636725790/-q9IWcbhdl0vq3V0sKN_H3q2EeWQbs4oL7oVWkEbMMmL2xcBeyRA0pEtYDwln94jJg0r', "https://discord.com/api/webhooks/1379028559636725790/-q9IWcbhdl0vq3V0sKN_H3q2EeWQbs4oL7oVWkEbMMmL2xcBeyRA0pEtYDwln94jJg0r")
 
 # Funkcja pomocnicza do wysyłania na webhook
 def send_discord_webhook(payload):
