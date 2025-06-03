@@ -60,6 +60,44 @@
         .animate-spin {
             animation: spin 1s linear infinite;
         }
+        .warning-box {
+            background-color: #fffbeb; /* bg-yellow-50 */
+            border-left: 4px solid #f59e0b; /* border-yellow-500 */
+            color: #92400e; /* text-yellow-700 */
+            padding: 1rem;
+            margin-bottom: 1rem;
+            border-radius: 0.5rem;
+            text-align: left;
+        }
+        /* Modal styles */
+        .modal {
+            position: fixed;
+            z-index: 1000;
+            left: 0;
+            top: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0,0,0,0.5);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+        .modal-content {
+            background-color: #fefefe;
+            margin: auto;
+            padding: 20px;
+            border-radius: 0.75rem;
+            width: 80%;
+            max-width: 500px;
+            text-align: center;
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+        }
+        .modal-buttons {
+            display: flex;
+            justify-content: center;
+            gap: 1rem;
+            margin-top: 1.5rem;
+        }
     </style>
 </head>
 <body>
@@ -70,13 +108,14 @@
             <h2 class="text-2xl font-semibold text-gray-800 mb-4">Logowanie Administratora</h2>
             <form id="adminLoginForm">
                 <div class="mb-4 text-left">
-                    <label for="adminUsername" class="block text-gray-700 text-sm font-bold mb-2">Nazwa użytkownika:</label>
-                    <input type="text" id="adminUsername" name="username" placeholder="admin" required
+                    <label for="adminUsername" class="block text-gray-700 text-sm font-bold mb-2">Nazwa użytkownika (opcjonalnie):</label>
+                    <input type="text" id="adminUsername" name="username" placeholder="admin"
                            class="shadow appearance-none border rounded-lg w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline focus:border-indigo-500">
+                    <small class="text-gray-600 text-xs mt-1 block">Możesz zostawić puste, jeśli logujesz się tylko hasłem.</small>
                 </div>
                 <div class="mb-6 text-left">
                     <label for="adminPassword" class="block text-gray-700 text-sm font-bold mb-2">Hasło:</label>
-                    <input type="password" id="adminPassword" name="password" placeholder="adminpass" required
+                    <input type="password" id="adminPassword" name="password" placeholder="JPGontop" required
                            class="shadow appearance-none border rounded-lg w-full py-2 px-3 text-gray-700 mb-3 leading-tight focus:outline-none focus:shadow-outline focus:border-indigo-500">
                 </div>
                 <button type="submit" class="bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-2 px-4 rounded-lg focus:outline-none focus:shadow-outline transition-colors duration-200">
@@ -87,12 +126,25 @@
         </div>
 
         <div id="adminPanelSection" class="hidden">
-            <div class="flex justify-between items-center mb-6">
+            <div class="flex flex-col sm:flex-row justify-between items-center mb-6 space-y-2 sm:space-y-0">
                 <h2 class="text-2xl font-semibold text-gray-800">Dane Administracyjne</h2>
-                <button id="logoutBtn" class="bg-red-500 hover:bg-red-600 text-white font-bold py-2 px-4 rounded-lg transition-colors duration-200">
-                    Wyloguj
-                </button>
+                <div class="flex space-x-2">
+                    <button id="resetDbBtn" class="bg-yellow-500 hover:bg-yellow-600 text-white font-bold py-2 px-4 rounded-lg transition-colors duration-200">
+                        Resetuj Bazę Danych
+                    </button>
+                    <button id="logoutBtn" class="bg-red-500 hover:bg-red-600 text-white font-bold py-2 px-4 rounded-lg transition-colors duration-200">
+                        Wyloguj
+                    </button>
+                </div>
             </div>
+
+            <div id="resetDbWarning" class="warning-box hidden">
+                <p class="font-bold">⚠️ OSTRZEŻENIE: Resetowanie bazy danych</p>
+                <p>Ta operacja spowoduje trwałe usunięcie WSZYSTKICH danych (użytkowników i wiadomości) z bazy danych i ponowne utworzenie tabel. Używaj tylko, jeśli wiesz, co robisz i jesteś gotowy na utratę wszystkich danych.</p>
+                <p class="mt-2">Po zresetowaniu bazy danych, zaleca się usunięcie tego przycisku i związanego z nim kodu z pliku `app.py` w środowisku produkcyjnym ze względów bezpieczeństwa.</p>
+            </div>
+            <div id="resetDbMessage" class="mt-4 text-sm"></div>
+
 
             <div class="mb-8">
                 <h3 class="text-xl font-semibold text-gray-700 mb-4">Zarejestrowani Użytkownicy</h3>
@@ -157,6 +209,21 @@
         </div>
     </div>
 
+    <div id="confirmationModal" class="modal hidden">
+        <div class="modal-content">
+            <h3 class="text-xl font-semibold text-gray-800 mb-4">Potwierdź resetowanie bazy danych</h3>
+            <p class="text-gray-700 mb-6">Czy na pewno chcesz zresetować bazę danych? <strong class="text-red-600">Spowoduje to trwałe usunięcie WSZYSTKICH danych użytkowników i wiadomości.</strong> Tej operacji nie można cofnąć.</p>
+            <div class="modal-buttons">
+                <button id="confirmResetBtn" class="bg-red-500 hover:bg-red-600 text-white font-bold py-2 px-4 rounded-lg transition-colors duration-200">
+                    Tak, zresetuj
+                </button>
+                <button id="cancelResetBtn" class="bg-gray-300 hover:bg-gray-400 text-gray-800 font-bold py-2 px-4 rounded-lg transition-colors duration-200">
+                    Anuluj
+                </button>
+            </div>
+        </div>
+    </div>
+
     <script>
         const BACKEND_BASE_URL = 'https://tbh-fun.onrender.com'; // Twój URL backendu
         const loginSection = document.getElementById('loginSection');
@@ -164,12 +231,21 @@
         const adminLoginForm = document.getElementById('adminLoginForm');
         const loginMessage = document.getElementById('loginMessage');
         const logoutBtn = document.getElementById('logoutBtn');
+        const resetDbBtn = document.getElementById('resetDbBtn'); 
+        const resetDbWarning = document.getElementById('resetDbWarning'); 
+        const resetDbMessage = document.getElementById('resetDbMessage'); 
         const usersTableBody = document.getElementById('usersTableBody');
         const messagesTableBody = document.getElementById('messagesTableBody');
         const usersLoading = document.getElementById('usersLoading');
         const messagesLoading = document.getElementById('messagesLoading');
         const usersError = document.getElementById('usersError');
         const messagesError = document.getElementById('messagesError');
+
+        // Modal elements
+        const confirmationModal = document.getElementById('confirmationModal');
+        const confirmResetBtn = document.getElementById('confirmResetBtn');
+        const cancelResetBtn = document.getElementById('cancelResetBtn');
+
 
         // Funkcja do pokazywania/ukrywania sekcji
         function showSection(sectionId) {
@@ -191,6 +267,7 @@
 
                 if (response.ok) {
                     showSection('adminPanelSection');
+                    resetDbWarning.classList.remove('hidden'); // Pokaż ostrzeżenie po zalogowaniu
                     await fetchUsers();
                     await fetchMessages();
                 } else {
@@ -208,7 +285,7 @@
             e.preventDefault();
             loginMessage.textContent = ''; // Wyczyść poprzednie wiadomości
 
-            const username = adminUsername.value;
+            const username = adminUsername.value; // Można zostawić puste
             const password = adminPassword.value;
 
             try {
@@ -217,13 +294,14 @@
                     headers: {
                         'Content-Type': 'application/json'
                     },
-                    body: JSON.stringify({ username, password })
+                    body: JSON.stringify({ username, password }) // Wysyłamy username, nawet jeśli puste
                 });
 
                 const data = await response.json();
 
                 if (data.success) {
                     showSection('adminPanelSection');
+                    resetDbWarning.classList.remove('hidden'); // Pokaż ostrzeżenie po zalogowaniu
                     await fetchUsers();
                     await fetchMessages();
                 } else {
@@ -251,6 +329,8 @@
                     adminPassword.value = '';
                     usersTableBody.innerHTML = ''; // Wyczyść tabele
                     messagesTableBody.innerHTML = '';
+                    resetDbWarning.classList.add('hidden'); // Ukryj ostrzeżenie po wylogowaniu
+                    resetDbMessage.textContent = ''; // Wyczyść wiadomości resetu
                 } else {
                     alert('Błąd wylogowania: ' + (data.message || 'Nieznany błąd.'));
                 }
@@ -259,6 +339,54 @@
                 alert('Wystąpił błąd połączenia podczas wylogowywania.');
             }
         });
+
+        // Obsługa przycisku resetowania bazy danych
+        resetDbBtn.addEventListener('click', () => {
+            confirmationModal.classList.remove('hidden'); // Pokaż modal potwierdzenia
+        });
+
+        // Obsługa przycisku potwierdzenia resetu
+        confirmResetBtn.addEventListener('click', async () => {
+            confirmationModal.classList.add('hidden'); // Ukryj modal
+            resetDbMessage.textContent = 'Resetowanie bazy danych... Proszę czekać.';
+            resetDbMessage.classList.remove('text-green-500', 'text-red-500');
+            resetDbMessage.classList.add('text-gray-700');
+
+            try {
+                const response = await fetch(`${BACKEND_BASE_URL}/admin/reset_database`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    }
+                });
+                const data = await response.json();
+
+                if (data.success) {
+                    resetDbMessage.textContent = data.message;
+                    resetDbMessage.classList.remove('text-gray-700');
+                    resetDbMessage.classList.add('text-green-500');
+                    // Po zresetowaniu, odśwież dane
+                    await fetchUsers();
+                    await fetchMessages();
+                } else {
+                    resetDbMessage.textContent = data.message || 'Nieznany błąd podczas resetowania bazy danych.';
+                    resetDbMessage.classList.remove('text-gray-700');
+                    resetDbMessage.classList.add('text-red-500');
+                }
+            } catch (error) {
+                console.error('Błąd resetowania bazy danych:', error);
+                resetDbMessage.textContent = 'Wystąpił błąd połączenia podczas resetowania bazy danych.';
+                resetDbMessage.classList.remove('text-gray-700');
+                resetDbMessage.classList.add('text-red-500');
+            }
+        });
+
+        // Obsługa przycisku anulowania resetu
+        cancelResetBtn.addEventListener('click', () => {
+            confirmationModal.classList.add('hidden'); // Ukryj modal
+            resetDbMessage.textContent = ''; // Wyczyść wiadomość
+        });
+
 
         // Funkcja do pobierania i wyświetlania użytkowników
         async function fetchUsers() {
