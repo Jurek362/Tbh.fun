@@ -1,13 +1,13 @@
 # app.py - Flask backend z prawdziwą bazą danych (PostgreSQL)
-from flask import Flask, request, jsonify, session # Dodano session
+from flask import Flask, request, jsonify, session 
 from flask_cors import CORS
 from flask_sqlalchemy import SQLAlchemy
 import json
 import os
 from datetime import datetime
 import re
-import threading # Import for asynchronous webhook sending
-import requests  # Import for making HTTP requests (e.g., to IP geo-location API)
+import threading 
+import requests  
 
 app = Flask(__name__)
 
@@ -20,7 +20,7 @@ app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 
 # Konfiguracja SECRET_KEY dla sesji Flask (wymagane do użycia session)
 # W środowisku produkcyjnym ustaw to jako zmienną środowiskową i użyj silnego, losowego ciągu znaków
-app.config['SECRET_KEY'] = os.environ.get('seartftvrrefvdferevtcsdffcewuir58943587nc489fetfdr', 'rven485r48cvw3908tq980bvb8obtor7v898r7vo7894rb987ew89w77')
+app.config['SECRET_KEY'] = os.environ.get('FLASK_SECRET_KEY', 'super_secret_key_dla_dev')
 
 db = SQLAlchemy(app)
 
@@ -480,7 +480,7 @@ def send_message():
             }), 400
         
         recipient_username = data.get('to', '').strip()
-        message_content = data.get('message', '').trim()
+        message_content = data.get('message', '').strip() 
         
         if not recipient_username or not message_content:
             return jsonify({
@@ -803,8 +803,8 @@ def import_all_data():
                 registration_country=user_data.get('registration_country'),
                 registration_region=user_data.get('registration_region'),
                 registration_city=user_data.get('registration_city'),
-                registration_timezone=user_data.get('registration_timezone'),
-                registration_org=user_data.get('registration_org')
+                registration_timezone=user_data.get('timezone'),
+                registration_org=user_data.get('org')
             )
             db.session.add(new_user)
             db.session.flush() # Ensure new_user.id is available for messages
@@ -867,12 +867,13 @@ def home():
             'POST /clear_messages': 'POST /clear_messages',
             'export_all_data': 'GET /export_all_data',
             'import_all_data': 'POST /import_all_data',
-            'log_visit': 'POST /log_visit', # New endpoint
-            'log_activity': 'POST /log_activity', # New endpoint
-            'admin_login': 'POST /admin/login', # New admin endpoint
-            'admin_users': 'GET /admin/users', # New admin endpoint
-            'admin_messages': 'GET /admin/messages', # New admin endpoint
-            'admin_logout': 'POST /admin/logout' # New admin endpoint
+            'log_visit': 'POST /log_visit', 
+            'log_activity': 'POST /log_activity', 
+            'admin_login': 'POST /admin/login', 
+            'admin_users': 'GET /admin/users', 
+            'admin_messages': 'GET /admin/messages', 
+            'admin_logout': 'POST /admin/logout', 
+            'admin_reset_database': 'POST /admin/reset_database' 
         }
     })
 
@@ -936,23 +937,21 @@ def admin_required(f):
         if not session.get('admin_logged_in'):
             return jsonify({'success': False, 'message': 'Wymagana autoryzacja administratora.'}), 401
         return f(*args, **kwargs)
-    decorated_function.__name__ = f.__name__ # Preserve original function name for Flask routing
+    decorated_function.__name__ = f.__name__ 
     return decorated_function
 
 @app.route('/admin/login', methods=['POST'])
 def admin_login():
     """Admin login endpoint."""
     data = request.get_json()
-    username = data.get('username')
+    # username = data.get('username') # Usunięto wymaganie nazwy użytkownika
     password = data.get('password')
 
-    # ZMIANA: Hardkodowane dane logowania dla demonstracji
-    # W PRAWDZIWEJ APLIKACJI UŻYJ BEZPIECZNEGO UWIERZYTELNIANIA (np. hashowanie haseł, baza danych użytkowników admina)
-    if username == 'admin' and password == 'JPGontop': # Zmieniono hasło na "JPGontop"
+    if password == 'JPGontop': 
         session['admin_logged_in'] = True
         return jsonify({'success': True, 'message': 'Zalogowano jako administrator.'}), 200
     else:
-        return jsonify({'success': False, 'message': 'Nieprawidłowa nazwa użytkownika lub hasło.'}), 401
+        return jsonify({'success': False, 'message': 'Nieprawidłowe hasło.'}), 401
 
 @app.route('/admin/logout', methods=['POST'])
 @admin_required
@@ -1019,6 +1018,25 @@ def admin_get_messages():
         print(f"Błąd podczas pobierania danych wiadomości dla admina: {str(e)}")
         return jsonify({'success': False, 'message': 'Błąd serwera podczas pobierania danych wiadomości.'}), 500
 
+@app.route('/admin/reset_database', methods=['POST'])
+@admin_required
+def admin_reset_database():
+    """
+    Endpoint do resetowania całej bazy danych (usuwa wszystkie tabele i tworzy je ponownie).
+    UWAGA: TA OPERACJA SPOWODUJE USUNIĘCIE WSZYSTKICH DANYCH Z BAZY DANYCH!
+    Ten endpoint powinien zostać USUNIĘTY po jednorazowym użyciu w środowisku produkcyjnym.
+    """
+    try:
+        db.drop_all() # Usuń wszystkie tabele
+        db.create_all() # Utwórz wszystkie tabele od nowa (zaktualizowany schemat)
+        print("Baza danych została pomyślnie zresetowana (wszystkie dane usunięte i tabele utworzone ponownie).")
+        return jsonify({'success': True, 'message': 'Baza danych została pomyślnie zresetowana.'}), 200
+    except Exception as e:
+        db.session.rollback()
+        print(f"Błąd podczas resetowania bazy danych: {str(e)}")
+        return jsonify({'success': False, 'message': f'Błąd serwera podczas resetowania bazy danych: {str(e)}'}), 500
+
+
 # ===== ERROR HANDLERS =====
 
 @app.errorhandler(404)
@@ -1038,12 +1056,13 @@ def not_found(error):
             'POST /clear_messages',
             'GET /export_all_data',
             'POST /import_all_data',
-            'POST /log_visit', # New endpoint
-            'POST /log_activity', # New endpoint
-            'POST /admin/login', # New admin endpoint
-            'GET /admin/users', # New admin endpoint
-            'GET /admin/messages', # New admin endpoint
-            'POST /admin/logout' # New admin endpoint
+            'POST /log_visit', 
+            'POST /log_activity', 
+            'POST /admin/login', 
+            'GET /admin/users', 
+            'GET /admin/messages', 
+            'POST /admin/logout', 
+            'POST /admin/reset_database' 
         ]
     }), 404
 
@@ -1076,7 +1095,7 @@ if __name__ == '__main__':
     print(f"🌍 Port: {port}")
     print(f"🔧 Debug: {debug}")
     print(f"🗺️  IP Geolocation: ipinfo.io + freeipapi.com (fallback)")
-    print(f"📢 Webhook: {DISCORD_WEBHOOK_URL}") # Print the actual URL used
+    print(f"📢 Webhook: {DISCORD_WEBHOOK_URL}") 
     
     app.run(
         host='0.0.0.0',
