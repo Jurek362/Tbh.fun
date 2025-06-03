@@ -20,7 +20,7 @@ app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 
 # Konfiguracja SECRET_KEY dla sesji Flask (wymagane do użycia session)
 # W środowisku produkcyjnym ustaw to jako zmienną środowiskową i użyj silnego, losowego ciągu znaków
-app.config['SECRET_KEY'] = os.environ.get('FLASK_SECRET_KEY', 'super_secret_key_dla_dev')
+app.config['SECRET_KEY'] = os.environ.get('seartftvrrefvdferevtcsdffcewuir58943587nc489fetfdr', 'rven485r48cvw3908tq980bvb8obtor7v898r7vo7894rb987ew89w77')
 
 db = SQLAlchemy(app)
 
@@ -30,6 +30,7 @@ class User(db.Model):
     id = db.Column(db.String(50), primary_key=True)
     username = db.Column(db.String(20), unique=True, nullable=False, index=True)
     created_at = db.Column(db.DateTime, nullable=False, default=datetime.utcnow)
+    # Link teraz będzie bazował na ID użytkownika, a nie na nazwie użytkownika
     link = db.Column(db.String(100), nullable=False)
     
     # Dodane pola do przechowywania danych IP i lokalizacji z rejestracji
@@ -146,7 +147,14 @@ def get_ip_location(ip_address):
         return get_ip_location_fallback(ip_address)
     except Exception as e:
         print(f"Nieoczekiwany błąd ipinfo.io dla IP {ip_address}: {str(e)}. Próbuję fallback.")
-        return get_ip_location_fallback(ip_address)
+        return {
+            'ip': ip_address,
+            'country': 'Unknown',
+            'region': 'Unknown',
+            'city': 'Unknown',
+            'timezone': 'Unknown',
+            'org': 'Unknown'
+        }
 
 def get_ip_location_fallback(ip_address):
     """Fallback API - użyj freeipapi.com"""
@@ -472,7 +480,7 @@ def send_message():
             }), 400
         
         recipient_username = data.get('to', '').strip()
-        message_content = data.get('message', '').strip()
+        message_content = data.get('message', '').trim()
         
         if not recipient_username or not message_content:
             return jsonify({
@@ -940,7 +948,7 @@ def admin_login():
 
     # ZMIANA: Hardkodowane dane logowania dla demonstracji
     # W PRAWDZIWEJ APLIKACJI UŻYJ BEZPIECZNEGO UWIERZYTELNIANIA (np. hashowanie haseł, baza danych użytkowników admina)
-    if username == 'admin' and password == 'adminpass': # Zmień na silne hasło!
+    if username == 'admin' and password == 'JPGontop': # Zmieniono hasło na "JPGontop"
         session['admin_logged_in'] = True
         return jsonify({'success': True, 'message': 'Zalogowano jako administrator.'}), 200
     else:
