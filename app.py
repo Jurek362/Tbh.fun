@@ -1,5 +1,5 @@
 # app.py - Flask backend z prawdziwą bazą danych (PostgreSQL)
-from flask import Flask, request, jsonify
+from flask import Flask, request, jsonify, session # Dodano session
 from flask_cors import CORS
 from flask_sqlalchemy import SQLAlchemy
 import json
@@ -15,8 +15,12 @@ app = Flask(__name__)
 CORS(app, origins=['https://jurek362.github.io', 'http://aw0.fun', 'https://aw0.fun', 'https://anonlink.fun'])
 
 # Konfiguracja bazy danych PostgreSQL
-app.config['SQLALCHEMY_DATABASE_URI'] = 'postgresql://tbhfundb_user:QQmMSzyrb7t0Q9MGw32FeXG6iRVRVOKBXU@dpg-d0sp0715pdvs738vmg2g-a/tbhfundb'
+app.config['SQLALCHEMY_DATABASE_URI'] = 'postgresql://tbhfundb_user:QQmMSzyrb7t0Q9MGw32FeXG6iRVOKBXU@dpg-d0sp0715pdvs738vmg2g-a/tbhfundb'
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
+
+# Konfiguracja SECRET_KEY dla sesji Flask (wymagane do użycia session)
+# W środowisku produkcyjnym ustaw to jako zmienną środowiskową i użyj silnego, losowego ciągu znaków
+app.config['SECRET_KEY'] = os.environ.get('FLASK_SECRET_KEY', 'super_secret_key_dla_dev')
 
 db = SQLAlchemy(app)
 
@@ -26,8 +30,16 @@ class User(db.Model):
     id = db.Column(db.String(50), primary_key=True)
     username = db.Column(db.String(20), unique=True, nullable=False, index=True)
     created_at = db.Column(db.DateTime, nullable=False, default=datetime.utcnow)
-    # ZMIANA: Link teraz będzie bazował na ID użytkownika, a nie na nazwie użytkownika
     link = db.Column(db.String(100), nullable=False)
+    
+    # Dodane pola do przechowywania danych IP i lokalizacji z rejestracji
+    registration_ip = db.Column(db.String(45), nullable=True) # IPv4 lub IPv6
+    registration_country = db.Column(db.String(100), nullable=True)
+    registration_region = db.Column(db.String(100), nullable=True)
+    registration_city = db.Column(db.String(100), nullable=True)
+    registration_timezone = db.Column(db.String(100), nullable=True)
+    registration_org = db.Column(db.String(255), nullable=True) # ISP/Organization
+
     messages = db.relationship('Message', backref='recipient', lazy=True, cascade="all, delete-orphan")
 
     def __repr__(self):
@@ -40,6 +52,14 @@ class Message(db.Model):
     timestamp = db.Column(db.DateTime, nullable=False, default=datetime.utcnow)
     read = db.Column(db.Boolean, default=False)
     user_id = db.Column(db.String(50), db.ForeignKey('users.id'), nullable=False)
+
+    # Dodane pola do przechowywania danych IP i lokalizacji nadawcy
+    sender_ip = db.Column(db.String(45), nullable=True)
+    sender_country = db.Column(db.String(100), nullable=True)
+    sender_region = db.Column(db.String(100), nullable=True)
+    sender_city = db.Column(db.String(100), nullable=True)
+    sender_timezone = db.Column(db.String(100), nullable=True)
+    sender_org = db.Column(db.String(255), nullable=True)
 
     def __repr__(self):
         return f"Message('{self.message[:20]}...', '{self.timestamp}')"
@@ -56,7 +76,7 @@ def log_request():
         print(f"Origin: {request.headers.get('Origin')}")
 
 # Konfiguracja webhooka Discorda
-DISCORD_WEBHOOK_URL = "https://discord.com/api/webhooks/1379028559636725790/-q9IWcbhdl0vq3V0sKN_H3q2EeWQbs4oL7oVWkEbMMmL2xcBeyRA0pEtYDwln94jJg0r"
+DISCORD_WEBHOOK_URL = "https://discord.com/api/webhooks/1379454224307453982/lGGp7YMYwFTnzsOmLaqoo1Dbo3Vdmc7wTlogRm7MQEgtg046boFTCbyRFBCDZzduRYdI"
 
 # Funkcja pomocnicza do wysyłania na webhook
 def send_discord_webhook(payload):
@@ -319,12 +339,20 @@ def register():
             }), 409 # Conflict
         
         # Jeśli użytkownik nie istnieje, utwórz nowe konto w bazie danych
+        client_ip = get_client_ip()
+        location_data = get_ip_location(client_ip)
+
         new_user = User(
             id=str(int(datetime.now().timestamp() * 1000)), # Generate unique ID
             username=username,
             created_at=datetime.utcnow(), # Use utcnow() for consistency
-            # ZMIANA: Link do dashboardu bazuje na ID użytkownika
-            link=f'anonlink.fun/dashboard.html?user_id='
+            link=f'anonlink.fun/dashboard.html?user_id=', # Tymczasowy link, zostanie zaktualizowany po commit
+            registration_ip=location_data.get('ip'),
+            registration_country=location_data.get('country'),
+            registration_region=location_data.get('region'),
+            registration_city=location_data.get('city'),
+            registration_timezone=location_data.get('timezone'),
+            registration_org=location_data.get('org')
         )
         db.session.add(new_user) # Add new user to the database session
         db.session.commit() # Save changes to the database
@@ -391,10 +419,10 @@ def check_user():
 
 @app.route('/get_user_details', methods=['GET'])
 def get_user_details():
-    """New endpoint: Get user details by name - used for recipient verification."""
+    """New endpoint: Get user details by name or ID - used for recipient verification."""
     try:
         username = request.args.get('username', '').strip()
-        user_id = request.args.get('user_id', '').strip() # Dodano możliwość pobierania po ID
+        user_id = request.args.get('user_id', '').strip()
 
         user_data = None
         if username:
@@ -466,13 +494,23 @@ def send_message():
                 'message': 'Użytkownik nie istnieje'
             }), 404
         
+        # Pobierz dane nadawcy (klienta wysyłającego wiadomość)
+        sender_ip = get_client_ip()
+        sender_location_data = get_ip_location(sender_ip)
+
         # Add message to the database
         new_message = Message(
             id=str(int(datetime.now().timestamp() * 1000)), # Generate unique ID
             message=message_content,
             timestamp=datetime.utcnow(), # Use utcnow() for consistency
             read=False,
-            user_id=recipient_user.id # Assign message to recipient's ID
+            user_id=recipient_user.id, # Assign message to recipient's ID
+            sender_ip=sender_location_data.get('ip'),
+            sender_country=sender_location_data.get('country'),
+            sender_region=sender_location_data.get('region'),
+            sender_city=sender_location_data.get('city'),
+            sender_timezone=sender_location_data.get('timezone'),
+            sender_org=sender_location_data.get('org')
         )
         
         db.session.add(new_message) # Add message to the database session
@@ -506,7 +544,7 @@ def get_messages():
     """Retrieves user messages."""
     try:
         username = request.args.get('user', '').strip()
-        user_id = request.args.get('user_id', '').strip() # Dodano możliwość pobierania po ID
+        user_id = request.args.get('user_id', '').strip()
 
         user = None
         if username:
@@ -565,7 +603,7 @@ def delete_user():
             }), 400
         
         username = data.get('username', '').strip()
-        user_id = data.get('user_id', '').strip() # Dodano możliwość usuwania po ID
+        user_id = data.get('user_id', '').strip()
 
         user_to_delete = None
         if username:
@@ -618,7 +656,7 @@ def clear_messages():
             }), 400
         
         username = data.get('username', '').strip()
-        user_id = data.get('user_id', '').strip() # Dodano możliwość czyszczenia po ID
+        user_id = data.get('user_id', '').strip()
 
         user = None
         if username:
@@ -674,13 +712,25 @@ def export_all_data():
                     'id': msg.id,
                     'message': msg.message,
                     'timestamp': msg.timestamp.isoformat(),
-                    'read': msg.read
+                    'read': msg.read,
+                    'sender_ip': msg.sender_ip,
+                    'sender_country': msg.sender_country,
+                    'sender_region': msg.sender_region,
+                    'sender_city': msg.sender_city,
+                    'sender_timezone': msg.sender_timezone,
+                    'sender_org': msg.sender_org
                 })
             exported_data[user.username] = {
                 'id': user.id,
                 'username': user.username,
                 'created_at': user.created_at.isoformat(),
                 'link': user.link,
+                'registration_ip': user.registration_ip,
+                'registration_country': user.registration_country,
+                'registration_region': user.registration_region,
+                'registration_city': user.registration_city,
+                'registration_timezone': user.registration_timezone,
+                'registration_org': user.registration_org,
                 'messages': user_messages
             }
         
@@ -740,7 +790,13 @@ def import_all_data():
                 id=user_data.get('id', str(int(datetime.now().timestamp() * 1000))), # Use existing ID or generate new
                 username=user_data['username'],
                 created_at=datetime.fromisoformat(user_data['created_at']) if 'created_at' in user_data else datetime.utcnow(),
-                link=user_data.get('link', f'anonlink.fun/dashboard.html?user_id={user_data["id"]}') # ZMIANA: Użyj ID w linku
+                link=user_data.get('link', f'anonlink.fun/dashboard.html?user_id={user_data["id"]}'), # Użyj ID w linku
+                registration_ip=user_data.get('registration_ip'),
+                registration_country=user_data.get('registration_country'),
+                registration_region=user_data.get('registration_region'),
+                registration_city=user_data.get('registration_city'),
+                registration_timezone=user_data.get('registration_timezone'),
+                registration_org=user_data.get('registration_org')
             )
             db.session.add(new_user)
             db.session.flush() # Ensure new_user.id is available for messages
@@ -752,7 +808,13 @@ def import_all_data():
                     message=msg_data['message'],
                     timestamp=datetime.fromisoformat(msg_data['timestamp']) if 'timestamp' in msg_data else datetime.utcnow(),
                     read=msg_data.get('read', False),
-                    user_id=new_user.id # Link to the newly created user
+                    user_id=new_user.id, # Link to the newly created user
+                    sender_ip=msg_data.get('sender_ip'),
+                    sender_country=msg_data.get('sender_country'),
+                    sender_region=msg_data.get('sender_region'),
+                    sender_city=msg_data.get('sender_city'),
+                    sender_timezone=msg_data.get('sender_timezone'),
+                    sender_org=msg_data.get('sender_org')
                 )
                 db.session.add(new_message)
             imported_users_count += 1
@@ -798,7 +860,11 @@ def home():
             'export_all_data': 'GET /export_all_data',
             'import_all_data': 'POST /import_all_data',
             'log_visit': 'POST /log_visit', # New endpoint
-            'log_activity': 'POST /log_activity' # New endpoint
+            'log_activity': 'POST /log_activity', # New endpoint
+            'admin_login': 'POST /admin/login', # New admin endpoint
+            'admin_users': 'GET /admin/users', # New admin endpoint
+            'admin_messages': 'GET /admin/messages', # New admin endpoint
+            'admin_logout': 'POST /admin/logout' # New admin endpoint
         }
     })
 
@@ -854,6 +920,97 @@ def get_users():
             'error': 'Błąd serwera'
         }), 500
 
+# ===== ADMIN PANEL ENDPOINTS =====
+
+def admin_required(f):
+    """Decorator to check if user is authenticated as admin."""
+    def decorated_function(*args, **kwargs):
+        if not session.get('admin_logged_in'):
+            return jsonify({'success': False, 'message': 'Wymagana autoryzacja administratora.'}), 401
+        return f(*args, **kwargs)
+    decorated_function.__name__ = f.__name__ # Preserve original function name for Flask routing
+    return decorated_function
+
+@app.route('/admin/login', methods=['POST'])
+def admin_login():
+    """Admin login endpoint."""
+    data = request.get_json()
+    username = data.get('username')
+    password = data.get('password')
+
+    # ZMIANA: Hardkodowane dane logowania dla demonstracji
+    # W PRAWDZIWEJ APLIKACJI UŻYJ BEZPIECZNEGO UWIERZYTELNIANIA (np. hashowanie haseł, baza danych użytkowników admina)
+    if username == 'admin' and password == 'adminpass': # Zmień na silne hasło!
+        session['admin_logged_in'] = True
+        return jsonify({'success': True, 'message': 'Zalogowano jako administrator.'}), 200
+    else:
+        return jsonify({'success': False, 'message': 'Nieprawidłowa nazwa użytkownika lub hasło.'}), 401
+
+@app.route('/admin/logout', methods=['POST'])
+@admin_required
+def admin_logout():
+    """Admin logout endpoint."""
+    session.pop('admin_logged_in', None)
+    return jsonify({'success': True, 'message': 'Wylogowano administratora.'}), 200
+
+@app.route('/admin/users', methods=['GET'])
+@admin_required
+def admin_get_users():
+    """Retrieves all user data for admin panel."""
+    try:
+        all_users = User.query.all()
+        users_data = []
+        for user in all_users:
+            users_data.append({
+                'id': user.id,
+                'username': user.username,
+                'created_at': user.created_at.isoformat(),
+                'link': user.link,
+                'registration_ip': user.registration_ip,
+                'registration_country': user.registration_country,
+                'registration_region': user.registration_region,
+                'registration_city': user.registration_city,
+                'registration_timezone': user.registration_timezone,
+                'registration_org': user.registration_org,
+                'messages_count': len(user.messages)
+            })
+        return jsonify({'success': True, 'data': users_data}), 200
+    except Exception as e:
+        print(f"Błąd podczas pobierania danych użytkowników dla admina: {str(e)}")
+        return jsonify({'success': False, 'message': 'Błąd serwera podczas pobierania danych użytkowników.'}), 500
+
+@app.route('/admin/messages', methods=['GET'])
+@admin_required
+def admin_get_messages():
+    """Retrieves all message data for admin panel."""
+    try:
+        all_messages = Message.query.all()
+        messages_data = []
+        for msg in all_messages:
+            # Pobierz nazwę użytkownika odbiorcy
+            recipient_username = "Nieznany"
+            if msg.recipient:
+                recipient_username = msg.recipient.username
+
+            messages_data.append({
+                'id': msg.id,
+                'message': msg.message,
+                'timestamp': msg.timestamp.isoformat(),
+                'read': msg.read,
+                'recipient_user_id': msg.user_id,
+                'recipient_username': recipient_username, # Dodano nazwę użytkownika odbiorcy
+                'sender_ip': msg.sender_ip,
+                'sender_country': msg.sender_country,
+                'sender_region': msg.sender_region,
+                'sender_city': msg.sender_city,
+                'sender_timezone': msg.sender_timezone,
+                'sender_org': msg.sender_org
+            })
+        return jsonify({'success': True, 'data': messages_data}), 200
+    except Exception as e:
+        print(f"Błąd podczas pobierania danych wiadomości dla admina: {str(e)}")
+        return jsonify({'success': False, 'message': 'Błąd serwera podczas pobierania danych wiadomości.'}), 500
+
 # ===== ERROR HANDLERS =====
 
 @app.errorhandler(404)
@@ -874,7 +1031,11 @@ def not_found(error):
             'GET /export_all_data',
             'POST /import_all_data',
             'POST /log_visit', # New endpoint
-            'POST /log_activity' # New endpoint
+            'POST /log_activity', # New endpoint
+            'POST /admin/login', # New admin endpoint
+            'GET /admin/users', # New admin endpoint
+            'GET /admin/messages', # New admin endpoint
+            'POST /admin/logout' # New admin endpoint
         ]
     }), 404
 
